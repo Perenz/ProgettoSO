@@ -69,7 +69,7 @@ Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c6
 
 ## Authors
 
-* **[Paolo Tasin]** - **[Stefano Perenzoni]** - **[Marcello Rigotti]**[PurpleBooth](https://github.com/Piro17)(https://github.com/Perenz)(https://github.com/rigottimarcello)
+* **[Paolo Tasin]** (https://github.com/Piro17) - **[Stefano Perenzoni]**https://github.com/Perenz) - **[Marcello Rigotti]**(https://github.com/rigottimarcello)
 
 See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
 
