@@ -1,43 +1,126 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "functionDeclarations.c"
 
 #define EXIT_CMD "exit"
 #define CLEAR_CMD "clear"
+#define CEN_DELIM " \t\r\n\a"
+#define CEN_BUFSIZE 128
 
-int processCmd(char *command);
+int cen_processCmd(char **command);
+char* cen_getLine();
+char** cen_splitLine(char *line);
 
 
-int start(){
+int cen_start(){
     char *command;
+    char **params;
     ssize_t bufS = 0;
     int status =1;
 
     //Continuo ad ascoltare in input su stdin
     do{
         printf("Inserisci il comando:>");
+
         //Prendo il comando dall'utente
-        getline(&command, &bufS, stdin);
-        command = strtok(command, "\n");
+        command = cen_getLine();
+
+        //Splitta la linea in singoli parametri/argomenti
+        params = cen_splitLine(command);
 
         //Esegue il comando
-        status = processCmd(command);
+        status = cen_processCmd(params);
     }while(status);
 }
 
-int processCmd(char *command){
-    //Esco se cmd "exit"
-    if(strcmp(command, EXIT_CMD)==0) {
-        return 0;
+char* cen_getLine(){
+    char *cmd=NULL;
+    //Dimensione buffer per riallocazione
+    ssize_t  bufS = 0;
+    getline(&cmd, &bufS, stdin);
+
+    /*
+     * Non più necessario come lo splitLine
+     *
+    //Rimuovo newLine \n a fine stringa
+    cmd = strtok(cmd, "\n");
+    */
+
+    return cmd;
+}
+
+//Restituita una stringa la funzione la splitta in
+//diverse stringhe secondo i delimitatori specificati
+//nella macro CEN_DELIM
+char** cen_splitLine(char *line){
+    int pos=0, bufS = CEN_BUFSIZE;
+    char **commands = malloc(bufS * sizeof(char));
+    char *cmd;
+
+    //IF error in the allocation of commands
+    if(!commands){
+        fprintf(stderr, "cen: allocation (malloc) error\n");
+        //Exit with error
+        exit(1);
     }
 
-    //Pulisco terminale se cmd "clear"
-    if(strcmp(command, CLEAR_CMD)==0) {
-        system("clear");
+    cmd=strtok(line, CEN_DELIM);
+    while(cmd!=NULL){
+        commands[pos++]=cmd;
+
+        //Realocation of the buffer if we have exceeded its size
+        if(pos >= bufS){
+            bufS += CEN_BUFSIZE;
+            commands = realloc(commands, bufS * sizeof(char));
+            //IF error in the allocation of commands
+            if(!commands){
+                fprintf(stderr, "cen: allocation (malloc) error\n");
+                //Exit with error
+                exit(1);
+            }
+        }
+        cmd = strtok(NULL, CEN_DELIM);
+    }
+    commands[pos]=NULL;
+    return commands;
+}
+
+
+int cen_processCmd(char **command){
+    //Esecuzione di un comando SINGOLO senza argomenti
+/*
+    //Eseguo la funziona cen_prova se comando inserito è "prova"
+    if(strcmp(command[0], builtin_cmd[0])==0){
+        return cen_prova(command);
+    }
+    else if(strcmp(command[0], builtin_cmd[1])==0) {
+        //Eseguo la funziona cen_clear se comando inserito è "clear"
+        //Pulisco terminale se cmd "clear"
+        return cen_clear(command);
+    }
+    else if(strcmp(command[0], builtin_cmd[2])==0){
+        //Eseguo la funzione cen_help se il comando inserito è "help"
+        return cen_help(command);
+    }
+    else if(strcmp(command[0], builtin_cmd[3])==0) {
+        //Eseguo la funziona cen_exit se comando inserito è "exit"
+        //Esco se cmd "exit"
+        return cen_exit(command);
+    }
+    else{
+        printf("Comando non riconosciuto, digitare \"help\" per la lista\n");
         return 1;
     }
+    */
+    int i=0;
+    for(i; i<cen_numCommands(); i++){
+        if(strcmp(command[0],builtin_cmd[i])==0)
+            return builtin_func[i](command);
+    }
 
-    printf("Hai inserito %s", command);
+    //Se comando inserito non esiste
+    printf("Comando non riconosciuto, digitare \"help\" per la lista\n");
     return 1;
 }
 
