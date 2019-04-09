@@ -1,3 +1,0 @@
-C:/ProgrammiUni/CLion Projects/ProgettoSO/cmake-build-debug/CMakeFiles/ProgettoSO.dir
-C:/ProgrammiUni/CLion Projects/ProgettoSO/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/ProgrammiUni/CLion Projects/ProgettoSO/cmake-build-debug/CMakeFiles/rebuild_cache.dir

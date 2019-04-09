@@ -3,8 +3,6 @@
 #include <string.h>
 #include "functionDeclarations.c"
 
-#define EXIT_CMD "exit"
-#define CLEAR_CMD "clear"
 #define CEN_DELIM " \t\r\n\a"
 #define CEN_BUFSIZE 128
 
@@ -16,7 +14,7 @@ char** cen_splitLine(char *line);
 int cen_start(){
     char *command;
     char **params;
-    ssize_t bufS = 0;
+    __ssize_t bufS = 0;
     int status =1;
 
     //Continuo ad ascoltare in input su stdin
@@ -37,7 +35,7 @@ int cen_start(){
 char* cen_getLine(){
     char *cmd=NULL;
     //Dimensione buffer per riallocazione
-    ssize_t  bufS = 0;
+    size_t  bufS = 0;
     getline(&cmd, &bufS, stdin);
 
     /*

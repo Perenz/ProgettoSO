@@ -20,7 +20,7 @@ char *builtin_cmd[]={
 //Pointers list to a Function associated to each command
 int (*builtin_func[]) (char **) = {
         &cen_prova,
-        &cen_prova,
+        &cen_clear,
         &cen_help,
         &cen_exit
 };
