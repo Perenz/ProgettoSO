@@ -14,7 +14,7 @@ char** cen_splitLine(char *line);
 int cen_start(){
     char *command;
     char **params;
-    __ssize_t bufS = 0;
+    size_t bufS = 0;
     int status =1;
 
     //Continuo ad ascoltare in input su stdin
@@ -112,6 +112,10 @@ int cen_processCmd(char **command){
     }
     */
     int i=0;
+    //se inserisco un comando vuoto richiedo di inserire un nuovo comando
+    if(command[0] == NULL)
+        return 1;
+
     for(i; i<cen_numCommands(); i++){
         if(strcmp(command[0],builtin_cmd[i])==0)
             return builtin_func[i](command);
