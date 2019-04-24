@@ -1,26 +1,12 @@
-CC		:= gcc
-C_FLAGS := -Wall -Wextra
+all: compilaCmd compilaMain
 
-BIN		:= bin
-SRC		:= src
-INCLUDE	:= include
-LIB		:= lib
+compilaCmd:
+	gcc -o PROVA componenti/bulb.c
 
-LIBRARIES	:=
+compilaMain:
+	gcc -o PRINCIPALE strutture/list.c main.c
 
-ifeq ($(OS),Windows_NT)
-EXECUTABLE	:= main.exe
-else
-EXECUTABLE	:= main
-endif
-
-all: $(BIN)/$(EXECUTABLE)
+binaries=PROVA PRINCIPALE
 
 clean:
-	-$(RM) $(BIN)/$(EXECUTABLE)
-
-run: all
-	./$(BIN)/$(EXECUTABLE)
-
-$(BIN)/$(EXECUTABLE): $(SRC)/*
-	$(CC) $(C_FLAGS) -I$(INCLUDE) -L$(LIB) $^ -o $@ $(LIBRARIES)
+	rm -f $(binaries)
