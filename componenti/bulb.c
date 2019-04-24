@@ -17,6 +17,10 @@ int main(char **args){
     //Invio segnale al padre
     int ris = kill(idPar, SIGCONT);
 
+    //Child va in pausa
+    printf("Child va in pausa\n");
+    pause();
+
     printf("Child ora termina\n");   
     exit(0);
 }
