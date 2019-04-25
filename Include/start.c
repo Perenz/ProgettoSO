@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "functionDeclarations.c"
+#include "addDevice.c"
 
 #define CEN_DELIM " \t\r\n\a"
 #define CEN_BUFSIZE 128

@@ -7,6 +7,7 @@ int cen_prova(char **args);
 int cen_clear(char **args);
 int cen_exit(char **args);
 int cen_help(char **args);
+int cen_add(char **args);
 int cen_numCommands();
 
 //Commands list
@@ -14,7 +15,8 @@ char *builtin_cmd[]={
         "prova",
         "clear",
         "help",
-        "exit"
+        "exit",
+        "add"
 };
 
 //Pointers list to a Function associated to each command
@@ -22,7 +24,8 @@ int (*builtin_func[]) (char **) = {
         &cen_prova,
         &cen_clear,
         &cen_help,
-        &cen_exit
+        &cen_exit,
+        &cen_add
 };
 
 int cen_numCommands(){

@@ -12,9 +12,9 @@ int main(char **args){
     pid_t idPar = getppid(); //chiedo il pid di mio padre
     //0 spenta
     //1 accesa
-    int status = 0; 
+    int status = 0;
 
-    printf("\nLampadina creata\n");
+    printf("\nWindow creata\n");
     printf("Pid: %d\nPid padre: %d\n", id, idPar);
 
     //Invio segnale al padre
@@ -28,5 +28,3 @@ int main(char **args){
     printf("Child ora termina\n");   
     exit(0);
 }
-
-

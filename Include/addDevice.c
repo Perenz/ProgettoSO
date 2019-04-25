@@ -1,3 +1,8 @@
+#include <sys/types.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+
 int dev_bulb();
 int dev_window();
 int dev_fridge();
@@ -22,37 +27,82 @@ int (*builtin_addDevice[]) () = {
 };
 
 int device_number(){
-    return sizeof(builtin_device)/sizeof(char*);
+        return sizeof(builtin_device)/sizeof(char*);
 }
 
 int dev_bulb(){
-    printf("Implementare l'aggiunta della bulb\n");
+        pid_t pid, wpid;
 
-    return 1;
+        pid = fork();
+        if (pid == 0) {
+                // Child process
+                char *args[]={"./componenti/BULB",NULL};
+                execvp(args[0],args);
+        } else if (pid < 0) {
+                // Errore nell'operazione di fork
+                perror("errore fork");
+        } 
+        return 1;
 }
 
 int dev_window(){
-    printf("Implementare l'aggiunta della window\n");
+        pid_t pid, wpid;
 
-    return 1;
+        pid = fork();
+        if (pid == 0) {
+                // Child process
+                char *args[]={"./componenti/WINDOW",NULL};
+                execvp(args[0],args);
+        } else if (pid < 0) {
+                // Errore nell'operazione di fork
+                perror("errore fork");
+        } 
+        return 1;
 }
 
 int dev_fridge(){
-    printf("Implementare l'aggiunta del fridge\n");
+        pid_t pid, wpid;
 
-    return 1;
+        pid = fork();
+        if (pid == 0) {
+                // Child process
+                char *args[]={"./componenti/FRIDGE",NULL};
+                execvp(args[0],args);
+        } else if (pid < 0) {
+                // Errore nell'operazione di fork
+                perror("errore fork");
+        } 
+        return 1;
 }
 
 int dev_timer(){
-    printf("Implementare l'aggiunta del timer\n");
+        pid_t pid, wpid;
 
-    return 1;
+        pid = fork();
+        if (pid == 0) {
+                // Child process
+                char *args[]={"./componenti/TIMER",NULL};
+                execvp(args[0],args);
+        } else if (pid < 0) {
+                // Errore nell'operazione di fork
+                perror("errore fork");
+        } 
+        return 1;
 }
 
 int dev_hub(){
-    printf("Implementare l'aggiunta dell'hub\n");
+        pid_t pid, wpid;
 
-    return 1;
+        pid = fork();
+        if (pid == 0) {
+                // Child process
+                char *args[]={"./componenti/HUB",NULL};
+                execvp(args[0],args);
+        } else if (pid < 0) {
+                // Errore nell'operazione di fork
+                perror("errore fork");
+        } 
+        return 1;
 }
 
 int cen_add(char **args){
@@ -61,6 +111,7 @@ int cen_add(char **args){
                 printf("Argomenti non validi\n");
                 printf("Utilizzo: add <device>\n");
                 printf("Comando 'device' per vedere la lista di quelli disponibili\n");
+                return 1;
         }
 
         //3 devide disponibili: bulb, window, fridge
@@ -68,7 +119,7 @@ int cen_add(char **args){
             int i=0;
             for(i=0; i<device_number(); i++){
                 if(strcmp(args[1], builtin_device[i])==0)
-                    return builtin_addDevice[i]();
+                        return builtin_addDevice[i]();
             }
         }
 
