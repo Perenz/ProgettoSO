@@ -10,7 +10,7 @@ compilaCmd:
 compilaMain:
 	gcc -o PRINCIPALE strutture/list.c main.c
 
-binaries=BULB PRINCIPALE
+binaries=PRINCIPALE componenti/BULB componenti/FRIDGE componenti/WINDOW componenti/HUB componenti/TIMER
 
 clean:
 	rm -f $(binaries)
