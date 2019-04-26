@@ -42,6 +42,9 @@ int dev_bulb(){
                 // Errore nell'operazione di fork
                 perror("errore fork");
         } 
+        sleep(2);
+        kill(pid,SIGINT);
+        sleep(2);
         return 1;
 }
 
@@ -102,6 +105,7 @@ int dev_hub(){
                 // Errore nell'operazione di fork
                 perror("errore fork");
         } 
+        
         return 1;
 }
 
