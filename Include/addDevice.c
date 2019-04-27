@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <signal.h>
 
-int add_device(char*);
+int add_device(char*, NodoPtr);
 void sign_handler(int);
 
 //device list
@@ -32,7 +32,7 @@ void sign_handler(int sig){
         return;
 }
 
-int add_device(char* execPath){
+int add_device(char* execPath, NodoPtr procList){
         pid_t pid, wpid;
 
         pid=fork();
@@ -49,6 +49,9 @@ int add_device(char* execPath){
                 //Indico al processo corrente (il padre) di gestire segnali in entrata di tipo SIGCONT con la funzione sign_handler
                 signal(SIGCONT, sign_handler);
 
+                //Aggiungo alla lista dei processi quello appena generato, identificato dal suo pid
+                insertLast(procList, pid);
+
                 //Vado in pausa per permettere al figlio di generarsi
                 pause();
         }
@@ -56,7 +59,7 @@ int add_device(char* execPath){
         return 1;
 }
 
-int cen_add(char **args){
+int cen_add(char **args, NodoPtr procList){
         //Implementazione del comando spostabile in un altro file.c
         if(args[1]==NULL){
                 printf("Argomenti non validi\n");
@@ -69,7 +72,7 @@ int cen_add(char **args){
             int i=0;
             for(i=0; i<device_number(); i++){
                 if(strcmp(args[1], builtin_device[i])==0)
-                        return add_device(bultin_dev_path[i]);
+                        return add_device(bultin_dev_path[i], procList);
             }
         }
 

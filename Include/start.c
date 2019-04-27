@@ -1,13 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../strutture/listH.h"
 #include "functionDeclarations.c"
 #include "addDevice.c"
+
 
 #define CEN_DELIM " \t\r\n\a"
 #define CEN_BUFSIZE 128
 
-int cen_processCmd(char **command);
+int cen_processCmd(char **command, NodoPtr);
 char* cen_getLine();
 char** cen_splitLine(char *line);
 
@@ -17,6 +19,10 @@ int cen_start(){
     char **params;
     size_t bufS = 0;
     int status =1;
+    NodoPtr procList = NULL;
+
+    //Inserisco nella lista il pid corrente indicante la centraline stessa
+    procList = listInit(getpid());
 
     //Continuo ad ascoltare in input su stdin
     do{
@@ -29,7 +35,7 @@ int cen_start(){
         params = cen_splitLine(command);
 
         //Esegue il comando
-        status = cen_processCmd(params);
+        status = cen_processCmd(params, procList);
     }while(status);
 }
 
@@ -86,7 +92,7 @@ char** cen_splitLine(char *line){
 }
 
 
-int cen_processCmd(char **command){
+int cen_processCmd(char **command, NodoPtr procList){
     //Esecuzione di un comando SINGOLO senza argomenti
 /*
     //Eseguo la funziona cen_prova se comando inserito è "prova"
@@ -119,7 +125,7 @@ int cen_processCmd(char **command){
 
     for(i; i<cen_numCommands(); i++){
         if(strcmp(command[0],builtin_cmd[i])==0)
-            return builtin_func[i](command);
+            return builtin_func[i](command, procList);
     }
 
     //Se comando inserito non esiste
