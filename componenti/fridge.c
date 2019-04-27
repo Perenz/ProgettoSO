@@ -4,8 +4,11 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <signal.h>
+int status;
 
-
+void signhandle_quit(int sig){
+    _exit(0);
+}
 
 int main(char **args){
     pid_t id=getpid(); // chiedo il mio pid
@@ -14,6 +17,8 @@ int main(char **args){
     //1 accesa
     int status = 0;
 
+    signal(SIGQUIT, signhandle_quit);
+
     printf("\nFridge creato\n");
     printf("Pid: %d\nPid padre: %d\n", id, idPar);
 
@@ -21,8 +26,10 @@ int main(char **args){
     int ris = kill(idPar, SIGCONT); 
 
     //Child va in pausa
+    
     printf("Child va in pausa\n");
     pause();
+    
 
 
     printf("Child ora termina\n");   

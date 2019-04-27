@@ -5,7 +5,9 @@
 #include <sys/types.h>
 #include <signal.h>
 
-
+void signhandle_quit(int sig){
+    _exit(0);
+}
 
 int main(char **args){
     pid_t id=getpid(); // chiedo il mio pid
@@ -13,6 +15,8 @@ int main(char **args){
     //0 spenta
     //1 accesa
     int status = 0; //equivalente a quello dei dispositivi collegati
+
+    signal(SIGQUIT, signhandle_quit);
 
     printf("\nHub creato\n");
     printf("Pid: %d\nPid padre: %d\n", id, idPar);
