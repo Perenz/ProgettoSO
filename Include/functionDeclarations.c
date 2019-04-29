@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include "../strutture/listH.h"
 
 //Functions for commands
 int cen_prova(char **args, NodoPtr procList);
@@ -52,6 +53,9 @@ int cen_exit(char **args, NodoPtr procList){
             kill(procList->data, SIGQUIT);
             procList=procList->next;
     }
+
+    //Bisogna deallocare la lista procList
+    freeList(procList);
 
     return 0;
 }
