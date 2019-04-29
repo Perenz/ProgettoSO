@@ -16,6 +16,16 @@ void printList(NodoPtr list){
     printf("\n");
 }
 
+//Dealloco tutta ma meoria allocata dinamicamente per i nodi della lista
+void freeList(NodoPtr list){
+    NodoPtr node;
+    while(list!=NULL){
+        node=list;
+        list=list->next;
+        free(node);
+    }
+}
+
 NodoPtr insertLast(NodoPtr list, int data){
     if(list==NULL){
         return listInit(data);

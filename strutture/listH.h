@@ -15,5 +15,6 @@ typedef Nodo* NodoPtr;
 NodoPtr listInit(int);
 void printList(NodoPtr);
 NodoPtr insertLast(NodoPtr, int);
+void freeList(NodoPtr);
 
 #endif
