@@ -16,6 +16,9 @@ int main(char **args){
     //1 accesa
     int status = 0; //equivalente a quello dei dispositivi collegati
 
+    //leggo args per prendere gli argomenti passati(puntatore al lato di scrittura della pipe)
+    int fd = atoi(args[1]);
+    close(fd); //chiudo il lato di lettura;
     signal(SIGQUIT, signhandle_quit);
 
     printf("\nHub creato\n");

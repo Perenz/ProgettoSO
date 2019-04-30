@@ -31,6 +31,16 @@ int main(char **args){
     //1 accesa
     status = 0; 
 
+    //leggo args per prendere gli argomenti passati(puntatore al lato di scrittura della pipe)
+    int fd = atoi(args[1]);
+
+
+    char* msg = "ciao";
+    write(fd,msg,sizeof(char)*strlen(msg));
+
+
+
+    
     signal(SIGINT, sighandle_int);
     signal(SIGQUIT, signhandle_quit);
 
