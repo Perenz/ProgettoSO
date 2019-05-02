@@ -24,7 +24,7 @@ void signhandle_quit(int sig){
 }
 
 
-int main(char **args){
+int main(int argc, char *args[]){
     pid_t id=getpid(); // chiedo il mio pid
     pid_t idPar = getppid(); //chiedo il pid di mio padre
     //0 spenta
@@ -33,12 +33,11 @@ int main(char **args){
 
     //leggo args per prendere gli argomenti passati(puntatore al lato di scrittura della pipe)
     int fd = atoi(args[1]);
-
-
-    char* msg = "ciao";
-    write(fd,msg,sizeof(char)*strlen(msg));
-
-
+    
+    //Mando il msg sul fd e ne stampo l'esito
+    char* msg = "ciao gruppo";
+    int rtn = write(fd,msg,strlen(msg)+1);
+    printf("Esito invio %d\nmsg inviato: %s\n", rtn, msg);
 
     
     signal(SIGINT, sighandle_int);
