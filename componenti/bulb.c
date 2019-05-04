@@ -20,16 +20,13 @@ void sighandle_int(int sig) {
 //SIGUSR1 usato per l'implementazione del comando list
 void sighandle_usr1(int sig){
     if(sig == SIGUSR1){
-        //printf("lampadina %d sta scrivendo\n", id);
         char str[50];
         sprintf(str, "Bulb %d", id);
         //printf("Figlio ora scrive\n");
         strcat(str ,(status==1?" accesa\n":" spenta\n"));
         
         int esito = write(fd,str,strlen(str)+1);
-        //printf("Figlio ha scritto con esito %d\n", esito);
         kill(idPar,SIGCONT);
-        pause();
     }
 }
 
@@ -49,7 +46,7 @@ int main(int argc, char *args[]){
     //leggo args per prendere gli argomenti passati(puntatore al lato di scrittura della pipe)
     fd = atoi(args[1]);
 
-    
+    /*
     //Mando il msg sul fd e ne stampo l'esito
     char msg[50];
     sprintf(msg, "Bulb %d", id);
@@ -57,7 +54,7 @@ int main(int argc, char *args[]){
     strcat(msg ,(status==1?" accesa\n":" spenta\n"));
     int rtn = write(fd,msg,strlen(msg)+1);
     //printf("Esito invio %d\nmsg inviato: %s\n", rtn, msg);
-
+    */
     
     signal(SIGINT, sighandle_int);
     signal(SIGQUIT, signhandle_quit);
@@ -73,7 +70,7 @@ int main(int argc, char *args[]){
     
     
     while(1){
-        printf("Child va in pausa\n");
+        //printf("Child va in pausa\n");
         pause();
     }
 

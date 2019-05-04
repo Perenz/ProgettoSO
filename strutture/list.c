@@ -4,8 +4,6 @@ NodoPtr listInit(int data){
     NodoPtr toRtn = malloc(sizeof(Nodo));
     toRtn->data=data;
     toRtn->next=NULL;
-    toRtn->fd[0]=0;
-    toRtn->fd[1]=0;
 
     return toRtn;
 }
@@ -13,6 +11,7 @@ NodoPtr listInit(int data){
 void printList(NodoPtr list){
     while(list != NULL){
         printf("%d ", list->data);
+        printf("Canale scrittura %d\nCanale lettura %d\n", list->fd[0], list->fd[1]);
         list=list->next;
     }
     printf("\n");
@@ -46,9 +45,10 @@ NodoPtr insertLast(NodoPtr list, int data, int fd[2]){
     
     //Inserisco il nuovo nodo in ultima posizione
     NodoPtr tmp = listInit(data);
+    tmp->fd[0]=fd[0];
+    tmp->fd[1]=fd[1];
     n->next=tmp;
-    n->fd[0]=fd[0];
-    n->fd[1]=fd[1];
+
 
 
     return list;
