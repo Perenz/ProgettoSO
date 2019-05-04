@@ -4,6 +4,7 @@
 #include "include/start.c"
 
 int main(){
+
     cen_start();
 
     exit(0);

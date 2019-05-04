@@ -4,6 +4,8 @@ NodoPtr listInit(int data){
     NodoPtr toRtn = malloc(sizeof(Nodo));
     toRtn->data=data;
     toRtn->next=NULL;
+    toRtn->fd[0]=0;
+    toRtn->fd[1]=0;
 
     return toRtn;
 }
@@ -26,9 +28,13 @@ void freeList(NodoPtr list){
     }
 }
 
-NodoPtr insertLast(NodoPtr list, int data){
+NodoPtr insertLast(NodoPtr list, int data, int fd[2]){
     if(list==NULL){
-        return listInit(data);
+        NodoPtr toRtn = listInit(data);
+        toRtn->fd[0]=fd[0];
+        toRtn->fd[1]=fd[1];
+
+        return toRtn;
     }
     
     //Scorro la lista fino all'ultima posizione
@@ -41,6 +47,9 @@ NodoPtr insertLast(NodoPtr list, int data){
     //Inserisco il nuovo nodo in ultima posizione
     NodoPtr tmp = listInit(data);
     n->next=tmp;
+    n->fd[0]=fd[0];
+    n->fd[1]=fd[1];
+
 
     return list;
 }
