@@ -14,9 +14,12 @@ char* cen_getLine();
 char** cen_splitLine(char *line);
 
 
+
+
 int cen_start(){
     char *command;
     char **params;
+
     size_t bufS = 0;
     int status =1;
     NodoPtr procList = NULL;

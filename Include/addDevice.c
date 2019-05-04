@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <signal.h>
 
+
+
 int add_device(char*, NodoPtr);
 void sign_handler(int);
 
@@ -34,16 +36,18 @@ void sign_handler(int sig){
 
 int add_device(char* execPath, NodoPtr procList){
         pid_t pid, wpid;
-        int fd[2]; //fd[0]legge fd[1]scrive
+        int fd[2];
         pipe(fd); //creo la pipe
         
         pid=fork();
+        
         if (pid == 0) {
                 // Child process
-                char *args[]={execPath,NULL,NULL}; 
-                sprintf(args[1],"%d",fd[1]);
-                printf("\naaaa%s\n",args[1]);
+                char fdTmp[10];
+                //close(fd[0]);
 
+                sprintf(fdTmp,"%d",fd[1]);
+                char *args[]={execPath,fdTmp,NULL}; 
 
 
 
@@ -56,19 +60,30 @@ int add_device(char* execPath, NodoPtr procList){
                 //Parent process
                 //Indico al processo corrente (il padre) di gestire segnali in entrata di tipo SIGCONT con la funzione sign_handler
                 signal(SIGCONT, sign_handler);
-                close(fd[1]); //chiudo il lato di scrittura;
+                //close(fd[1]); //chiudo il lato di scrittura;
                 //Aggiungo alla lista dei processi quello appena generato, identificato dal suo pid
-                insertLast(procList, pid);
-                char* msg = NULL;
+                //Devo aggiungere anche i fd per la pipe
+                
+                //DEBUG
+                insertLast(procList, pid, fd);
+                
+                /**
+                 * TODO
+                 * Nella funzione insertLast devo anche passare i FD cosi che vengano aggiunti al nodo
+                 * */
+
+
+                
                 
                 //Vado in pausa per permettere al figlio di generarsi
                 pause();
 
 
 
-                
-                read(fd[0],msg,1024);
-                printf("\n\n\n\ndebug msg: %s\n\n\n",msg);
+                //char msg[30];
+                // int rev = read(fd[0],msg,512);
+                // printf("\nesito: %d\n", rev);
+                // printf("\n\n\n\ndebug msg: %s\n\n\n",msg);
                 
         }
         
