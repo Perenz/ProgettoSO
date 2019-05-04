@@ -1,5 +1,4 @@
 #include "listH.h"
-
 NodoPtr listInit(int data){
     NodoPtr toRtn = malloc(sizeof(Nodo));
     toRtn->data=data;
@@ -11,7 +10,7 @@ NodoPtr listInit(int data){
 void printList(NodoPtr list){
     while(list != NULL){
         printf("%d ", list->data);
-        printf("Canale scrittura %d\nCanale lettura %d\n", list->fd[0], list->fd[1]);
+        printf("Canale scrittura %d\nCanale lettura %d\n", list->fd_reader, list->fd_writer);
         list=list->next;
     }
     printf("\n");
@@ -27,11 +26,11 @@ void freeList(NodoPtr list){
     }
 }
 
-NodoPtr insertLast(NodoPtr list, int data, int fd[2]){
+NodoPtr insertLast(NodoPtr list, int data, int fd_reader,int fd_writer){
     if(list==NULL){
         NodoPtr toRtn = listInit(data);
-        toRtn->fd[0]=fd[0];
-        toRtn->fd[1]=fd[1];
+        toRtn->fd_reader=fd_reader;
+        toRtn->fd_writer=fd_writer;
 
         return toRtn;
     }
@@ -45,11 +44,21 @@ NodoPtr insertLast(NodoPtr list, int data, int fd[2]){
     
     //Inserisco il nuovo nodo in ultima posizione
     NodoPtr tmp = listInit(data);
-    tmp->fd[0]=fd[0];
-    tmp->fd[1]=fd[1];
+    tmp->fd_reader=fd_reader;
+    tmp->fd_writer=fd_writer;
     n->next=tmp;
 
 
 
     return list;
+}
+void removeNode(NodoPtr list, int data){
+    NodoPtr nodo = list;
+    while(nodo->next != NULL){
+        if(nodo->next->data == data){
+            NodoPtr tmp = nodo->next;
+            nodo->next = tmp->next;
+            return;
+        }
+    }
 }

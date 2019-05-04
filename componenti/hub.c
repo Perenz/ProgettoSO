@@ -9,8 +9,8 @@ void signhandle_quit(int sig){
     _exit(0);
 }
 
-int main(char **args){
-    pid_t id=getpid(); // chiedo il mio pid
+int main(int argc, char **args){
+    pid_t id = getpid(); // chiedo il mio pid
     pid_t idPar = getppid(); //chiedo il pid di mio padre
     //0 spenta
     //1 accesa

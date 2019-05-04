@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "../strutture/listH.h"
 #include "functionDeclarations.c"
-#include "addDevice.c"
+
 
 
 #define CEN_DELIM " \t\r\n\a"
@@ -23,8 +24,7 @@ int cen_start(){
     size_t bufS = 0;
     int status =1;
     NodoPtr procList = NULL;
-
-    //Inserisco nella lista il pid corrente indicante la centraline stessa
+    //Inserisco nella lista il pid corrente indicante la centraline stessa --> TODO secondo me sbagliato 
     procList = listInit(getpid());
 
     //Continuo ad ascoltare in input su stdin
