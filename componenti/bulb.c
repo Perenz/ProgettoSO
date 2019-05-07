@@ -24,7 +24,7 @@ pid_t id;
 int device_handle_command(char **args);
 char *builtin_func[]={
         "l",//list
-        "c",//changeState
+        "s",//changeState
         "g",//getInfo
         "d" //delete
 };
@@ -38,16 +38,11 @@ void sighandle_int(int sig) {
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
 void sighandle_usr1(int sig){
     if(sig == SIGUSR1){
-
-        
-
         //proviamo a leggere
         //potrei passare anche la lunghezza del messaggio
         char str[CEN_BUFSIZE];
-
         read(fd_read, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
-        printf("\n\t Lettura da pipe %s  \n", str);
-
+        //printf("\n\tLettura da pipe %s  \n", str);
         char** arg = splitLine(str);
         int errnum = device_handle_command(arg);
     }
@@ -66,28 +61,40 @@ int device_handle_command(char **args){
 }
 
 
-//COMANDO c <tipo> <id> <stato:1/0>
+//COMANDO s <id> <label> <stato:1/0>
+/*restituisco in pipe:
+    0 se NON sono il dispositivo in cui ho modificato lo stato
+    1 se sono il dispositivo in cui ho modificato lo stato
+*/
 int dev_changestate(char **args){
-    if(args[1][0]== tipo && strcmp(args[2], id)==0){
+    int id_change = atoi(args[1]);
+    printf("%d\n", id_change);
+    if(id_change == id){//devo confrontare lo stato
         /* potremo scriver un messaggio del tipo: dispositivo <id> acceso / spento
         char* msg = malloc(10);//potrei fare il log10 dell'id per trovare il numero di cifre
         sprintf(msg, "d %d", id);//id inteso come pid
         
         int esito = write(fd_write, msg, strlen(msg)+1);
+        
+        per un'altra idea vedi functionDeclaration in metodo cen_switch
         */
+        
         status = atoi(args[3]);
-        
-        
-        printf("Status dispositivo %d : %d\n", id, status);
-        //printf("Pipe su cui scrivo %d, pipe su cui leggo %d \n", fd_write, fd_read);
+        printf("%s\n", args[3]);
 
-        //int esito = write(fd_write, str, strlen(str)+1);
-        
+        printf("Status dispositivo %d : %d\n", id, status);  
+        printf("\033[1;32m"); //scrivo in verde 
+        printf("\tNon sono felice e non sono triste. È questo il dilemma della mia vita: non so come definire il mio stato d’animo, mi manca sempre qualcosa.");
+        printf("\033[0m\n"); //resetto per scriver in bianco
+
+        char* msg = malloc(10);
+        int esito = write(fd_write, "1\0", 2);
         kill(idPar,SIGCONT);
-
-        
-
-    } 
+    }else{
+        int esito = write(fd_write, "0\0", 2);//TODO
+        printf("here\n\n");
+        kill(idPar,SIGCONT);
+    }
     //famo ritornare l'errore poi
     return 1;
 }
@@ -125,12 +132,12 @@ int dev_delete(char **args){
         //TODO trovare un altro metodo
        
         sprintf(msg, "%d\0", id);//id inteso come pid
-         printf("id in messaggio: %s\n",msg);
+        printf("id in messaggio: %s\n",msg);
         int esito = write(fd_write, msg, strlen(msg));
         
         printf("\033[1;31m"); //scrivo in rosso 
         printf("\x1b[ \n\t«Dio mio, Dio mio, perché mi hai abbandonato?»\n");
-        printf("\033[0m");
+        printf("\033[0m"); //resetto per scriver in bianco
        
         printf("Eliminazione avvenuta con successo\n\n");
         kill(idPar,SIGCONT);

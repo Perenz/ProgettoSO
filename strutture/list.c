@@ -55,7 +55,6 @@ NodoPtr insertLast(NodoPtr list, int data, int fd_reader,int fd_writer){
     return list;
 }
 void removeNode(NodoPtr list, int data){
-    printf("%d\n\n", data);
     if(list != NULL){//controllo che la lista non sia vuota
         NodoPtr nodo = list;
         NodoPtr tmp = nodo->next;
@@ -64,12 +63,11 @@ void removeNode(NodoPtr list, int data){
 
         }else{//la lista ha più di un elemento
             while(tmp != NULL){
-                printf("Nodo: %d\t", nodo->data);
-                printf("Tmp: %d\t\n", tmp->data);
                 if(tmp->data == data){
-                    printf("Trovato\n");
+                    //printf("Trovato\n");
                     nodo->next = tmp->next;
                     free(tmp);
+                    //printList(list);
                     return;
                 }
                 nodo = nodo->next;
@@ -77,5 +75,7 @@ void removeNode(NodoPtr list, int data){
             }
             
         }
+
     }
+
 }
