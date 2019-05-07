@@ -6,6 +6,11 @@
 #include <signal.h>
 #include <assert.h>
 #include <sched.h>
+//ho spostato i metodi getLine e splitLine in una nuova libreria 
+//TODO tale verrà linkata nel gestore generale dei processi di interazione
+#include "../Include/gestioneComandi.c"
+
+
 int status;
 //TODO : potrei usare un unico node
 //File descriptor in cui il figlio legge e il padre scrive
@@ -24,8 +29,6 @@ char *builtin_func[]={
         "d" //delete
 };
 
-//TODO
-//al posto che un sighandle per ogni comando dato dalla centralina potremo utilizzare un metodo svegliami da metter in una funzione a parte
 void sighandle_int(int sig) {
     if(sig==SIGQUIT)
         _exit(0);      
@@ -35,53 +38,18 @@ void sighandle_int(int sig) {
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
 void sighandle_usr1(int sig){
     if(sig == SIGUSR1){
+
+        
+
         //proviamo a leggere
         //potrei passare anche la lunghezza del messaggio
-        char str[50];
+        char str[CEN_BUFSIZE];
 
-        read(fd_read, str, 10);//uso 10 per intanto, vedi sopra poi
+        read(fd_read, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
         printf("\n\t Lettura da pipe %s  \n", str);
 
-        //TODO tutto questo dovrebbe farlo una funzione split command e tipo e comando potrebbero esser un singolo carattere
-        char* comando = malloc(2);
-        char* tipo = malloc(2);
-        char* id = malloc(2);//2 come prova, vedi commento sopra
-        
-        comando[0] = str[0];
-        comando[1] = '\0';
-        //printf("comando: %s\n", comando);
-        tipo[0] = str[2];
-        tipo[1] = '\0';
-        //printf("tipo: %s\n", tipo);
-        id[0] = str[4];
-        id[1] = '\0';
-        //printf("id: %s \n", id);
-        
-        
-        char** arg = malloc(3*(sizeof(char)));
-        arg[0] = comando;
-        arg[1] = tipo;
-        arg[2] = id;
-
-
-        //solo per switch prova, TODO cambiare
-        arg[3] = "1\0";
-
+        char** arg = splitLine(str);
         int errnum = device_handle_command(arg);
-        //printf("%d\n", strlen(str));
-        
-        //printf("siamo ancora qua...\n");
-
-
-        //sprintf(str, "Bulb %d", id);
-        //printf("Figlio ora scrive\n");
-        //strcat(str ,(status==1?" accesa\n":" spenta\n"));
-
-        //printf("Pipe su cui scrivo %d, pipe su cui leggo %d \n", fd_write, fd_read);
-
-        //int esito = write(fd_write, str, strlen(str)+1);
-        
-        
     }
 }
 int device_handle_command(char **args){
@@ -100,7 +68,7 @@ int device_handle_command(char **args){
 
 //COMANDO c <tipo> <id> <stato:1/0>
 int dev_changestate(char **args){
-    if(args[1][0]== tipo /*&& strcmp(args[2], id)==0*/){//guardo se il tipo e l'id coincidono
+    if(args[1][0]== tipo && strcmp(args[2], id)==0){
         /* potremo scriver un messaggio del tipo: dispositivo <id> acceso / spento
         char* msg = malloc(10);//potrei fare il log10 dell'id per trovare il numero di cifre
         sprintf(msg, "d %d", id);//id inteso come pid
@@ -110,10 +78,7 @@ int dev_changestate(char **args){
         status = atoi(args[3]);
         
         
-        char* str = malloc(30);
-        printf("Status %d\n", status);//non funziona ancora perché non gestisco lo split dei comandi
-        str = "Ha funzionato\0";
-
+        printf("Status dispositivo %d : %d\n", id, status);
         //printf("Pipe su cui scrivo %d, pipe su cui leggo %d \n", fd_write, fd_read);
 
         //int esito = write(fd_write, str, strlen(str)+1);
@@ -145,22 +110,39 @@ int dev_getinfo(char **args){
     return 1;
 }
 
-//COMANDO d <tipo> <id>
+//COMANDO d <id>
+/*restituisco in pipe:
+    0 se NON sono il dispositivo da eliminare
+    pid se sono il dispositivo da eliminare
+*/
 int dev_delete(char **args){
-    printf("%s\n",args[1]);
-    printf("%c\n",tipo);
-    if(args[1][0]== tipo /*&& strcmp(args[2], id)==0*/){//guardo se il tipo e l'id coincidono
+    //printf("id: %d\n",id);
+    int id_delete = atoi(args[1]);
+    char* msg = malloc(10);//potrei fare il log10 dell'id per trovare il numero di cifre
+
+    if(id == id_delete){//guardo se il tipo e l'id coincidono
         //scrivo sulla pipe che sono io quello che deve essere ucciso e scrivo anche il mio pid, la centralina dovrà toglierlo dalla lista
         //TODO trovare un altro metodo
-        char* msg = malloc(10);//potrei fare il log10 dell'id per trovare il numero di cifre
-        sprintf(msg, "d %d", id);//id inteso come pid
-        int esito = write(fd_write, msg, strlen(msg)+1);
-        printf("questo è il pid: %s\n", msg);
-        printf("Eliminazione avvenuta con successo\n");
+       
+        sprintf(msg, "%d\0", id);//id inteso come pid
+         printf("id in messaggio: %s\n",msg);
+        int esito = write(fd_write, msg, strlen(msg));
+        
+        printf("\033[1;31m"); //scrivo in rosso 
+        printf("\x1b[ \n\t«Dio mio, Dio mio, perché mi hai abbandonato?»\n");
+        printf("\033[0m");
+       
+        printf("Eliminazione avvenuta con successo\n\n");
         kill(idPar,SIGCONT);
-        exit(0);//questo exit 0 avviene? forse sarebbe meglio terminarlo dal padre
 
-    } 
+        exit(0);
+
+    }else{
+        sprintf(msg, "%d\0", 0);
+        int esito = write(fd_write, msg, strlen(msg));
+        printf("Non eliminato dato che id non coincide\n");
+        kill(idPar,SIGCONT);
+    }
     //famo ritornare l'errore poi
     return 1;
 }

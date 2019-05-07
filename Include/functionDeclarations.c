@@ -8,7 +8,7 @@
 #include "addDevice.c"
 
 
-//Functions for commands
+//Comandi centralina
 int cen_prova(char **args, NodoPtr procList);
 int cen_clear(char **args, NodoPtr procList);
 int cen_exit(char **args, NodoPtr procList);
@@ -17,13 +17,11 @@ int cen_add(char **args, NodoPtr procList);
 int cen_list(char **args, NodoPtr procList);
 int cen_delete(char **args, NodoPtr procList);
 int cen_switch(char **args, NodoPtr procList);
+int cen_info(char **args, NodoPtr procList);
 
 int cen_numCommands();
 
-
-
-
-//Commands list
+//Lista dei comandi della centralina
 char *builtin_cmd[]={
         "prova",
         "clear",
@@ -32,10 +30,11 @@ char *builtin_cmd[]={
         "add",
         "list",
         "delete",
-        "switch"
+        "switch",
+        "info"
 };
 
-//Pointers list to a Function associated to each command
+//Puntatori alle funzioni relative ai comandi della centralina
 int (*builtin_func[]) (char **, NodoPtr) = {
         &cen_prova,
         &cen_clear,
@@ -44,10 +43,9 @@ int (*builtin_func[]) (char **, NodoPtr) = {
         &cen_add,
         &cen_list,
         &cen_delete,
-        &cen_switch
+        &cen_switch,
+        &cen_info
 };
-
-
 
 int cen_numCommands(){
     return (sizeof(builtin_cmd)/ sizeof(char*));
@@ -70,7 +68,7 @@ int cen_exit(char **args, NodoPtr procList){
             procList=procList->next;
     }
 
-    //Bisogna deallocare la lista procList
+    //Dealloco la lista procList
     freeList(procList);
 
     return 0;
@@ -85,15 +83,21 @@ int cen_help(char **args, NodoPtr procList){
     for(int i=0; i<cen_numCommands();i++){
         printf("> %s\n", builtin_cmd[i]);
     }
-
     return 1;
 }
 
 void sign_cont_handler(int sig){
         return;
 }
-//COMANDO CHE CENTRALINA IMPARTISCE --> l
+
+/*
+    Funzione: elenca tutti i dispositivi con <nome>, quelli attivi con <nome> <id> 
+    Sintassi lato utente: list
+    Sintassi comunicata dalla centralina ai figli: l
+*/
 int cen_list(char **args, NodoPtr procList){
+    printList(procList);
+        /*
         printf("Stampo la lista dei dispositivi tramite il loro pid\n");
         //printList(procList);
         char tmp[30];
@@ -122,72 +126,91 @@ int cen_list(char **args, NodoPtr procList){
                 //strcat(msg,tmp);
                 Nodo = Nodo->next;
         }
-        
+        */
         return 1;
 }
-//COMANDO CHE CENTRALINA IMPARTISCE --> d <tipo> <id>
+
+/*
+    Funzione: rimuove il dispositivo <id>, se di controllo elimina anche i dispositivi sottostanti
+    Sintassi lato utente:                          delete <id>
+    Sintassi comunicata dalla centralina ai figli: d <id>
+*/
 int cen_delete(char **args, NodoPtr procList){
-        if(args[1]==NULL || args[2]==NULL){
-                printf("Argomenti non validi\n");
-                printf("Utilizzo: del <device> <num>\n");
-                printf("Comando 'device' per vedere la lista di quelli disponibili\n");
-                return 1;
-        }else{
-            
-            for(int i=0; i<device_number(); i++){
-                if(strcmp(args[1], builtin_device[i])==0){
-                    NodoPtr Nodo = procList;
-                    //Escludo la centralina dal while
-                    Nodo = Nodo->next;
+    //TODO da modificare, pensavo che l'eliminazione avvenisse anche per tipo.
+    if(args[1]==NULL){
+            printf("Argomenti non validi\n");
+            printf("Utilizzo: delete <id>\n");
+            return 1;
+    }else{
 
-                    signal(SIGCONT, sign_cont_handler);
-                    
-                    char* tmp = malloc(strlen(args[1]) + strlen(args[2]) + 10);//4 perché c'è il comando, 2 spazi di sep. e la terminazione
-                    
-                    //concateno per poter scrivere sulla pipe, non mi piace, posso farlo come scritto a inizio metodo così
-                    //è semplice da leggere
-                    char* tipo = malloc(2);//2 caratteri
-                    //prendo solo l'iniziale del tipo per identificare il tipo di dispositivo
-                    tipo[0] = args[1][0];
-                    tipo[1] = '\0';
-
-                    strcat(tmp,"d ");
-                    strcat(tmp, tipo);
-                    strcat(tmp," ");
-                    strcat(tmp, args[2]);
-                    strcat(tmp, "\0");
-                    printf("scrittura lato padre: %s\n", tmp);
-
-                    while(Nodo != NULL){
-                        //scrivo il comando sulla pipe
-                        printf("Dimensione tmp: %d\n", strlen(tmp));
-                        write(Nodo->fd_writer, tmp, strlen(tmp) + 1);
-                        kill(Nodo->data, SIGUSR1);
-                        //printf("Mi metto in read dal figlio %d sul canale %d\n", Nodo->data, Nodo->fd[0]);
-                        pause();
-                            
-                        //TODO
-                        int temp = read(Nodo->fd_reader,tmp,30);
-                        printf("funzica: %s\n", tmp);
-                        //removeNode(atoi(tmp));
-                        //memset(tmp,0,30);
-                        //strcat(msg,tmp);
-                        Nodo = Nodo->next;
-                    }
-                    
-                    
-                    return 1; //esci che sennò va avanti
-                }
-                    
-            }
-        }
-        printf("Device indicato non riconosciuto\n");
-        printf("Utilizzo: del <device> <num>\n");
-        printf("Digitare il comando 'device' per la lista di quelli disponibili\n");
+        NodoPtr Nodo = procList;
+        //Escludo la centralina dal while
+        Nodo = Nodo->next;
+        signal(SIGCONT, sign_cont_handler);
         
+        char* tmp = malloc(1 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 2 per spazi e terminazione stringa
+        
+        //tipo di comando
+        strcat(tmp,"d ");
+        //id dispositivo da spegnere
+        strcat(tmp, args[1]);
+        //delimitatore 
+        strcat(tmp, "\0");
+        printf("scrittura lato padre: %s\n", tmp);
+
+        while(Nodo != NULL){
+
+            //scrivo il comando sulla pipe
+            write(Nodo->fd_writer, tmp, strlen(tmp));
+            //mando un segnale al figlio così si risveglia e legge il contenuto della pipe
+            kill(Nodo->data, SIGUSR1);
+            //printf("Mi metto in read dal figlio %d sul canale %d\n", Nodo->data, Nodo->fd[0]);
+            //pause();
+                
+            //TODO gestione errori
+            //leggo il pid del figlio così da poterlo togliere dalla lista di processi
+            char* answer = malloc(30);
+            int err = read(Nodo->fd_reader,answer, 30);
+            //TODO se il figlio ritorna 0 esso non è figlio e perciò non lo elimino dalla lista
+            int ris = atoi(answer);
+
+            printf("Lettura da pipe lato padre %d\n", ris);
+
+            if(ris!=0){
+                removeNode(procList, ris);
+                return 1;
+            }else
+                Nodo = Nodo->next;
+            //risveglio il figlio così può eliminarsi
+            //kill(Nodo->data, SIGUSR1);
+            //memset(tmp,0,30);
+            //strcat(msg,tmp);
+            
+        }
+        
+        
+        return 1; //esci che sennò va avanti
+            
+                
+    }
+    
+    printf("Device indicato non riconosciuto\n");
+    printf("Utilizzo: delete <id>\n");
+    
     return 1;
 }
 
+
+/*
+    Funzione: aggiunge un device al sistema e ne mostra i dettagli
+    Sintassi lato utente:                          add <tipo>
+    TODO Sintassi comunicata dalla centralina :    add <tipo> (centralina comunica a processo specifico)
+*/
+//TODO dobbiamo mostrare i dettagli
+//potremo fare che la centralina impartisce un comando ad un qualche processo 
+//tipo: a <tipo> <id> 
+//e questo processo terrà la lista dei processi aggiunti che poi dovranno essere
+//collegati per venire a far parte effettivamente del sistema.
 int cen_add(char **args, NodoPtr procList){
         if(args[1]==NULL){
                 printf("Argomenti non validi\n");
@@ -209,7 +232,11 @@ int cen_add(char **args, NodoPtr procList){
 
         return 1;        
 }
-//COMANDO CHE CENTRALINA IMPARTISCE --> c <tipo> <id> <stato>
+/*
+    Funzione: modifica <stato> di dispositivo di tipo <tipo> con <id>
+    Sintassi lato utente:                          switch <id> <label> <pos>
+    Sintassi comunicata dalla centralina :         c <id> <tipo> <stato>
+*/
 int cen_switch(char **args, NodoPtr procList){
     //è uguale a cen_delete PORCODDDDIO
     if(args[1]==NULL || args[2]==NULL){
@@ -242,21 +269,22 @@ int cen_switch(char **args, NodoPtr procList){
                     strcat(tmp, args[2]);
                     strcat(tmp," ");
                     strcat(tmp, args[3]);
-                    printf("scrittura lato padre: %s\n", tmp);
+                        printf("scrittura lato padre: %s\n", tmp);
 
+                    //meglio search e identifico percorso che broadcast.
                     while(Nodo != NULL){
                         //scrivo il comando sulla pipe
-                        printf("Dimensione tmp: %d\n", strlen(tmp));
+                            printf("Dimensione tmp: %d\n", strlen(tmp));
                         write(Nodo->fd_writer, tmp, strlen(tmp) + 1);
                         kill(Nodo->data, SIGUSR1);
                         //printf("Mi metto in read dal figlio %d sul canale %d\n", Nodo->data, Nodo->fd[0]);
-                        //pause();
                             
                         //TODO
                         pause();
                         //int temp = read(Nodo->fd_reader,tmp,30);
                         printf("funzica: %s\n", tmp);
                         //removeNode(atoi(tmp));
+                        
                         //memset(tmp,0,30);
                         //strcat(msg,tmp);
                         
@@ -274,5 +302,18 @@ int cen_switch(char **args, NodoPtr procList){
         printf("Utilizzo: del <device> <num>\n");
         printf("Digitare il comando 'device' per la lista di quelli disponibili\n");
         
+    return 1;
+}
+
+/*
+    Funzione: mostra i dettagli del dispositivo 
+    Sintassi lato utente:                          add <tipo>
+    TODO Sintassi comunicata dalla centralina :    add <tipo> (centralina comunica a processo specifico)
+*/
+int cen_info(char **args, NodoPtr procList){
+
+
+
+
     return 1;
 }

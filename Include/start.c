@@ -4,11 +4,7 @@
 
 #include "../strutture/listH.h"
 #include "functionDeclarations.c"
-
-
-
-#define CEN_DELIM " \t\r\n\a"
-#define CEN_BUFSIZE 128
+#include "gestioneComandi.c"
 
 int cen_processCmd(char **command, NodoPtr);
 char* cen_getLine();
@@ -32,67 +28,16 @@ int cen_start(){
         printf("Inserisci il comando:>");
 
         //Prendo il comando dall'utente
-        command = cen_getLine();
+        command = getLine();
 
         //Splitta la linea in singoli parametri/argomenti
-        params = cen_splitLine(command);
+        params = splitLine(command);
 
         //Esegue il comando
         status = cen_processCmd(params, procList);
     }while(status);
 }
 
-char* cen_getLine(){
-    char *cmd=NULL;
-    //Dimensione buffer per riallocazione
-    size_t  bufS = 0;
-    getline(&cmd, &bufS, stdin);
-
-    /*
-     * Non più necessario come lo splitLine
-     *
-    //Rimuovo newLine \n a fine stringa
-    cmd = strtok(cmd, "\n");
-    */
-
-    return cmd;
-}
-
-//Restituita una stringa la funzione la splitta in
-//diverse stringhe secondo i delimitatori specificati
-//nella macro CEN_DELIM
-char** cen_splitLine(char *line){
-    int pos=0, bufS = CEN_BUFSIZE;
-    char **commands = malloc(bufS * sizeof(char));
-    char *cmd;
-
-    //IF error in the allocation of commands
-    if(!commands){
-        fprintf(stderr, "cen: allocation (malloc) error\n");
-        //Exit with error
-        exit(1);
-    }
-
-    cmd=strtok(line, CEN_DELIM);
-    while(cmd!=NULL){
-        commands[pos++]=cmd;
-
-        //Realocation of the buffer if we have exceeded its size
-        if(pos >= bufS){
-            bufS += CEN_BUFSIZE;
-            commands = realloc(commands, bufS * sizeof(char));
-            //IF error in the allocation of commands
-            if(!commands){
-                fprintf(stderr, "cen: allocation (malloc) error\n");
-                //Exit with error
-                exit(1);
-            }
-        }
-        cmd = strtok(NULL, CEN_DELIM);
-    }
-    commands[pos]=NULL;
-    return commands;
-}
 
 
 int cen_processCmd(char **command, NodoPtr procList){

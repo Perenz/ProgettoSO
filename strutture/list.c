@@ -7,10 +7,11 @@ NodoPtr listInit(int data){
     return toRtn;
 }
 
+
 void printList(NodoPtr list){
     while(list != NULL){
-        printf("%d ", list->data);
-        printf("Canale scrittura %d\nCanale lettura %d\n", list->fd_reader, list->fd_writer);
+        printf("%d \n", list->data);
+        //printf("Canale scrittura %d\nCanale lettura %d\n", list->fd_reader, list->fd_writer);
         list=list->next;
     }
     printf("\n");
@@ -36,7 +37,7 @@ NodoPtr insertLast(NodoPtr list, int data, int fd_reader,int fd_writer){
     }
     
     //Scorro la lista fino all'ultima posizione
-    NodoPtr n= list;
+    NodoPtr n = list;
     while (n->next != NULL)
     {
         n = n->next;
@@ -50,15 +51,31 @@ NodoPtr insertLast(NodoPtr list, int data, int fd_reader,int fd_writer){
 
 
 
+
     return list;
 }
 void removeNode(NodoPtr list, int data){
-    NodoPtr nodo = list;
-    while(nodo->next != NULL){
-        if(nodo->next->data == data){
-            NodoPtr tmp = nodo->next;
-            nodo->next = tmp->next;
-            return;
+    printf("%d\n\n", data);
+    if(list != NULL){//controllo che la lista non sia vuota
+        NodoPtr nodo = list;
+        NodoPtr tmp = nodo->next;
+        if(tmp == NULL){//La lista ha un elemento
+
+
+        }else{//la lista ha più di un elemento
+            while(tmp != NULL){
+                printf("Nodo: %d\t", nodo->data);
+                printf("Tmp: %d\t\n", tmp->data);
+                if(tmp->data == data){
+                    printf("Trovato\n");
+                    nodo->next = tmp->next;
+                    free(tmp);
+                    return;
+                }
+                nodo = nodo->next;
+                tmp = tmp->next;
+            }
+            
         }
     }
 }
