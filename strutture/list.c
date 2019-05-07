@@ -10,7 +10,8 @@ NodoPtr listInit(int data){
 
 void printList(NodoPtr list){
     while(list != NULL){
-        printf("%d ", list->data);
+        if(list->data != -1)
+            printf("%d ", list->data);
         list=list->next;
     }
     printf("\n");

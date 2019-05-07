@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <signal.h>
 
-int add_device(char*, NodoPtr);
+int add_device(char*, NodoPtr, NodoPtr);
 void sign_handler(int);
 
 //device list
@@ -32,7 +32,7 @@ void sign_handler(int sig){
         return;
 }
 
-int add_device(char* execPath, NodoPtr procList){
+int add_device(char* execPath, NodoPtr procList, NodoPtr dispList){
         pid_t pid, wpid;
 
         pid=fork();
@@ -50,7 +50,8 @@ int add_device(char* execPath, NodoPtr procList){
                 signal(SIGCONT, sign_handler);
 
                 //Aggiungo alla lista dei processi quello appena generato, identificato dal suo pid
-                insertLast(procList, pid);
+                insertLast(dispList, pid); //lista dei processi creati ma ancora non collegati a niente!
+                //insertLast(procList, pid);
 
                 //Vado in pausa per permettere al figlio di generarsi
                 pause();
@@ -59,7 +60,7 @@ int add_device(char* execPath, NodoPtr procList){
         return 1;
 }
 
-int cen_add(char **args, NodoPtr procList){
+int cen_add(char **args, NodoPtr procList, NodoPtr dispList){
         //Implementazione del comando spostabile in un altro file.c
         if(args[1]==NULL){
                 printf("Argomenti non validi\n");
@@ -72,7 +73,7 @@ int cen_add(char **args, NodoPtr procList){
             int i=0;
             for(i=0; i<device_number(); i++){
                 if(strcmp(args[1], builtin_device[i])==0)
-                        return add_device(bultin_dev_path[i], procList);
+                        return add_device(bultin_dev_path[i], procList, dispList);
             }
         }
 
