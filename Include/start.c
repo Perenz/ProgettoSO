@@ -11,19 +11,49 @@
 int cen_processCmd(char **command, NodoPtr, NodoPtr);
 char* cen_getLine();
 char** cen_splitLine(char *line);
+int lanciaGetCenPid();
+
+int lanciaGetCenPid(){
+    int pid;
+
+    pid=fork();
+    if(pid<0){
+        perror("cen");
+        exit(0);
+    }else if(pid == 0){
+        //Child code
+        char *args[]={"./supporto/CENPIDREAD",NULL}; 
+
+        execvp(args[0],args);
+    }
+    else if(pid >0){
+        //parent code
+        return pid;
+    }
+}
 
 
 int cen_start(){
     char *command;
     char **params;
+
     size_t bufS = 0;
     int status =1;
+    int supportReadPid;
     NodoPtr procList = NULL; //lista dei dispositivi collegati 
     NodoPtr dispList = NULL; //lista dei dispositivi disponibili (aggiunti ma non collegati a niente)
 
     //Inserisco nella lista il pid corrente indicante la centraline stessa
     procList = listInit(getpid());
     dispList = listInit(-1);
+
+
+    //Lancio i processi di supporto
+    //getCenPid che comunica tramite FIFO con manuale.c
+    supportReadPid = lanciaGetCenPid();
+    //TODO assicurarsi che il processo CENPIDREAD venga terminato anche quando si esce dal programma tramite ctr+C
+    //Cosi come tutte le componenti
+
 
     //Continuo ad ascoltare in input su stdin
     do{
@@ -38,6 +68,8 @@ int cen_start(){
         //Esegue il comando
         status = cen_processCmd(params, procList, dispList);
     }while(status);
+
+    kill(supportReadPid, SIGQUIT);
 }
 
 char* cen_getLine(){

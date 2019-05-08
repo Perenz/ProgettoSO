@@ -12,6 +12,7 @@ void printList(NodoPtr list){
     while(list != NULL){
         if(list->data != -1)
             printf("%d ", list->data);
+            
         list=list->next;
     }
     printf("\n");
@@ -27,9 +28,13 @@ void freeList(NodoPtr list){
     }
 }
 
-NodoPtr insertLast(NodoPtr list, int data){
+NodoPtr insertLast(NodoPtr list, int data, int fd[2]){
     if(list==NULL){
-        return listInit(data);
+        NodoPtr toRtn = listInit(data);
+        toRtn->fd[0]=fd[0];
+        toRtn->fd[1]=fd[1];
+
+        return toRtn;
     }
     
     //Scorro la lista fino all'ultima posizione
@@ -41,7 +46,11 @@ NodoPtr insertLast(NodoPtr list, int data){
     
     //Inserisco il nuovo nodo in ultima posizione
     NodoPtr tmp = listInit(data);
+    tmp->fd[0]=fd[0];
+    tmp->fd[1]=fd[1];
     n->next=tmp;
+
+
 
     return list;
 }

@@ -34,12 +34,22 @@ void sign_handler(int sig){
 
 int add_device(char* execPath, NodoPtr procList, NodoPtr dispList){
         pid_t pid, wpid;
-
+        int fd[2];
+        pipe(fd); //creo la pipe
+        
         pid=fork();
+        
         if (pid == 0) {
                 // Child process
-                char *args[]={execPath,NULL};
-                execvp(args[0],args);
+                char fdTmp[10];
+                //close(fd[0]);
+
+                sprintf(fdTmp,"%d",fd[1]);
+                char *args[]={execPath,fdTmp,NULL}; 
+
+
+
+                execvp(args[0],args); //passo gli argomenti incluso il puntatore al lato di scrittura della pipe
         } else if (pid < 0) {
                 // Errore nell'operazione di fork
                 perror("errore fork");
@@ -48,12 +58,29 @@ int add_device(char* execPath, NodoPtr procList, NodoPtr dispList){
                 //Parent process
                 //Indico al processgit po corrente (il padre) di gestire segnali in entrata di tipo SIGCONT con la funzione sign_handler
                 signal(SIGCONT, sign_handler);
-
+                //close(fd[1]); //chiudo il lato di scrittura;
                 //Aggiungo alla lista dei processi quello appena generato, identificato dal suo pid
-                insertLast(dispList, pid);
-
+                //Devo aggiungere anche i fd per la pipe
+                
+                //DEBUG
+                insertLast(procList, pid, fd);
+                
+                /**
+                 * TODO
+                 * Nella funzione insertLast devo anche passare i FD cosi che vengano aggiunti al nodo
+                 * */
+                
+                
                 //Vado in pausa per permettere al figlio di generarsi
                 pause();
+
+
+
+                //char msg[30];
+                // int rev = read(fd[0],msg,512);
+                // printf("\nesito: %d\n", rev);
+                // printf("\n\n\n\ndebug msg: %s\n\n\n",msg);
+                
         }
         
         return 1;
