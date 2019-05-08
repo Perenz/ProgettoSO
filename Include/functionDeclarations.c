@@ -64,7 +64,7 @@ int cen_exit(char **args, NodoPtr procList, NodoPtr dispList){
             dispList=dispList->next;
     }
 
-    //Bisogna deallocare la lista procList
+    //Bisogna deallocare la lista procList e dispList
     freeList(procList);
     freeList(dispList);
 
@@ -97,6 +97,7 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
         //printList(procList);
         char tmp[30];
         NodoPtr Nodo = procList;
+        NodoPtr NodoD = dispList;
 
         //Escludo la centralina dal while e la stampo SINGOLARMENTE
         Nodo = Nodo->next;
@@ -125,8 +126,23 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
                 Nodo = Nodo->next;
         }
 
+        //stampo i dettagli dei dispositivi disponibili ma non ancora collegati
         printf("Dispositivi attivi ma non collegati: \n");
-        printList(dispList);
+        while(NodoD != NULL){
+                if(NodoD->data == -1)
+                        NodoD = NodoD->next;
+                kill(NodoD->data, SIGUSR1);
+                //printf("Mi metto in read dal figlio %d sul canale %d\n", Nodo->data, Nodo->fd[0]);
+                //pause();
+                
+                //TODO
+                int temp = read(NodoD->fd[0],tmp,30);
+                printf("%s\n", tmp);
+                memset(tmp,0,30);
+                //strcat(msg,tmp);
+                NodoD = NodoD->next;
+        }
+        //printList(dispList);
         
         return 1;
 }
