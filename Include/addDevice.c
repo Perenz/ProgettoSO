@@ -63,7 +63,7 @@ int add_device(char* execPath, NodoPtr procList, NodoPtr dispList){
                 //Devo aggiungere anche i fd per la pipe
                 
                 //DEBUG
-                insertLast(procList, pid, fd);
+                insertLast(dispList, pid, fd);
                 
                 /**
                  * TODO
