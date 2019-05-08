@@ -21,16 +21,16 @@ int controllo=0;
 
 
 /*Cambio il processCmd in questo modo:
-    - Se pid == 0
+    - Se controllo == 0
         Significa che nessun dispositivo è al momento controllato quindi si dovrà effettuare il collegamento digitando il nome,id o pid del 
         dispositivo su cui vogliamo agire.
         Tramite la centralina (ricercaNellAlbero) torniamo il pid del dispositivo con tale nome/id cosi da poter istanziare una
         FIFO tra manuale.c ed il dispositivo interessato.
         A questo punto la variabile pid cambia
 
-        pid rimane assegnata fino a quando non si effettua una exit/quit dal dispositivo "attivo"
+        controllo rimane assegnata fino a quando non si effettua una exit/quit dal dispositivo "attivo"
 
-    - Se pid != 0
+    - Se controllo != 0
         Significa che stiamo gia controllando un dispositivo e possiamo quindi impartire i vari comandi come:
             - switch ...
             - status ...
@@ -70,6 +70,10 @@ int main(){
     mkfifo(myFIFO, 0666);
 
     printf("Ecco il pid %d", getCenPid());
+
+    //Ora mi comporto diversamente a secondo del valore di controllo
+    //in entrambi i casi prendo i comandi esattamente come faccio in start.c, cambia l'insieme di comandi disponibili
+    //Quindi cambia solo il processCmd con una serie di funzioni bultin diverse per i due casi
 
     exit(0);
 }
