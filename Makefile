@@ -19,5 +19,9 @@ binaries=PRINCIPALE supporto/CENPIDREAD manuale/CENPIDWRITE componenti/BULB comp
 clean:
 	rm -f $(binaries)
 
+hand:
+	gcc -o manuale/CENPIDWRITE manuale/manuale.c
+	manuale/CENPIDWRITE
+
 exec: all
 	./PRINCIPALE
