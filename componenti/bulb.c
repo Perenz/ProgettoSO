@@ -25,7 +25,7 @@ int device_handle_command(char **args);
 char *builtin_func[]={
         "l",//list
         "s",//changeState
-        "g",//getInfo
+        "i",//getInfo
         "d" //delete
 };
 
@@ -48,13 +48,13 @@ void sighandle_usr1(int sig){
     }
 }
 int device_handle_command(char **args){
-
     //da fare come in functionDeclarations in file dispositivi
+    
     if(strcmp(args[0],builtin_func[0])==0 || strcmp(args[0],builtin_func[2])==0){//list o getinfo
         return dev_getinfo(args);
     }else if(strcmp(args[0],builtin_func[1])==0){//changestate
         return dev_changestate(args);
-    }else if(strcmp(args[0],builtin_func[3])==0){//delete
+   }else if(strcmp(args[0],builtin_func[3])==0){//delete
         return dev_delete(args);
     }
     return 1;
@@ -101,7 +101,14 @@ int dev_changestate(char **args){
 
 //COMANDO i <tipo> <id> o
 //        l
+/*restituisce in pipe
+    se comando è l: <informazioni>
+    se comando è i:
+        se <id> == id_dispositivo: <informazioni>
+        else 0; TODO segnale errore
+*/
 int dev_getinfo(char **args){
+    //è uguale a delete
     if(args[0][0] == 'l'){//list
         char* str = malloc(30);
         sprintf(str, "Bulb %d", id);
@@ -112,6 +119,25 @@ int dev_getinfo(char **args){
         int esito = write(fd_write, str, strlen(str)+1);
         kill(idPar,SIGCONT);
         //pause();
+    }else if(args[0][0] == 'i'){//info
+        int id_info = atoi(args[1]);
+        char* msg = malloc(10);
+        if(id == id_info){//guardo se il tipo e l'id coincidono
+        //scrivo sulla pipe che sono io quello che deve essere ucciso e scrivo anche il mio pid, la centralina dovrà toglierlo dalla lista
+        //TODO trovare un altro metodo
+            sprintf(msg, "Bulb %d", id);
+            strcat(msg ,(status==1?" accesa\n":" spenta\n"));
+            int esito = write(fd_write, msg, strlen(msg));
+            
+            kill(idPar,SIGCONT);
+
+
+        }else{
+            sprintf(msg, "%d\0", 0);
+            int esito = write(fd_write, msg, strlen(msg));
+            printf("Non restituisce info dato che id non coincide\n");
+            kill(idPar,SIGCONT);
+        }
     }
     //famo ritornare l'errore poi
     return 1;

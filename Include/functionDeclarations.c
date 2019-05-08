@@ -298,13 +298,47 @@ int cen_switch(char **args, NodoPtr procList){
 
 /*
     Funzione: mostra i dettagli del dispositivo 
-    Sintassi lato utente:                          add <tipo>
-    TODO Sintassi comunicata dalla centralina :    add <tipo> (centralina comunica a processo specifico)
+    Sintassi lato utente:                          info <id>
+    TODO Sintassi comunicata dalla centralina :    i <id> (centralina comunica a processo specifico)
 */
 int cen_info(char **args, NodoPtr procList){
 
+    //TODO POSSIBILE UNIRE CON LIST DATO CHE è MOLTO SIMILE
+    NodoPtr Nodo = procList;
+    //Escludo la centralina dal while
+    Nodo = Nodo->next;
+    signal(SIGCONT, sign_cont_handler);
+    char* tmp = malloc(1 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
+    //tipo di comando
+    strcat(tmp,"i ");
+    //id dispositivo da spegnere
+    strcat(tmp, args[1]);
+    //delimitatore 
+    strcat(tmp, "\0");
+    printf("scrittura lato padre: %s\n", tmp);
+    while(Nodo != NULL){
+        
+        //scrivo il comando sulla pipe
+        write(Nodo->fd_writer, tmp, strlen(tmp));
+        //mando un segnale al figlio così si risveglia e legge il contenuto della pipe
+        kill(Nodo->data, SIGUSR1);
+        //printf("Mi metto in read dal figlio %d sul canale %d\n", Nodo->data, Nodo->fd[0]);
+        //pause();
+            
+        //TODO gestione errori
+        //leggo il pid del figlio così da poterlo togliere dalla lista di processi
+        char* answer = malloc(30);
+        int err = read(Nodo->fd_reader,answer, 30);
+        //pause();
+        //TODO se il figlio ritorna 0 esso non è figlio e perciò non lo elimino dalla lista
+        
+        //printf("Lettura da pipe lato padre %d\n", ris);
+        if(strcmp(answer, "0")!=0){
+            printf("%s\n", answer);
+            return 1;
+        }                
+        Nodo = Nodo->next;
+    }        
+    return 1; //esci che sennò va avanti    
 
-
-
-    return 1;
 }
