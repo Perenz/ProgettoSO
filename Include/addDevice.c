@@ -46,12 +46,11 @@ int add_device(char* execPath, NodoPtr procList, NodoPtr dispList){
         } 
         else{
                 //Parent process
-                //Indico al processo corrente (il padre) di gestire segnali in entrata di tipo SIGCONT con la funzione sign_handler
+                //Indico al processgit po corrente (il padre) di gestire segnali in entrata di tipo SIGCONT con la funzione sign_handler
                 signal(SIGCONT, sign_handler);
 
                 //Aggiungo alla lista dei processi quello appena generato, identificato dal suo pid
-                insertLast(dispList, pid); //lista dei processi creati ma ancora non collegati a niente!
-                //insertLast(procList, pid);
+                insertLast(dispList, pid);
 
                 //Vado in pausa per permettere al figlio di generarsi
                 pause();
