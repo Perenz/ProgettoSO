@@ -4,7 +4,6 @@
 
 #define CEN_DELIM " \t\r\n\a"
 #define CEN_BUFSIZE 128
-
 char* getLine(){
     char *cmd=NULL;
     //Dimensione buffer per riallocazione

@@ -224,6 +224,7 @@ int main(int argc, char *args[]){
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
 
     printf("\nLampadina creata\n");
+    printf("Id: %d\n", id);
     printf("Pid: %d\nPid padre: %d\n", pid, idPar);
 
     //Invio segnale al padre

@@ -8,6 +8,7 @@
 #include "addDevice.c"
 
 
+
 //Comandi centralina
 int cen_prova(char **args, NodoPtr procList, NodoPtr dispList);
 int cen_clear(char **args, NodoPtr procList, NodoPtr dispList);

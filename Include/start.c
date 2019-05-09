@@ -15,6 +15,7 @@ char* cen_getLine();
 char** cen_splitLine(char *line);
 int lanciaGetCenPid();
 
+
 int lanciaGetCenPid(){
     int pid;
 
