@@ -1,5 +1,4 @@
 #include "listH.h"
-
 NodoPtr listInit(int data){
     NodoPtr toRtn = malloc(sizeof(Nodo));
     toRtn->data=data;
@@ -7,6 +6,7 @@ NodoPtr listInit(int data){
 
     return toRtn;
 }
+
 
 void printList(NodoPtr list){
     while(list != NULL){
@@ -28,17 +28,17 @@ void freeList(NodoPtr list){
     }
 }
 
-NodoPtr insertLast(NodoPtr list, int data, int fd[2]){
+NodoPtr insertLast(NodoPtr list, int data, int fd_reader,int fd_writer){
     if(list==NULL){
         NodoPtr toRtn = listInit(data);
-        toRtn->fd[0]=fd[0];
-        toRtn->fd[1]=fd[1];
+        toRtn->fd_reader=fd_reader;
+        toRtn->fd_writer=fd_writer;
 
         return toRtn;
     }
     
     //Scorro la lista fino all'ultima posizione
-    NodoPtr n= list;
+    NodoPtr n = list;
     while (n->next != NULL)
     {
         n = n->next;
@@ -46,11 +46,37 @@ NodoPtr insertLast(NodoPtr list, int data, int fd[2]){
     
     //Inserisco il nuovo nodo in ultima posizione
     NodoPtr tmp = listInit(data);
-    tmp->fd[0]=fd[0];
-    tmp->fd[1]=fd[1];
+    tmp->fd_reader=fd_reader;
+    tmp->fd_writer=fd_writer;
     n->next=tmp;
 
 
 
+
     return list;
+}
+void removeNode(NodoPtr list, int data){
+    if(list != NULL){//controllo che la lista non sia vuota
+        NodoPtr nodo = list;
+        NodoPtr tmp = nodo->next;
+        if(tmp == NULL){//La lista ha un elemento
+
+
+        }else{//la lista ha più di un elemento
+            while(tmp != NULL){
+                if(tmp->data == data){
+                    //printf("Trovato\n");
+                    nodo->next = tmp->next;
+                    free(tmp);
+                    //printList(list);
+                    return;
+                }
+                nodo = nodo->next;
+                tmp = tmp->next;
+            }
+            
+        }
+
+    }
+
 }

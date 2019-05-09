@@ -5,7 +5,6 @@
 
 int add_device(char*, NodoPtr, NodoPtr);
 void sign_handler(int);
-
 //device list
 char *builtin_device[]={
         "bulb",
@@ -23,32 +22,34 @@ char *bultin_dev_path[]={
         "./componenti/HUB"
 };
 
+
 int device_number(){
         return sizeof(builtin_device)/sizeof(char*);
 }
 
 //Signal handler per gestire l'arrivo di segnali
 void sign_handler(int sig){
-        return;
+    return;
 }
-
 int add_device(char* execPath, NodoPtr procList, NodoPtr dispList){
+//TODO potrei passare solo i canali su cui scriver e non tutta la pipe
         pid_t pid, wpid;
-        int fd[2];
-        pipe(fd); //creo la pipe
-        
+        int fd_reader[2];
+        int fd_writer[2];
+
+        pipe(fd_reader); //creo la pipe
+        pipe(fd_writer);
         pid=fork();
         
         if (pid == 0) {
                 // Child process
-                char fdTmp[10];
-                //close(fd[0]);
-
-                sprintf(fdTmp,"%d",fd[1]);
-                char *args[]={execPath,fdTmp,NULL}; 
-
-
-
+                //TODO modifica fdTmp
+                char fd_writer_Tmp[10];
+                char fd_reader_Tmp[10];
+                //TODO close(fd[0]);
+                sprintf(fd_writer_Tmp,"%d", (fd_writer[0]));
+                sprintf(fd_reader_Tmp,"%d", (fd_reader[1]));
+                char *args[]={execPath,fd_writer_Tmp, fd_reader_Tmp ,NULL}; 
                 execvp(args[0],args); //passo gli argomenti incluso il puntatore al lato di scrittura della pipe
         } else if (pid < 0) {
                 // Errore nell'operazione di fork
@@ -63,8 +64,10 @@ int add_device(char* execPath, NodoPtr procList, NodoPtr dispList){
                 //Devo aggiungere anche i fd per la pipe
                 
                 //DEBUG
-                insertLast(dispList, pid, fd);
+                insertLast(dispList, pid, fd_reader[0],fd_writer[1]);
                 
+                //modifica Paolo --> Voglio far sì che il filedescriptor sia unico per la centralina --> qua devo fare il dup
+                //insertLast(procList, pid, fd_reader[0], fd_writer[1]);
                 /**
                  * TODO
                  * Nella funzione insertLast devo anche passare i FD cosi che vengano aggiunti al nodo
@@ -86,27 +89,4 @@ int add_device(char* execPath, NodoPtr procList, NodoPtr dispList){
         return 1;
 }
 
-int cen_add(char **args, NodoPtr procList, NodoPtr dispList){
-        //Implementazione del comando spostabile in un altro file.c
-        if(args[1]==NULL){
-                printf("Argomenti non validi\n");
-                printf("Utilizzo: add <device>\n");
-                printf("Comando 'device' per vedere la lista di quelli disponibili\n");
-                return 1;
-        }
-        //3 devide disponibili: bulb, window, fridge
-        else{
-            int i=0;
-            for(i=0; i<device_number(); i++){
-                if(strcmp(args[1], builtin_device[i])==0)
-                        return add_device(bultin_dev_path[i], procList, dispList);
-            }
-        }
-
-        printf("Device indicato non riconosciuto\n");
-        printf("Utilizzo: add <device>\n");
-        printf("Digitare il comando 'device' per la lista di quelli disponibili\n");
-
-        return 1;        
-}
 
