@@ -10,6 +10,9 @@
 //TODO tale verrà linkata nel gestore generale dei processi di interazione
 #include "../Include/gestioneComandi.c"
 
+int dev_getinfo(char **args);
+int dev_delete(char **args);
+int dev_changestate(char **args);
 
 int status;
 //TODO : potrei usare un unico node
@@ -137,7 +140,7 @@ int dev_getinfo(char **args){
 
 
         }else{
-            sprintf(msg, "%d\0", 0);
+            sprintf(msg, "%d", 0);
             int esito = write(fd_write, msg, strlen(msg));
             printf("Non restituisce info dato che id non coincide\n");
             kill(idPar,SIGCONT);
@@ -161,7 +164,7 @@ int dev_delete(char **args){
         //scrivo sulla pipe che sono io quello che deve essere ucciso e scrivo anche il mio pid, la centralina dovrà toglierlo dalla lista
         //TODO trovare un altro metodo
        
-        sprintf(msg, "%d\0", id);//id inteso come pid
+        sprintf(msg, "%d", id);//id inteso come pid
         printf("id in messaggio: %s\n",msg);
         int esito = write(fd_write, msg, strlen(msg));
         
@@ -175,7 +178,7 @@ int dev_delete(char **args){
         exit(0);
 
     }else{
-        sprintf(msg, "%d\0", 0);
+        sprintf(msg, "%d", 0);
         int esito = write(fd_write, msg, strlen(msg));
         printf("Non eliminato dato che id non coincide\n");
         kill(idPar,SIGCONT);
