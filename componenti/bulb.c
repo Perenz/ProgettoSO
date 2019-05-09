@@ -38,8 +38,6 @@ void sighandle_int(int sig) {
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
 void sighandle_usr1(int sig){
     if(sig == SIGUSR1){
-
-        printf("bulb in handler sigusr1\n");
         //proviamo a leggere
         //potrei passare anche la lunghezza del messaggio
         char str[CEN_BUFSIZE];
