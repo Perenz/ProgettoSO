@@ -4,6 +4,7 @@
 #include <signal.h>
 
 int add_device(char*, NodoPtr, NodoPtr);
+int id = 2; //id che parte da 2, 1 = centralina
 void sign_handler(int);
 //device list
 char *builtin_device[]={
@@ -46,10 +47,13 @@ int add_device(char* execPath, NodoPtr procList, NodoPtr dispList){
                 //TODO modifica fdTmp
                 char fd_writer_Tmp[10];
                 char fd_reader_Tmp[10];
+                char idTmp[10]; //id che verrà passato in args al processo creato
+                sprintf(idTmp,"%d",id); //salvo in idTmp l'id attuale e poi lo incremento
+                id+=1;
                 //TODO close(fd[0]);
                 sprintf(fd_writer_Tmp,"%d", (fd_writer[0]));
                 sprintf(fd_reader_Tmp,"%d", (fd_reader[1]));
-                char *args[]={execPath,fd_writer_Tmp, fd_reader_Tmp ,NULL}; 
+                char *args[]={execPath,fd_writer_Tmp, fd_reader_Tmp , idTmp, NULL}; 
                 execvp(args[0],args); //passo gli argomenti incluso il puntatore al lato di scrittura della pipe
         } else if (pid < 0) {
                 // Errore nell'operazione di fork
