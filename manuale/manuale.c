@@ -73,12 +73,18 @@ int getCenPid(){
     return atoi(msg);
 }
 
+void sigquit_handler(int sig){
+    exit(0);
+}
+
 int main(){
     char *command;
     char **params;
 
     size_t bufS = 0;
     int status =1;
+
+    signal(SIGQUIT, sigquit_handler);
     //Passo 1: Prendere il pid della centralina grazie ad il processo di support
     //Creo la fifo
     //TODO, provare a non fare il mkfifo e fare solo l'open utilizzando la fifo aperta dal READ
@@ -169,7 +175,7 @@ int cen_processCmd(char **command){
     for(i; i<cen_numCommands(controllo); i++){
         if(controllo==0){
             if(strcmp(command[0],noControl_builtin_cmd[i])==0){
-                controllo=noControl_builtin_func[i](command);
+                controllo=noControl_builtin_func[i](command, cenPid);
                 if(controllo==-1){
                     controllo=0;
                     return 1;

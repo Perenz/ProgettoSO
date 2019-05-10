@@ -3,9 +3,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <signal.h>
 #include "../strutture/listH.h"
 #include "addDevice.c"
+
 
 
 //Comandi centralina
@@ -18,6 +21,7 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList);
 int cen_delete(char **args, NodoPtr procList, NodoPtr dispList);
 int cen_switch(char **args, NodoPtr procList, NodoPtr dispList);
 int cen_info(char **args, NodoPtr procList, NodoPtr dispList);
+void getManualPid();
 
 int cen_numCommands();
 
@@ -106,7 +110,7 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
     printf("Stampo la lista dei dispositivi tramite il loro pid:");
     //printList(procList);
     char tmp[30];
-    NodoPtr Nodo = procList;
+    NodoPtr Nodo = dispList;
     //printList(Nodo);
     printf("\n\tCen %d accesa\n", Nodo->data);
 
@@ -348,4 +352,73 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
     }        
     return 1; //esci che sennò va avanti    
 
+}
+
+int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
+
+    //TODO POSSIBILE UNIRE CON LIST DATO CHE è MOLTO SIMILE
+    NodoPtr Nodo = dispList;
+    //Escludo la centralina dal while
+    Nodo = Nodo->next;
+    signal(SIGCONT, sign_cont_handler);
+    char* tmp = malloc(1 + strlen(arg) + 3);//1 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
+    //tipo di comando
+    strcat(tmp,"i ");
+    //id dispositivo da spegnere
+    strcat(tmp, arg);
+    //delimitatore 
+    strcat(tmp, "\0");
+    printf("scrittura lato padre: %s\n", tmp);
+    while(Nodo != NULL){
+        
+        //scrivo il comando sulla pipe
+        write(Nodo->fd_writer, tmp, strlen(tmp));
+        //mando un segnale al figlio così si risveglia e legge il contenuto della pipe
+        kill(Nodo->data, SIGUSR1);
+        //printf("Mi metto in read dal figlio %d sul canale %d\n", Nodo->data, Nodo->fd[0]);
+        //pause();
+            
+        //TODO gestione errori
+        //leggo il pid del figlio così da poterlo togliere dalla lista di processi
+        char* answer = malloc(30);
+        int err = read(Nodo->fd_reader,answer, 30);
+        //pause();
+        //TODO se il figlio ritorna 0 esso non è figlio e perciò non lo elimino dalla lista
+        
+        //printf("Lettura da pipe lato padre %d\n", ris);
+        if(strcmp(answer, "0")!=0){
+            printf("%s\n", answer);
+            return 1;
+        }                
+        Nodo = Nodo->next;
+    }        
+    return 1; //esci che sennò va avanti    
+
+}
+
+//Funzione per ottenre l'ID del dispositivo che è richiesto dal manuale 
+//sul quale poi tramite info() si ottiene il PID che viene poi passato al manuale
+void getManualPid(NodoPtr procList, NodoPtr dispList){
+    //Se ci sono entrato significa che è arrivato sigusr2 da manuale
+    char msg[20];
+    char** args;
+    int fd;
+    char *manCenFifo = "/tmp/manCenFifo";
+    //Apro la fifo in lettura
+    fd=open(manCenFifo, O_RDONLY);
+    read(fd, msg, 20);
+    args = splitLine(msg);
+    if(strcmp(args[0], "contpid")==0){
+        printf("Letto msg correto 'contpid'\n");
+        printf("Ho ricevuto il pid %s\n", args[1]);    
+
+        //Tramite info(modificato) ricavo il pid corrispondente all'id passato
+        manualCen_info(args[1], procList, dispList);  
+    }
+    //printf("Sono nel getManualPid della centralina\n");
+    //Chiudo la fifo in lettura
+    close(fd);
+
+    
+    return;
 }

@@ -6,6 +6,7 @@
 
 
 
+
 typedef struct Nodo{
     int data;
 

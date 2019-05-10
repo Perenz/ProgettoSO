@@ -1,14 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "gestioneComandi.c"
 #include "../strutture/listH.h"
 #include "functionDeclarations.c"
 
 
 #define CEN_DELIM " \t\r\n\a"
 #define CEN_BUFSIZE 128
-#include "gestioneComandi.c"
+
+
+NodoPtr procList = NULL; //lista dei dispositivi collegati 
+NodoPtr dispList = NULL; //lista dei dispositivi disponibili (aggiunti ma non collegati a niente)
 
 int cen_processCmd(char **command, NodoPtr, NodoPtr);
 char* cen_getLine();
@@ -42,8 +45,7 @@ int cen_start(){
     size_t bufS = 0;
     int status =1;
     int supportReadPid;
-    NodoPtr procList = NULL; //lista dei dispositivi collegati 
-    NodoPtr dispList = NULL; //lista dei dispositivi disponibili (aggiunti ma non collegati a niente)
+
 
     //Inserisco nella lista il pid corrente indicante la centraline stessa
     procList = listInit(getpid());
@@ -59,14 +61,12 @@ int cen_start(){
 
     //Continuo ad ascoltare in input su stdin
     do{
-        printf("Inserisci il comando:>");
-
-        //Prendo il comando dall'utente
-        command = getLine();
+            printf("Inserisci il comando:>");
+            command = getLine();
 
         //Splitta la linea in singoli parametri/argomenti
         params = splitLine(command);
-
+        
         //Esegue il comando
         status = cen_processCmd(params, procList, dispList);
     }while(status);

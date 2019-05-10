@@ -2,8 +2,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include "../strutture/listH.h"
 
+int id = 2;
 int add_device(char*, NodoPtr, NodoPtr);
+
 void sign_handler(int);
 //device list
 char *builtin_device[]={
@@ -39,17 +42,22 @@ int add_device(char* execPath, NodoPtr procList, NodoPtr dispList){
 
         pipe(fd_reader); //creo la pipe
         pipe(fd_writer);
+        id+=1;
         pid=fork();
-        
         if (pid == 0) {
                 // Child process
                 //TODO modifica fdTmp
                 char fd_writer_Tmp[10];
                 char fd_reader_Tmp[10];
+                char idTmp[10]; //id che verrà passato in args al processo creato
+                
+                sprintf(idTmp,"%d",id); //salvo in idTmp l'id attuale e poi lo incremento
+                
                 //TODO close(fd[0]);
+                printf("Id: %s\n", idTmp);
                 sprintf(fd_writer_Tmp,"%d", (fd_writer[0]));
                 sprintf(fd_reader_Tmp,"%d", (fd_reader[1]));
-                char *args[]={execPath,fd_writer_Tmp, fd_reader_Tmp ,NULL}; 
+                char *args[]={execPath,fd_writer_Tmp, fd_reader_Tmp , idTmp, NULL}; 
                 execvp(args[0],args); //passo gli argomenti incluso il puntatore al lato di scrittura della pipe
         } else if (pid < 0) {
                 // Errore nell'operazione di fork
