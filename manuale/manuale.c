@@ -81,6 +81,7 @@ int main(){
     int status =1;
     //Passo 1: Prendere il pid della centralina grazie ad il processo di support
     //Creo la fifo
+    //TODO, provare a non fare il mkfifo e fare solo l'open utilizzando la fifo aperta dal READ
     mkfifo(myFIFO, 0666);
 
     //printf("Ecco il pid %d", getCenPid());
@@ -159,31 +160,6 @@ char** cen_splitLine(char *line){
 
 
 int cen_processCmd(char **command){
-    //Esecuzione di un comando SINGOLO senza argomenti
-/*
-    //Eseguo la funziona cen_prova se comando inserito è "prova"
-    if(strcmp(command[0], builtin_cmd[0])==0){
-        return cen_prova(command);
-    }
-    else if(strcmp(command[0], builtin_cmd[1])==0) {
-        //Eseguo la funziona cen_clear se comando inserito è "clear"
-        //Pulisco terminale se cmd "clear"
-        return cen_clear(command);
-    }
-    else if(strcmp(command[0], builtin_cmd[2])==0){
-        //Eseguo la funzione cen_help se il comando inserito è "help"
-        return cen_help(command);
-    }
-    else if(strcmp(command[0], builtin_cmd[3])==0) {
-        //Eseguo la funziona cen_exit se comando inserito è "exit"
-        //Esco se cmd "exit"
-        return cen_exit(command);
-    }
-    else{
-        printf("Comando non riconosciuto, digitare \"help\" per la lista\n");
-        return 1;
-    }
-    */
     int i=0;
     //se inserisco un comando vuoto richiedo di inserire un nuovo comando
     if(command[0] == NULL)

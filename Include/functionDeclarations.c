@@ -32,6 +32,8 @@ char *builtin_cmd[]={
         "delete",
         "switch",
         "info"
+        //CREA NUOVO COMANDO INFOMANUALE 
+        //TODO
 };
 
 //Pointers list to a Function associated to each command
@@ -63,16 +65,13 @@ int cen_clear(char **args, NodoPtr procList, NodoPtr dispList){
 
 int cen_exit(char **args, NodoPtr procList, NodoPtr dispList){
     signal(SIGQUIT, SIG_IGN);
-    NodoPtr tmp, tmp1;
-    tmp = procList;
-    tmp1 = dispList;
-    while(tmp!=NULL){
-            kill(tmp->data, SIGQUIT);
-            tmp=tmp->next;
+    while(procList!=NULL){
+            kill(procList->data, SIGQUIT);
+            procList=procList->next;
     }
-    while(tmp1!=NULL){
-            kill(tmp1->data, SIGQUIT);
-            tmp1=tmp1->next;
+    while(dispList!=NULL){
+            kill(dispList->data, SIGQUIT);
+            dispList=dispList->next;
     }
 
     //Dealloco la lista procList
@@ -108,7 +107,6 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
     //printList(procList);
     char tmp[30];
     NodoPtr Nodo = procList;
-    NodoPtr NodoS = dispList->next; //escludo il -1 dalla lista
     //printList(Nodo);
     printf("\n\tCen %d accesa\n", Nodo->data);
 
@@ -131,19 +129,6 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
         Nodo = Nodo->next;
     }
     printf("\n");
-    printf("Stampo lista dei dispositivi non ancora collegati: \n");
-    while(NodoS != NULL){
-        //TODO gestire errori
-        write(NodoS->fd_writer,"l\0",2);
-        kill(NodoS->data, SIGUSR1);            
-        //TODO
-        //pause();
-        int temp = read(NodoS->fd_reader,tmp,30);
-        printf("\t%s", tmp);
-        //memset(tmp,0,30);
-        //strcat(msg,tmp);
-        NodoS = NodoS->next;
-    }
     
     return 1;
 }
@@ -163,10 +148,6 @@ int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
         NodoPtr Nodo = procList;
         //Escludo la centralina dal while
         Nodo = Nodo->next;
-        
-        //TODOMARCELLO
-        //da fare un secondo while o il metodo generale per la seconda lista
-
         signal(SIGCONT, sign_cont_handler);
         char* tmp = malloc(1 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 2 per spazi e terminazione stringa
         //tipo di comando
@@ -204,8 +185,7 @@ int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
             //kill(Nodo->data, SIGUSR1);
             //memset(tmp,0,30);
             //strcat(msg,tmp);
-        }
-          
+        }        
         return 1; //esci che sennò va avanti           
     }
     
@@ -334,10 +314,6 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
     NodoPtr Nodo = procList;
     //Escludo la centralina dal while
     Nodo = Nodo->next;
-
-    //TODOMARCELLO
-    //da fare un secondo while o il metodo generale per la seconda lista
-
     signal(SIGCONT, sign_cont_handler);
     char* tmp = malloc(1 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
     //tipo di comando
