@@ -13,6 +13,7 @@
 int dev_getinfo(char **args);
 int dev_delete(char **args);
 int dev_changestate(char **args);
+int dev_manualControl(char **);
 
 int status;
 //TODO : potrei usare un unico node
@@ -30,7 +31,8 @@ char *builtin_func[]={
         "l",//list
         "s",//changeState
         "i",//getInfo
-        "d" //delete
+        "d", //delete
+        "im"//getInfoManual
 };
 
 void sighandle_int(int sig) {
@@ -58,8 +60,10 @@ int device_handle_command(char **args){
         return dev_getinfo(args);
     }else if(strcmp(args[0],builtin_func[1])==0){//changestate
         return dev_changestate(args);
-   }else if(strcmp(args[0],builtin_func[3])==0){//delete
+    }else if(strcmp(args[0],builtin_func[3])==0){//delete
         return dev_delete(args);
+    }else if(strcmp(args[0], builtin_func[4])==0){//manual
+        return dev_manualControl(args);
     }
     return 1;
 }
@@ -146,6 +150,30 @@ int dev_getinfo(char **args){
         }
     }
     //famo ritornare l'errore poi
+    return 1;
+}
+
+int dev_manualControl(char **args){
+    int id_info = atoi(args[1]);
+    char* msg = malloc(10);
+
+    if(id == id_info){//guardo se il tipo e l'id coincidono
+    //scrivo sulla pipe che sono io quello che deve essere ucciso e scrivo anche il mio pid, la centralina dovrà toglierlo dalla lista
+    //TODO trovare un altro metodo
+        //In caso di id coincidente devo aprire la fifo a cui poi si connette il controllo manuale
+        sprintf(msg, "%d", pid);
+        int esito = write(fd_write, msg, strlen(msg));//Comunico alla centralina di aver trovato l'id cercato
+          
+        kill(idPar,SIGCONT);
+    }
+    else{
+        //Se ID non coincide scrivo 0 sulla pipe
+        sprintf(msg, "%d", 0);
+        int esito = write(fd_write, msg, strlen(msg));
+        //printf("Non restituisce info dato che pid non coincide\n");
+        kill(idPar,SIGCONT);
+    }
+
     return 1;
 }
 

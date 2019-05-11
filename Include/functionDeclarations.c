@@ -355,20 +355,20 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
 }
 
 int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
-
+    int pidCercato;
     //TODO POSSIBILE UNIRE CON LIST DATO CHE è MOLTO SIMILE
     NodoPtr Nodo = dispList;
     //Escludo la centralina dal while
     Nodo = Nodo->next;
     signal(SIGCONT, sign_cont_handler);
-    char* tmp = malloc(1 + strlen(arg) + 3);//1 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
+    char* tmp = malloc(2 + 10 + 3);//2 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
     //tipo di comando
-    strcat(tmp,"i ");
+    strcat(tmp,"im ");
     //id dispositivo da spegnere
     strcat(tmp, arg);
     //delimitatore 
-    strcat(tmp, "\0");
-    printf("scrittura lato padre: %s\n", tmp);
+    strcat(tmp, "\n");
+    //printf("scrittura lato padre: %s\n", tmp);
     while(Nodo != NULL){
         
         //scrivo il comando sulla pipe
@@ -386,13 +386,18 @@ int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
         //TODO se il figlio ritorna 0 esso non è figlio e perciò non lo elimino dalla lista
         
         //printf("Lettura da pipe lato padre %d\n", ris);
+        //Se la risposta tornata è diversa da "0" significa che è stato trovato il dispositivo con quell'id
         if(strcmp(answer, "0")!=0){
-            printf("%s\n", answer);
-            return 1;
-        }                
+            pidCercato = atoi(answer);
+            //Ritorno il pid
+            //printf("PidCercato è %d", pidCercato);
+            return pidCercato;
+        }                  
         Nodo = Nodo->next;
     }        
-    return 1; //esci che sennò va avanti    
+
+    //Se scorrendo tutti i processi l'ID non è stato trovato ritorno -1
+    return -1; //esci che sennò va avanti    
 
 }
 
@@ -402,23 +407,35 @@ void getManualPid(NodoPtr procList, NodoPtr dispList){
     //Se ci sono entrato significa che è arrivato sigusr2 da manuale
     char msg[20];
     char** args;
+    int pidCercato;
     int fd;
     char *manCenFifo = "/tmp/manCenFifo";
     //Apro la fifo in lettura
     fd=open(manCenFifo, O_RDONLY);
     read(fd, msg, 20);
-    args = splitLine(msg);
-    if(strcmp(args[0], "contpid")==0){
-        printf("Letto msg correto 'contpid'\n");
-        printf("Ho ricevuto il pid %s\n", args[1]);    
-
-        //Tramite info(modificato) ricavo il pid corrispondente all'id passato
-        manualCen_info(args[1], procList, dispList);  
-    }
-    //printf("Sono nel getManualPid della centralina\n");
-    //Chiudo la fifo in lettura
+    //Chiudo lettura 
     close(fd);
 
+    args = splitLine(msg);
+    if(strcmp(args[0], "contpid")==0){
+        //printf("Letto msg correto 'contpid'\n");
+        //printf("Ho ricevuto il pid %s\n", args[1]);    
+
+        //Tramite info(modificato) ricavo il pid corrispondente all'id passato
+        pidCercato = manualCen_info(args[1], procList, dispList); 
+        printf("Questo è il pid cercato %d\n", pidCercato); 
+    }
+    //Comunico il pid cercato al manuale
+    //Apro la pipe in scrittura
+    fd=open(manCenFifo, O_WRONLY);
+    sprintf(msg, "%d", pidCercato);
+    int esito= write(fd, msg, strlen(msg)+1);
+    printf("Cen ha scritto a manuale con esito %d", esito);
+
+
+    //printf("Sono nel getManualPid della centralina\n");
+    //Chiudo la fifo in lettura
     
+  
     return;
 }

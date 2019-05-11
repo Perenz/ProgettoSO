@@ -40,6 +40,7 @@ int cen_numCommands(int type){
 }
 
 int hand_control(char **args, int cenPid){
+    int fd;
     if(args[1]==NULL || args[2]!=NULL){
             printf("Errore nei parametri\n");
             printf("Usage: control <pid/nome>\n");
@@ -47,7 +48,6 @@ int hand_control(char **args, int cenPid){
             return -1;
     }
     else{
-            int fd;
             //Tramite comando info????
             printf("Chiedo alla centralina il pid del dispositivo richiesto\n");
 
@@ -63,10 +63,20 @@ int hand_control(char **args, int cenPid){
             strcat(msg, args[1]); //args1 conterrà l'id del dispositivo che si vuole controllare
             printf("Invio il messaggio\n%s\n", msg);
             int esito = write(fd, msg,strlen(msg)+1);
+            close(fd); //Chiudo in scrittura
             //TODO
             printf("Scritto con esito %d\n", esito);
             //Per ora ritorno -1;
-            return -1;
+            //Ascolto per la risposta
+            //Apro pipe in lettura
+            fd = open(manCenFifo, O_RDONLY);
+            read(fd,msg,20);
+            close(fd);
+            int pidCerc=atoi(msg);
+            printf("Pid ricevuto %d\n", pidCerc);
+
+            //Ora mi metto un lettura
+            return pidCerc;
     }
 }
 
