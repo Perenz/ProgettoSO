@@ -16,7 +16,8 @@ char* cen_getLine();
 char** cen_splitLine(char *line);
 //Variabili che indica il pid del dispositivo su cui si sta agendo manualmente
 //Di default uguale a 0, cioè non ho ancora effettuato il "collegamento" con alcun dispositivo
-int controllo=0;
+int controlloPid=0;
+int controlloId=0;
 int cenPid;
 
 //Lettura del comando identica a quanto fatto per la centralina in start.c
@@ -97,7 +98,11 @@ int main(){
     //in entrambi i casi prendo i comandi esattamente come faccio in start.c, cambia l'insieme di comandi disponibili
     //Quindi cambia solo il processCmd con una serie di funzioni bultin diverse per i due casi
     do{
-        printf("Inserisci il comando:>");
+        if(controlloPid==0)
+            printf("Inserisci il comando:>");
+        else
+            printf("(Controllo su dispositivo pid %d e id %d) Inserisci il comando :>", controlloPid, controlloId);
+        
 
         //Prendo il comando dall'utente
         command = cen_getLine();
@@ -172,21 +177,22 @@ int cen_processCmd(char **command){
         return 1;
 
 
-    for(i; i<cen_numCommands(controllo); i++){
-        if(controllo==0){
+    for(i; i<cen_numCommands(controlloPid); i++){
+        if(controlloPid==0){
             if(strcmp(command[0],noControl_builtin_cmd[i])==0){
-                controllo=noControl_builtin_func[i](command, cenPid);
-                if(controllo==-1){
-                    controllo=0;
+                controlloPid=noControl_builtin_func[i](command, &cenPid);
+                if(controlloPid==-1){
+                    controlloPid=0;
                     return 1;
                 }else{
-                    return controllo;
+                    controlloId=atoi(command[1]);
+                    return controlloPid;
                 }
             }
         }
         else{
             if(strcmp(command[0],control_builtin_cmd[i])==0)
-                return control_builtin_func[i](command);
+                return control_builtin_func[i](command, &controlloPid);
         }
     }
 

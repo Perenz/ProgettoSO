@@ -423,14 +423,14 @@ void getManualPid(NodoPtr procList, NodoPtr dispList){
 
         //Tramite info(modificato) ricavo il pid corrispondente all'id passato
         pidCercato = manualCen_info(args[1], procList, dispList); 
-        printf("Questo è il pid cercato %d\n", pidCercato); 
+        //printf("Questo è il pid cercato %d\n", pidCercato); 
     }
     //Comunico il pid cercato al manuale
     //Apro la pipe in scrittura
     fd=open(manCenFifo, O_WRONLY);
     sprintf(msg, "%d", pidCercato);
     int esito= write(fd, msg, strlen(msg)+1);
-    printf("Cen ha scritto a manuale con esito %d", esito);
+    //printf("Cen ha scritto a manuale con esito %d", esito);
 
 
     //printf("Sono nel getManualPid della centralina\n");

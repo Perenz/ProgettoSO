@@ -4,9 +4,10 @@
 #include <string.h>
 #include <signal.h>
 
-int hand_control(char **, int); //Dovra ritornare il pid del dispositivo specificato come argomento
-int hand_help(char **, int);
-int hand_exit(char **, int);
+int hand_control(char **, int*); //Dovra ritornare il pid del dispositivo specificato come argomento
+int hand_help(char **, int*);
+int hand_exit(char **, int*);
+int hand_release(char **, int*);
 
 char *noControl_builtin_cmd[]={
         "control", //Prende in input un parametro, il nome/id del dispositivo su cuiu vogliamo agire
@@ -15,18 +16,20 @@ char *noControl_builtin_cmd[]={
 };
 
 //Pointers list to a Function associated to each command
-int (*noControl_builtin_func[]) (char **, int) = {
+int (*noControl_builtin_func[]) (char **, int*) = {
         &hand_control,
         &hand_help,
         &hand_exit
 };
 
 char *control_builtin_cmd[]={
-
+    "exit",
+    "release"
 };
 
-int (*control_builtin_func[]) (char **) = {
-
+int (*control_builtin_func[]) (char **, int*) = {
+    &hand_exit,
+    &hand_release
 };
 
 
@@ -39,12 +42,13 @@ int cen_numCommands(int type){
     }
 }
 
-int hand_control(char **args, int cenPid){
+int hand_control(char **args, int *cenPid){
     int fd;
     if(args[1]==NULL || args[2]!=NULL){
             printf("Errore nei parametri\n");
             printf("Usage: control <pid/nome>\n");
             
+
             return -1;
     }
     else{
@@ -55,7 +59,7 @@ int hand_control(char **args, int cenPid){
             char *manCenFifo = "/tmp/manCenFifo";
             mkfifo(manCenFifo, 0666);
             //Mando signal a centralina per aprire la fifo in READ_ONLY
-            kill(cenPid, SIGUSR2);
+            kill(*cenPid, SIGUSR2);
             //Apro la fifo in WRITEONLY
             fd = open(manCenFifo, O_WRONLY);
             char msg[20];
@@ -80,7 +84,7 @@ int hand_control(char **args, int cenPid){
     }
 }
 
-int hand_help(char **args, int cenPid){     
+int hand_help(char **args, int *cenPid){     
     printf("Progetto SO realizzato da: Paolo Tasin, "
            "Stefano Perenzoni, Marcello Rigotti\n");
     printf("Centralina per controllo domotico\n");
@@ -100,6 +104,11 @@ int hand_help(char **args, int cenPid){
     return -1;
 }
 
-int hand_exit(char **args, int cenPid){
+int hand_exit(char **args, int *cenPid){
         return 0;
+}
+
+int hand_release(char **args, int *cont){
+    *cont=0;
+    return 1;
 }
