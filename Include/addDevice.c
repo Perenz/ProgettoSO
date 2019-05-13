@@ -49,7 +49,6 @@ int add_device(char* execPath, NodoPtr procList, NodoPtr dispList){
                 char fd_reader_Tmp[10];
                 char idTmp[10]; //id che verrà passato in args al processo creato
                 sprintf(idTmp,"%d",id); //salvo in idTmp l'id attuale e poi lo incremento
-                id+=1;
                 //TODO close(fd[0]);
                 sprintf(fd_writer_Tmp,"%d", (fd_writer[0]));
                 sprintf(fd_reader_Tmp,"%d", (fd_reader[1]));
@@ -80,12 +79,13 @@ int add_device(char* execPath, NodoPtr procList, NodoPtr dispList){
                 
                 //Vado in pausa per permettere al figlio di generarsi
                 pause();
+                id+=1;
 
 
 
                 //char msg[30];
                 // int rev = read(fd[0],msg,512);
-                // printf("\nesito: %d\n", rev);
+                // printf("\nesito: %d\n", rev);        
                 // printf("\n\n\n\ndebug msg: %s\n\n\n",msg);
                 
         }

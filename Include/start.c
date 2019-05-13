@@ -59,7 +59,9 @@ int cen_start(){
 
     //Continuo ad ascoltare in input su stdin
     do{
+        printf("\033[1;35m"); //Set the text to the color red
         printf("Inserisci il comando:>");
+        printf("\033[0m"); //Resets the text to default color
 
         //Prendo il comando dall'utente
         command = getLine();
