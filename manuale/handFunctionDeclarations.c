@@ -127,6 +127,7 @@ int hand_exit(char **args, int *cenPid){
 
 int hand_release(char **args, int *cont){
     *cont=0;
+    //TODO da fare la chiusura e la rimozione della fifo
     return 1;
 }
 
