@@ -46,6 +46,7 @@ void sighandle_int(int sig) {
     //pause();
 }
 
+//TODO I due handler sono compattabili in uno unico con controllo del tipo di segnale appena prima del read
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
 void sighandle_usr1(int sig){
     if(sig == SIGUSR1){
@@ -59,7 +60,7 @@ void sighandle_usr1(int sig){
     }
 }
 
-void sighandle_usr1(int sig){
+void sighandle_usr2(int sig){
     if(sig == SIGUSR2){
         //proviamo a leggere
         //potrei passare anche la lunghezza del messaggio
@@ -276,7 +277,7 @@ int main(int argc, char *args[]){
     signal(SIGINT, sighandle_int);
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
-    signal(SIGUSR2, sighandle_usr1); //Alla ricezione di SIGUSR2 leggere il comanda sulla fifo direttamente connessa al manuale
+    signal(SIGUSR2, sighandle_usr2); //Alla ricezione di SIGUSR2 leggere il comanda sulla fifo direttamente connessa al manuale
 
     printf("\nLampadina creata\n");
     printf("Id: %d\n", id);
