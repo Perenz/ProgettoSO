@@ -18,7 +18,6 @@ int lanciaGetCenPid();
 
 int lanciaGetCenPid(){
     int pid;
-
     pid=fork();
     if(pid<0){
         perror("cen");
@@ -48,7 +47,7 @@ int cen_start(){
 
     //Inserisco nella lista il pid corrente indicante la centraline stessa
     procList = listInit(getpid());
-    dispList = listInit(-1);
+            dispList = listInit(-1);//FUCKMARCELLO 
 
 
     //Lancio i processi di supporto
@@ -67,7 +66,7 @@ int cen_start(){
 
         //Splitta la linea in singoli parametri/argomenti
         params = splitLine(command);
-
+        //TODO potrei passare il comando non splittato così da poterlo mandare direttamente
         //Esegue il comando
         status = cen_processCmd(params, procList, dispList);
     }while(status);
@@ -103,12 +102,11 @@ int cen_processCmd(char **command, NodoPtr procList, NodoPtr dispList){
         return 1;
     }
     */
-    int i=0;
     //se inserisco un comando vuoto richiedo di inserire un nuovo comando
     if(command[0] == NULL)
         return 1;
 
-    for(i; i<cen_numCommands(); i++){
+    for(int i=0; i<cen_numCommands(); i++){
         if(strcmp(command[0],builtin_cmd[i])==0)
             return builtin_func[i](command, procList, dispList);
     }
