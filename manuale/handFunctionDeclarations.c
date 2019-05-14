@@ -149,7 +149,7 @@ int hand_switch(char **args, int *cont){
         //prendo solo l'iniziale del tipo per identificare il tipo di dispositivo
             //t per termostato
             //i per interruttore
-        label[0] = args[2][0];
+        label[0] = args[1][0];//Prendo solo il primo carattere della label
         label[1] = '\0';
         //comando
         sprintf(msg, "s %d %s %s",pid, label, args[2]); //Pid, label e il nuovo stato

@@ -58,6 +58,19 @@ void sighandle_usr1(int sig){
         int errnum = device_handle_command(arg);
     }
 }
+
+void sighandle_usr1(int sig){
+    if(sig == SIGUSR2){
+        //proviamo a leggere
+        //potrei passare anche la lunghezza del messaggio
+        char str[CEN_BUFSIZE];
+        read(fd_manuale, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
+        //printf("\n\tLettura da pipe %s  \n", str);
+        char** arg = splitLine(str);
+        int errnum = device_handle_command(arg);
+    }
+}
+
 int device_handle_command(char **args){
     //da fare come in functionDeclarations in file dispositivi
     if(strcmp(args[0],builtin_func[0])==0 || strcmp(args[0],builtin_func[2])==0){//list o getinfo
@@ -263,6 +276,7 @@ int main(int argc, char *args[]){
     signal(SIGINT, sighandle_int);
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
+    signal(SIGUSR2, sighandle_usr1); //Alla ricezione di SIGUSR2 leggere il comanda sulla fifo direttamente connessa al manuale
 
     printf("\nLampadina creata\n");
     printf("Id: %d\n", id);
