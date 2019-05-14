@@ -2,10 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <signal.h>
 #include <assert.h>
 #include <sched.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 //ho spostato i metodi getLine e splitLine in una nuova libreria 
 //TODO tale verrà linkata nel gestore generale dei processi di interazione
 #include "../Include/gestioneComandi.c"
@@ -21,6 +24,8 @@ int status;
 int fd_read;
 //File descriptor in cui il figlio scrive e il padre legge
 int fd_write;
+
+int fd_manuale;
 char tipo = 'b';
 pid_t idPar;
 pid_t pid;
@@ -55,7 +60,6 @@ void sighandle_usr1(int sig){
 }
 int device_handle_command(char **args){
     //da fare come in functionDeclarations in file dispositivi
-    
     if(strcmp(args[0],builtin_func[0])==0 || strcmp(args[0],builtin_func[2])==0){//list o getinfo
         return dev_getinfo(args);
     }else if(strcmp(args[0],builtin_func[1])==0){//changestate
@@ -161,6 +165,19 @@ int dev_manualControl(char **args){
     //scrivo sulla pipe che sono io quello che deve essere ucciso e scrivo anche il mio pid, la centralina dovrà toglierlo dalla lista
     //TODO trovare un altro metodo
         //In caso di id coincidente devo aprire la fifo a cui poi si connette il controllo manuale
+        char fifoManComp[30];
+        
+        sprintf(fifoManComp, "/tmp/fifoManComp%d", pid);
+        mkfifo(fifoManComp, 0666);
+
+        //Apro in lettura
+        //Userò, dal manuale, il SIGUSR2 per questa fifo oppure il SIGUSR1 con controllo se lo switch è manuale o centralina
+        //Non posso aprire prima in lettura
+        //Posso usare il SIGUSR2 per aprire questa fifo
+        fd_manuale = open(fifoManComp, O_RDONLY | O_NONBLOCK , 0644);
+        //NON mi metto in ascolto, userò dei segnali da parte del manuale per dire al componente di leggere dalla pipe
+        //Per essere chiusa devo scriverci qualcosa da manuale quando faccio il release
+
         sprintf(msg, "%d", pid);
         int esito = write(fd_write, msg, strlen(msg));//Comunico alla centralina di aver trovato l'id cercato
           
@@ -213,8 +230,6 @@ int dev_delete(char **args){
     //famo ritornare l'errore poi
     return 1;
 }
-
-
 
 
 void signhandle_quit(int sig){

@@ -8,6 +8,12 @@ int hand_control(char **, int*); //Dovra ritornare il pid del dispositivo specif
 int hand_help(char **, int*);
 int hand_exit(char **, int*);
 int hand_release(char **, int*);
+int hand_switch(char**, int*);
+
+void inizializzaFifo(int);
+
+//fifo per il collegamento DIRETTO con il dispositivo che si sta controllando
+int fdManual;
 
 char *noControl_builtin_cmd[]={
         "control", //Prende in input un parametro, il nome/id del dispositivo su cuiu vogliamo agire
@@ -24,15 +30,26 @@ int (*noControl_builtin_func[]) (char **, int*) = {
 
 char *control_builtin_cmd[]={
     "exit",
-    "release"
+    "release",
+    "switch"
 };
 
 int (*control_builtin_func[]) (char **, int*) = {
     &hand_exit,
-    &hand_release
+    &hand_release,
+    &hand_switch
 };
 
+void inizializzaFifo(int pidCont){
+    //file gia creato dal dispositivo
+    //Devo aprirlo in scrittura
+    char fifoManDisp[30];
+    int fdManDisp;
+    sprintf(fifoManDisp, "/tmp/fifoManComp%d", pidCont);
 
+    fdManDisp=open(fifoManDisp, O_WRONLY);
+    //printf("Fifo da manuale a disp controllato aperta con fd %d", fdManDisp);
+}
 
 int cen_numCommands(int type){
     if(type==0)
@@ -111,4 +128,51 @@ int hand_exit(char **args, int *cenPid){
 int hand_release(char **args, int *cont){
     *cont=0;
     return 1;
+}
+
+int hand_switch(char **args, int *cont){
+    if(args[2]==NULL || args[3]!=NULL){
+            printf("Errore nei parametri\n");
+            printf("Usage: switch <label> <nuovostato>\n");
+
+            return -1;
+    }
+    else{
+        //Escludo la centralina dal while
+        int pid = *cont;
+        
+
+        char* msg = malloc(6 + strlen(args[1]) + 4 + 1);//6 per il pid + len label + 4 spazi + 1 per il comando
+        
+        char* label = malloc(2);//2 caratteri: label + terminazione
+        //prendo solo l'iniziale del tipo per identificare il tipo di dispositivo
+            //t per termostato
+            //i per interruttore
+        label[0] = args[2][0];
+        label[1] = '\0';
+        //comando
+        sprintf(msg, "s %d %s %s",pid, label, args[2]); //Pid, label e il nuovo stato
+        printf("    scrittura lato padre: %s\n", msg);
+
+        int esito = write(fdManual, msg, strlen(msg) + 1);
+        kill(pid, SIGUSR1);
+        printf("Scritto sulla pipe con esito %d\n", esito);
+        //TODO
+        //pause();
+        //risposta da parte del dispositivo: 1 trovato, 0 non sono io
+            //un'altra possibile risposta potrebbe essere: 
+            // <dettagli disp> <id> <pid> <stato interruttore> 
+        
+        /*char* answer = malloc(30);
+        int err = read(fdManual, answer, 30);
+            
+        int risp = atoi(answer);
+        //ho trovato il dispositivo che stavo cercando ed ho cambiato il suo stato
+        if(risp == 1){
+            return 1 ; 
+        }*/
+
+        return -1;
+    }
+
 }

@@ -186,6 +186,7 @@ int cen_processCmd(char **command){
                     return 1;
                 }else{
                     controlloId=atoi(command[1]);
+                    inizializzaFifo(controlloPid);
                     return controlloPid;
                 }
             }
