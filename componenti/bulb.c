@@ -6,16 +6,21 @@
 #include <signal.h>
 #include <assert.h>
 #include <sched.h>
+#include <time.h>
 //ho spostato i metodi getLine e splitLine in una nuova libreria 
 //TODO tale verrà linkata nel gestore generale dei processi di interazione
 #include "../Include/gestioneComandi.c"
+
 #define ANSWER 32
 
 int dev_getinfo(char **args);
 int dev_delete(char **args);
 int dev_switch(char **args);
 int dev_list(char **args);
+int dev_info(char **args);
 void get_info_string(char* ans);
+
+time_t tempoTotale;
 int status;
 
 //TODO : potrei usare un unico node
@@ -55,7 +60,7 @@ void sighandle_usr1(int sig){
 int device_handle_command(char **args){
     //da fare come in functionDeclarations in file dispositivi
     if(strcmp(args[0],builtin_func[0])==0){//getinfo
-        return dev_getinfo(args);
+        return dev_info(args);
     }else if(strcmp(args[0],builtin_func[1])==0){//changestate
         return dev_switch(args);
     }else if(strcmp(args[0],builtin_func[2])==0){//list
@@ -77,7 +82,7 @@ void signhandle_quit(int sig){
 int dev_switch(char **args){
     int id_change = atoi(args[1]);
     if(id_change == id){
-        status = atoi(args[3]);
+        status = atoi(args[3]);//TODO
 
             printf("Status dispositivo Bulb %d : %d\n", id, status);  
             printf("\033[1;32m"); //scrivo in verde 
@@ -101,11 +106,9 @@ int dev_switch(char **args){
 int dev_list(char **args){
     char* ans = malloc(ANSWER);
     get_info_string(ans);
-    
     int esito = write(fd_write, ans, strlen(ans));
     kill(idPar,SIGCONT);
     //pause();
-
     return 1;
 }
 
@@ -114,7 +117,7 @@ int dev_list(char **args){
 /*restituisce in pipe
     <info> := <tipo> <pid???> <id> <status> <time>
 */
-int dev_getinfo(char **args){
+int dev_info(char **args){
     int id_info = atoi(args[1]);
     if(id == id_info){
         char* ans = malloc(ANSWER);
@@ -130,8 +133,10 @@ int dev_getinfo(char **args){
     //famo ritornare l'errore poi
     return 1;
 }
+
 void get_info_string(char* ans){//TODO aggiungere timer
     memset(ans, 0, ANSWER);
+    //<info> := <tipo> <pid???> <id> <status> <time>
     sprintf(ans, "bulb %d %d %d\n", pid, id, status);//TODO aggiungere timer
     //sprintf(ans, "Bulb %d %d", pid, id);
     //strcat(ans ,(status==1? " accesa\0":" spenta\0"));
@@ -144,6 +149,13 @@ void set_info(char* info){
     if(strcmp(info_split[0], "default")==0){
         id = atoi(info_split[1]);
         status = 0; 
+        time(&tempoTotale);
+        time_t prova;
+        sleep(2);
+        time(&prova);
+        double diff = difftime(prova,tempoTotale);
+        printf("%f\n", diff);
+        
     }else{
         //<info> := <tipo> <pid???> <id> <status> <time>
         tipo = info_split[0][0];
@@ -153,6 +165,8 @@ void set_info(char* info){
         }else{//spenta
             status = 0;
         }
+
+        //il tempo brother
     }
 }
 

@@ -301,7 +301,6 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
     //TODOMARCELLO
     //da fare un secondo while o il metodo generale per la seconda lista
     signal(SIGCONT, sign_cont_handler);
-
     char* comando = malloc(5 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
     //tipo di comando
     sprintf(comando, "info %s", args[1]);
@@ -339,8 +338,8 @@ int cen_link(char** args, NodoPtr procList){
     cen_delete(procList, NULL, command_id1);
 
     memset(command_id2, 0, 50);
-    //SINTASSI "link <id1> <id2> <infoid2>"
-    sprintf(command_id2, "link %s %s %s", args[1], args[2], args[3]);
+    //SINTASSI "link <id1> <id2> <infoid1>" 
+    sprintf(command_id2, "link %s %s : %s", args[1], args[2], args[3]);
 }
 
 

@@ -27,7 +27,8 @@ int fd_write;
 int dev_getinfo(char **args);
 int dev_delete(char **args);
 int dev_changestate(char **args);
-int dev_link(char** args);
+int dev_link(char* command);
+//int dev_link(char** args);
 int device_handle_command(char **args);
 int dev_add(char* execPath, char* info);
 
@@ -94,11 +95,9 @@ int dev_changestate(char **args){
         int esito = write(fd_write, msg, strlen(msg)+1);
         
         per un'altra idea vedi functionDeclaration in metodo cen_switch
-        */
-        
+        */ 
         status = atoi(args[3]);
         printf("%s\n", args[3]);
-
         printf("Status dispositivo Hub %d : %d\n", id, status);  
         printf("\033[1;32m"); //scrivo in verde 
         printf("\tNon sono felice e non sono triste. È questo il dilemma della mia vita: non so come definire il mio stato d’animo, mi manca sempre qualcosa.");
@@ -225,7 +224,7 @@ int dev_delete(char **args){
         NodoPtr Nodo = dispList;
         //Escludo il mio pid dal while
         Nodo = Nodo->next;
-
+        
         while(Nodo != NULL){ // se avevo dispositivi collegati mando un messaggio di delete ad ognuno di essei con il loro pid per farli eliminare!
             char* tmp = malloc(1 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 2 per spazi e terminazione stringa
             //tipo di comando
@@ -322,7 +321,7 @@ int dev_delete(char **args){
 
 //SINTASSI "link <id1> <id2> : <infoid2>"
 //ho messo i : perché così riesco a dividere il comando in due parti
-//voglio il comando unico non diviso
+//voglio le info uniche non diviso
 int dev_link(char* command){
     
     
