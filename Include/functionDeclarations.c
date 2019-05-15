@@ -25,9 +25,13 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList);
 int cen_delete(char **args, NodoPtr procList, NodoPtr dispList);
 int cen_switch(char **args, NodoPtr procList, NodoPtr dispList);
 int cen_info(char **args, NodoPtr procList, NodoPtr dispList);
+int cen_link(char **args, NodoPtr procList, NodoPtr dispList);
 void getManualPid();
 
 int cen_numCommands();
+
+//l'id della centralina è uguale a 2 --> potremo generalizzare e fare che in start.c creo il processo cmd che comunica con la centralina tramite pipe il
+//comando che deve essere eseguito --> centralina ha id = 2 o 1, è più fico id == 1
 
 //Lista dei comandi della centralina
 char *builtin_cmd[]={
@@ -39,12 +43,13 @@ char *builtin_cmd[]={
         "list",
         "delete",
         "switch",
-        "info"
+        "info",
+        "link"
         //CREA NUOVO COMANDO INFOMANUALE 
         //TODO
 };
 
-//Pointers list to a Function associated to each command
+//Puntatore alle funzioni associati alla lista dei comandi builtin_cmd
 int (*builtin_func[]) (char **, NodoPtr, NodoPtr) = {
         &cen_prova,
         &cen_clear,
@@ -54,7 +59,8 @@ int (*builtin_func[]) (char **, NodoPtr, NodoPtr) = {
         &cen_list,
         &cen_delete,
         &cen_switch,
-        &cen_info
+        &cen_info,
+        &cen_link
 };
 
 int cen_numCommands(){
@@ -111,8 +117,10 @@ void sign_cont_handler(int sig){
     Sintassi comunicata dalla centralina ai figli: l
 */
 int cen_list(char **args, NodoPtr procList, NodoPtr dispList){   
-    //printList(dispList);     
-    printf("Stampo la lista dei dispositivi tramite il loro pid:");
+
+    printList(dispList);   
+
+    printf("\nStampo la lista dei dispositivi tramite il loro pid:");
     //printList(procList);
     NodoPtr Nodo = procList;
 
@@ -129,12 +137,14 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
     signal(SIGCONT, sign_cont_handler);
     char* comando = malloc(10);
     sprintf(comando, "l");
-    char* answer = malloc(1000);
+    char* answer = malloc(1000);//DA STANDARIZZARE --> è molto grande perché raccoglie le info di tutti i dispositivi in una stringa
     answer = broadcast_list(NodoS, NULL, comando);
     
 
     printf("%s", answer);
     free(answer);
+
+    //TODO da mettere appena procList non sarà vuota cioè quando funziona cen_link
     /*
     //TODO possibile metterlo in funzione "broadcast"
     while(Nodo != NULL){
@@ -170,6 +180,7 @@ int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
         NodoPtr nodo = dispList;
         //escludo la centralina
         nodo = nodo->next;
+        printList(nodo);
         signal(SIGCONT, sign_cont_handler);
         //compongo il comando
         //passo NULL al posto che char** comando 
@@ -178,19 +189,20 @@ int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
         
         //tipo di comando
         sprintf(comando, "d %s", args[1]);
-        printf("comando padre: %s\n", comando);
+        
 
         char* answer = malloc(100);
         answer = broadcast(nodo, NULL, comando);
-        free(answer);
+        
         if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
             removeNode(dispList, atoi(answer));
+            free(comando);
+            free(answer);
         }else{//non ho trovato nessun dispositivo con quell'id
             printf("Nessun elemento ha questo id\n");
         }
         //printf("%s\n", answer);
-        free(comando);
-        free(answer);
+        
         return 1; //esci che sennò va avanti           
     }
 
@@ -306,6 +318,102 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
     return 1; //esci che sennò va avanti    
 
 }
+/*
+    Funzione: collega due dispositivi (uno deve essere di controllo) 
+    Sintassi lato utente:                          link <id1> to <id2>
+    TODO Sintassi comunicata dalla centralina : 
+*/
+int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
+    //2 casi da gestire: 
+        //caso 1--> l'id2 è uguale a 2
+            //a1) chiedo le info di id1 per vedere se si trova in dispList
+                //aT) se si trova in dispList sposto id1 in procList
+                //aF) else delete di id1 e add alla centralina in procList
+        //caso 2-->else
+            //chiedo le info di id1 per vedere se è dispositivo di controllo
+            //chiedo le info di id2 per vedere se è un dispositivo di interazione collegabile (stesso tipo) ad id1
+            //delete id1
+            //link id1 to id2
+
+    char* command_id1;
+    char* command_id2;
+    char* answer_id1;
+    char* answer_id2;
+    //caso 1
+
+    //PORCO DIO MARCELLO DI MERDA E IL TUO -1
+    dispList = dispList->next;
+    if(atoi(args[3]) == 2){ //uguaglianza con id centralina
+        
+        command_id1 = malloc(50);//TODO
+        answer_id1 = malloc(50);
+        char** splitted_answer_id1;
+        memset(command_id1, 0, 50);
+        sprintf(command_id1, "i %s", args[1]);
+        
+        
+        char* answer_id1 = broadcast(dispList, NULL, command_id1);//mando a dispList
+        printf("%s\n", answer_id1);
+        
+        //verifico la condizione a1 (vedi sopra)
+        if(strcmp(answer_id1, "0")!=0){//non mi interessa se esso è un hub o una lampadina, basta che esista
+            splitted_answer_id1 = splitLine(answer_id1);
+            int pid_id1 = atoi(splitted_answer_id1[1]);
+            //aT) se si trova in dispList sposto id1 in procList
+            NodoPtr nodo_rimuovere = malloc(sizeof(Nodo));
+           
+
+            
+            int err = getNode(dispList, pid_id1, nodo_rimuovere);
+
+            
+            if(err!= -1){//non c'è stato errore
+                spostaNode(dispList, procList, nodo_rimuovere);
+                printf("\n\n");
+                printList(dispList);
+            }else{
+                printf("Porco cazzo\n");
+
+            }
+            
+        }else{//significa che l'id1 non esiste in dispList
+
+
+        }
+        
+        
+    }
+    /*
+    command_id1 = malloc(50);//TODO
+    command_id2 = malloc(50);//TODO
+    memset(command_id1, 0, 50);
+    memset(command_id2, 0, 50);
+
+    sprintf(command_id1, "i %s", args[1]);
+    sprintf(command_id1, "i %s", args[3]);
+
+    answer_id1 = broadcast(procList, NULL, command_id1);
+    answer_id2 = broadcast(procList, NULL, command_id2);
+
+    //Verifico che id2 sia un hub
+
+
+    //Verifico che id1 esista
+
+
+    memset(command_id1, 0, 20);
+    sprintf(command_id1, "d %s", args[1]);
+    cen_delete(procList, NULL, command_id1);
+
+    memset(command_id2, 0, 50);
+    //SINTASSI "link <id1> <id2> <infoid1>" 
+    sprintf(command_id2, "link %s %s : %s", args[1], args[2], args[3]);
+
+    */
+    return 1;
+}
+
+
 
 int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
     int pidCercato;

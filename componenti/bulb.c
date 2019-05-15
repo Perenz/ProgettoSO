@@ -69,6 +69,7 @@ void sighandle_usr1(int sig){
         
         char** arg = splitLine(str);
         int errnum = device_handle_command(arg);
+        //free arg bro
     }
 }
 
@@ -134,11 +135,12 @@ int dev_switch(char **args){
 
 
         int esito = write(fd_write, answer, ANSWER);
-        kill(idPar,SIGCONT);
+        free(answer);
+        
     }else{
         int esito = write(fd_write, "0\0", 2);//TODO
-        kill(idPar,SIGCONT);
     }
+    kill(idPar,SIGCONT);
     //famo ritornare l'errore poi
     return 1;
 }
@@ -150,9 +152,10 @@ int dev_switch(char **args){
 int dev_list(char **args){
     char* ans = malloc(ANSWER);
     get_info_string(ans);
-    int esito = write(fd_write, ans, strlen(ans));
+    int esito = write(fd_write, ans, strlen(ans)+1);
+
+    //free(ans);
     kill(idPar,SIGCONT);
-    //pause();
     return 1;
 }
 
@@ -166,13 +169,14 @@ int dev_info(char **args){
     if(id == id_info){
         char* ans = malloc(ANSWER);
         get_info_string(ans);
-        int esito = write(fd_write, ans, strlen(ans));
+        int esito = write(fd_write, ans, strlen(ans)+1);
+        //free(ans);
         kill(idPar,SIGCONT);
     }else{
         int esito = write(fd_write, "0\0", 2);
         //printf("Non restituisce info dato che id non coincide\n");
-        kill(idPar,SIGCONT);
     }
+    kill(idPar,SIGCONT);
     
     //famo ritornare l'errore poi
     return 1;
@@ -195,6 +199,7 @@ void get_info_string(char* ans){//TODO aggiungere timer
     char* status_string = malloc(4);
     status_string = status==1? "on" : "off";
     sprintf(ans, "bulb %d %d %s %.2f\n", pid, id, status_string, tempoSecondi);//TODO aggiungere timer
+    //free(status_string);
     //sprintf(ans, "Bulb %d %d", pid, id);
     //strcat(ans ,(status==1? " accesa\0":" spenta\0"));
     //printf(": %s", ans);
@@ -243,17 +248,18 @@ int dev_manualControl(char **args){
         //Per essere chiusa devo scriverci qualcosa da manuale quando faccio il release
 
         sprintf(msg, "%d", pid);
-        int esito = write(fd_write, msg, strlen(msg));//Comunico alla centralina di aver trovato l'id cercato
-          
-        kill(idPar,SIGCONT);
+        int esito = write(fd_write, msg, strlen(msg)+1);//Comunico alla centralina di aver trovato l'id cercato
+        
+        //free(msg);
     }
     else{
         //Se ID non coincide scrivo 0 sulla pipe
         sprintf(msg, "%d", 0);
-        int esito = write(fd_write, msg, strlen(msg));
+        int esito = write(fd_write, msg, strlen(msg)+1);
         //printf("Non restituisce info dato che pid non coincide\n");
-        kill(idPar,SIGCONT);
+        
     }
+    kill(idPar,SIGCONT);
 
     return 1;
 }
@@ -273,23 +279,24 @@ int dev_delete(char **args){
         //TODO trovare un altro metodo
        
         sprintf(msg, "%d", pid);//pid inteso come pid
-        int esito = write(fd_write, msg, strlen(msg));
+        int esito = write(fd_write, msg, strlen(msg)+1);
         
             printf("\033[1;31m"); //scrivo in rosso 
             printf("\x1b[ \n\t«Dio mio, Dio mio, perché mi hai abbandonato?»\n");
-            printf("\033[0m"); //resetto per scriver in bianco
-       
-        printf("Eliminazione avvenuta con successo\n\n");
+            printf("\033[0m\n"); //resetto per scriver in bianco
+        free(msg);
         kill(idPar,SIGCONT);
 
         exit(0);
 
     }else{
         sprintf(msg, "%d", 0);
-        int esito = write(fd_write, msg, strlen(msg));
-        printf("\tNon eliminato dato che pid non coincide\n");
+        int esito = write(fd_write, msg, strlen(msg)+1);
+        //printf("\tNon eliminato dato che pid non coincide\n");
+        free(msg);
         kill(idPar,SIGCONT);
     }
+    
     //famo ritornare l'errore poi
     return 1;
 }

@@ -26,7 +26,6 @@ int lanciaGetCenPid(){
     }else if(pid == 0){
         //Child code
         char *args[]={"./supporto/CENPIDREAD",NULL}; 
-
         execvp(args[0],args);
     }
     else if(pid >0){
@@ -36,35 +35,8 @@ int lanciaGetCenPid(){
 }
 
 int cen_processCmd(char **command, NodoPtr procList, NodoPtr dispList){
-    //Esecuzione di un comando SINGOLO senza argomenti
-/*
-    //Eseguo la funziona cen_prova se comando inserito è "prova"
-    if(strcmp(command[0], builtin_cmd[0])==0){
-        return cen_prova(command);
-    }
-    else if(strcmp(command[0], builtin_cmd[1])==0) {
-        //Eseguo la funziona cen_clear se comando inserito è "clear"
-        //Pulisco terminale se cmd "clear"
-        return cen_clear(command);
-    }
-    else if(strcmp(command[0], builtin_cmd[2])==0){
-        //Eseguo la funzione cen_help se il comando inserito è "help"
-        return cen_help(command);
-    }
-    else if(strcmp(command[0], builtin_cmd[3])==0) {
-        //Eseguo la funziona cen_exit se comando inserito è "exit"
-        //Esco se cmd "exit"
-        return cen_exit(command);
-    }
-    else{
-        printf("Comando non riconosciuto, digitare \"help\" per la lista\n");
-        return 1;
-    }
-    */
-    //se inserisco un comando vuoto richiedo di inserire un nuovo comando
     if(command[0] == NULL)
         return 1;
-
     for(int i=0; i<cen_numCommands(); i++){
         if(strcmp(command[0],builtin_cmd[i])==0)
             return builtin_func[i](command, procList, dispList);
@@ -81,7 +53,7 @@ int cen_start(){
     char **params;
 
     size_t bufS = 0;
-    int status =1;
+    int status = 1;
     int supportReadPid;
 
     

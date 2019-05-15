@@ -9,7 +9,7 @@
 #include "../Include/gestioneComandi.c"
 #include "../Include/addDevice.c"
 
-
+//voglio usare le funzioni definite in functionDeclaration urca
 #define CEN_BUFSIZE 128
 
 
@@ -344,6 +344,7 @@ int dev_link(char** command){
         char info[16]; //assegno ad info le informazioni prese da command -> non so in che ordine siano quindi aspetto
         //sprintf(info, "%d %d %s %.2f", command[3]); // basta verificare di che tipo è il dispositivo per sapere quante info devo leggere
         
+        
         //se c'è default devo soltanto aggiungere il device senza preoccuparmi delle info ed è uguale per tutti
         if(command[3] == "default"){
             sprintf(info, "default %d", command[4]);
@@ -365,13 +366,13 @@ int dev_link(char** command){
             }
         }
     }
-
     //forse da sostituire con broadcast generale???
+    //da sostituire con broadcast generale!!!!!!!
     else{ // se non sono io id2 inoltro ai miei figli il comando 
         NodoPtr Nodo = dispList;
         //Escludo me stesso
         Nodo = Nodo->next;
-
+        
         while(Nodo != NULL){ 
             //scrivo il comando sulla pipe
             write(Nodo->fd_writer, command, strlen(command));

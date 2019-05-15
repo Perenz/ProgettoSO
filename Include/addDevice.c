@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include "../strutture/listH.h"
 
 int id = 2;
+
 int add_device(char*, NodoPtr, NodoPtr);
 int add_device_generale(char* execPath, NodoPtr procList, NodoPtr dispList, char* info);
 void sign_handler(int);

@@ -18,6 +18,7 @@ void printList(NodoPtr list){
     }
     printf("\n");
 }
+/*
 //stampa i dispositivi disponibili cioè quelli ancora non linkati
 void printDispList(NodoPtr list){
     printf("Stampa dispositivi disponibili: \n");
@@ -38,6 +39,7 @@ void printLinkedList(NodoPtr list){
     }
     printf("\n");
 }
+*/
 
 //Dealloco tutta ma meoria allocata dinamicamente per i nodi della lista
 void freeList(NodoPtr list){
@@ -71,12 +73,10 @@ NodoPtr insertLast(NodoPtr list, int data, int fd_reader,int fd_writer){
     tmp->fd_writer=fd_writer;
     tmp->linked = 0;
     n->next=tmp;
-
-
-
-
     return list;
 }
+
+//da sistemare
 void removeNode(NodoPtr list, int data){
     if(list != NULL){//controllo che la lista non sia vuota
         NodoPtr nodo = list;
@@ -100,5 +100,35 @@ void removeNode(NodoPtr list, int data){
         }
 
     }
+}
+
+void spostaNode(NodoPtr listSrc, NodoPtr listDest, NodoPtr obj){
+    printf("\n\n");
+    printList(listSrc);
+    printf("\n\n");
+    printList(listDest);
+    removeNode(listSrc, obj->data);
+    insertLast(listDest, obj->data, obj->fd_reader, obj->fd_writer);
+    printf("\n\n");
+    printList(listSrc);
+    printf("\n\n");
+    printList(listDest);
+}
+
+int getNode(NodoPtr list, int pid, NodoPtr nodo_return){
+    NodoPtr toRtn = NULL;
+    NodoPtr tmp = list;
+    printf("PID CHE CERCO: %d\n", pid);
+    while(tmp != NULL){
+        printf("PID CHE TROVO: %d\t", pid);
+        if(pid == tmp->data){
+            nodo_return = tmp;
+            return 1;
+        }
+        
+
+        tmp = tmp->next;
+    }
+    return -1;
 
 }
