@@ -127,7 +127,7 @@ char* broadcast_list(NodoPtr procList, char** comando, char* comando_compatto){
         kill(nodo->data, SIGUSR1);            
         //TODO
         
-        pause();
+        //pause();
         
         int err = ascolta_risposta(nodo, answer);
         strcat(list_answer,"\t\t-");

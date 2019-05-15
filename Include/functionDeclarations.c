@@ -134,7 +134,7 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
     
 
     printf("%s", answer);
-
+    free(answer);
     /*
     //TODO possibile metterlo in funzione "broadcast"
     while(Nodo != NULL){
@@ -180,18 +180,17 @@ int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
         sprintf(comando, "d %s", args[1]);
         printf("comando padre: %s\n", comando);
 
-        char** u = malloc(100);
         char* answer = malloc(100);
         answer = broadcast(nodo, NULL, comando);
-
+        free(answer);
         if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
             removeNode(dispList, atoi(answer));
         }else{//non ho trovato nessun dispositivo con quell'id
             printf("Nessun elemento ha questo id\n");
         }
         //printf("%s\n", answer);
-        
-          
+        free(comando);
+        free(answer);
         return 1; //esci che sennò va avanti           
     }
 
@@ -266,7 +265,8 @@ int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
             printf("Nessun elemento ha questo id o errore nel comando\n");        
         }          
         
-        
+        free(comando);
+        free(answer);
         return 1; //esci che sennò va avanti    
     }
     printf("Device indicato non riconosciuto\n");
@@ -301,6 +301,8 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
     }else{//non ho trovato nessun dispositivo con quell'id
         printf("Nessun elemento ha questo id\n");        
     }
+    free(comando);
+    free(answer);
     return 1; //esci che sennò va avanti    
 
 }
@@ -346,7 +348,7 @@ int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
         }                  
         nodo = nodo->next;
     }        
-
+    free(tmp);
     //Se scorrendo tutti i processi l'ID non è stato trovato ritorno -1
     return -1; //esci che sennò va avanti    
 
@@ -386,7 +388,7 @@ void getManualPid(NodoPtr procList, NodoPtr dispList){
 
     //printf("Sono nel getManualPid della centralina\n");
     //Chiudo la fifo in lettura
-    
+    free(args);
   
     return;
 }
