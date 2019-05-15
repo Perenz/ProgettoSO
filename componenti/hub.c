@@ -27,7 +27,7 @@ int fd_write;
 int dev_getinfo(char **args);
 int dev_delete(char **args);
 int dev_changestate(char **args);
-int dev_link(char* command);
+int dev_link(char **command);
 //int dev_link(char** args);
 int device_handle_command(char **args);
 int dev_add(char* execPath, char* info);
@@ -74,7 +74,7 @@ int device_handle_command(char **args){
     }else if(strcmp(args[0],builtin_func[3])==0){//delete
         return dev_delete(args);
     }else if(strcmp(args[0],builtin_func[4])==0){//addDevice
-        //return dev_add(args);
+        return dev_link(args);
     }
     return 1;
 }
@@ -154,11 +154,23 @@ int dev_getinfo(char **args){
         char* msg = malloc(10);
 
 
-        if(id == id_info){//guardo se il tipo e l'pid coincidono
-        //scrivo sulla pipe che sono io quello che deve essere ucciso e scrivo anche il mio pid, la centralina dovrà toglierlo dalla lista
-        //TODO trovare un altro metodo
+        if(id == id_info){//guardo se il tipo e l'pid coincidono in tal caso stampo il mio stato e quello di tutti i dispositivi collegati
             sprintf(msg, "%d Hub %d",pid, id);
             strcat(msg ,(status==1?" accesa\n":" spenta\n"));
+            NodoPtr Nodo = dispList;
+            Nodo = Nodo->next; //escludo il mio pid!
+            while(Nodo != NULL){
+                //TODO gestire errori
+                write(Nodo->fd_writer,"l\0",2);
+                kill(Nodo->data, SIGUSR1);            
+                //TODO
+                //pause();
+                int temp = read(Nodo->fd_reader,str,30);
+                //memset(tmp,0,30);
+                //strcat(msg,tmp);            printf("\t%s", str);
+                strcat(str, temp);
+                Nodo = Nodo->next;
+            }
             int esito = write(fd_write, msg, strlen(msg));
             
             kill(idPar,SIGCONT);
@@ -230,7 +242,11 @@ int dev_delete(char **args){
             //tipo di comando
             strcat(tmp,"d ");
             //id dispositivo da spegnere
-            strcat(tmp, Nodo->data); 
+
+            ////////////////////////
+            strcat(tmp, Nodo->data);  //probabile da sistemare e passare un array di char e non un intero?
+            ////////////////////////
+
             //delimitatore 
             strcat(tmp, "\0");
             //scrivo il comando sulla pipe
@@ -319,16 +335,68 @@ int dev_delete(char **args){
 
 
 
-//SINTASSI "link <id1> <id2> : <infoid2>"
+//SINTASSI "link <id1> <id2> : <infoid1>"
 //ho messo i : perché così riesco a dividere il comando in due parti
 //voglio le info uniche non diviso
-int dev_link(char* command){
-    
-    
+int dev_link(char** command){
+    if(command[2] == id){ // se sono io il dispositivo di controllo a cui va attaccato il nuovo dispositivo
+        
+        char info[16]; //assegno ad info le informazioni prese da command -> non so in che ordine siano quindi aspetto
+        //sprintf(info, "%d %d %s %.2f", command[3]); // basta verificare di che tipo è il dispositivo per sapere quante info devo leggere
+        
+        //se c'è default devo soltanto aggiungere il device senza preoccuparmi delle info ed è uguale per tutti
+        if(command[3] == "default"){
+            sprintf(info, "default %d", command[4]);
+            for(int i=0; i<device_number(); i++){
+            if(strcmp(command[3], builtin_device[i])==0)//non so in che posizione ci sia il tipo penso 3
+                    return dev_add(bultin_dev_path[i], info);
+            }
+        }//se invece non c'è default controllo il dispositivo
+        else{ // in base al dispositivo so quanti parametri ha per le info e di conseguenza so quante info devo passare
+            if(command[3] == "b")
+                sprintf(info, "%d %d %s %.2f", command[3], command[4], command[5], command[6]); 
+            else if(command[3] == "w"){}
+                //{}
+            else if(command[3] == "f"){}
+                //
+            for(int i=0; i<device_number(); i++){
+                if(strcmp(command[3], builtin_device[i])==0)//non so in che posizione ci sia il tipo penso 3
+                    return dev_add(bultin_dev_path[i], info);
+            }
+        }
+    }
+
+    //forse da sostituire con broadcast generale???
+    else{ // se non sono io id2 inoltro ai miei figli il comando 
+        NodoPtr Nodo = dispList;
+        //Escludo me stesso
+        Nodo = Nodo->next;
+
+        while(Nodo != NULL){ 
+            //scrivo il comando sulla pipe
+            write(Nodo->fd_writer, command, strlen(command));
+            //mando un segnale al figlio così si risveglia e legge il contenuto della pipe
+            kill(Nodo->data, SIGUSR1);
+                
+            //TODO gestione errori
+            //leggo il pid del figlio così da poterlo togliere dalla lista di processi
+            char* answer = malloc(30);
+            int err = read(Nodo->fd_reader,answer, 30);
+            //pause();
+            //TODO se il figlio ritorna 0 esso non è figlio e perciò non lo elimino dalla lista
+            int ris = atoi(answer);
+
+            //printf("Lettura da pipe lato padre %d\n", ris);
+            if(ris!=0){
+                return 1;
+            }                
+            Nodo = Nodo->next;
+        }
+    }
 }
 
 int dev_add(char* execPath, char* info){
-    
+    add_device_generale(execPath, NULL, dispList, info);
 }
 
 
