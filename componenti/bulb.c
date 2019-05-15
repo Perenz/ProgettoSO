@@ -53,8 +53,8 @@ void sighandle_usr1(int sig){
         //proviamo a leggere
         //potrei passare anche la lunghezza del messaggio
         char str[CEN_BUFSIZE];
+        //printf("LEggo dalla pipe con il padre\n");
         read(fd_read, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
-        //printf("\n\tLettura da pipe %s  \n", str);
         char** arg = splitLine(str);
         int errnum = device_handle_command(arg);
     }
@@ -65,8 +65,8 @@ void sighandle_usr2(int sig){
         //proviamo a leggere
         //potrei passare anche la lunghezza del messaggio
         char str[CEN_BUFSIZE];
+        //printf("Leggo dalla fifo manale\n");
         read(fd_manuale, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
-        //printf("\n\tLettura da pipe %s  \n", str);
         char** arg = splitLine(str);
         int errnum = device_handle_command(arg);
     }
@@ -94,7 +94,7 @@ int device_handle_command(char **args){
 */
 int dev_changestate(char **args){
     int id_change = atoi(args[1]);
-    printf("%d\n", id_change);
+    //printf("%d\n", id_change);
     if(id_change == id){//devo confrontare lo stato
         /* potremo scriver un messaggio del tipo: dispositivo <pid> acceso / spento
         char* msg = malloc(10);//potrei fare il log10 dell'pid per trovare il numero di cifre
@@ -106,7 +106,7 @@ int dev_changestate(char **args){
         */
         
         status = atoi(args[3]);
-        printf("%s\n", args[3]);
+        //printf("%s\n", args[3]);
 
         printf("Status dispositivo Bulb %d : %d\n", id, status);  
         printf("\033[1;32m"); //scrivo in verde 

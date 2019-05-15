@@ -3,12 +3,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 int hand_control(char **, int*); //Dovra ritornare il pid del dispositivo specificato come argomento
 int hand_help(char **, int*);
 int hand_exit(char **, int*);
-int hand_release(char **, int*);
-int hand_switch(char**, int*);
+int hand_exit1(char **, int*, int);
+int hand_release(char **, int*, int);
+int hand_switch(char**, int*, int);
 
 void inizializzaFifo(int);
 
@@ -34,8 +38,8 @@ char *control_builtin_cmd[]={
     "switch"
 };
 
-int (*control_builtin_func[]) (char **, int*) = {
-    &hand_exit,
+int (*control_builtin_func[]) (char **, int*, int) = {
+    &hand_exit1,
     &hand_release,
     &hand_switch
 };
@@ -46,8 +50,12 @@ void inizializzaFifo(int pidCont){
     char fifoManDisp[30];
     int fdManDisp;
     sprintf(fifoManDisp, "/tmp/fifoManComp%d", pidCont);
+    
 
     fdManDisp=open(fifoManDisp, O_WRONLY);
+    fdManual=fdManDisp;
+    //printf("Ora vado in scrittura sulla fifo %s con fd %d\n", fifoManDisp, fdManual);
+
     //printf("Fifo da manuale a disp controllato aperta con fd %d", fdManDisp);
 }
 
@@ -70,7 +78,7 @@ int hand_control(char **args, int *cenPid){
     }
     else{
             //Tramite comando info????
-            printf("Chiedo alla centralina il pid del dispositivo richiesto\n");
+            //printf("Chiedo alla centralina il pid del dispositivo richiesto\n");
 
             //Mi serve una fifo tra manuale.c e la centralina
             char *manCenFifo = "/tmp/manCenFifo";
@@ -82,11 +90,11 @@ int hand_control(char **args, int *cenPid){
             char msg[20];
             strcat(msg, "contpid ");
             strcat(msg, args[1]); //args1 conterrà l'id del dispositivo che si vuole controllare
-            printf("Invio il messaggio\n%s\n", msg);
+            //printf("Invio il messaggio\n%s\n", msg);
             int esito = write(fd, msg,strlen(msg)+1);
             close(fd); //Chiudo in scrittura
             //TODO
-            printf("Scritto con esito %d\n", esito);
+            //printf("Scritto con esito %d\n", esito);
             //Per ora ritorno -1;
             //Ascolto per la risposta
             //Apro pipe in lettura
@@ -94,7 +102,7 @@ int hand_control(char **args, int *cenPid){
             read(fd,msg,20);
             close(fd);
             int pidCerc=atoi(msg);
-            printf("Pid ricevuto %d\n", pidCerc);
+            //printf("Pid ricevuto %d\n", pidCerc);
 
             //Ora mi metto un lettura
             return pidCerc;
@@ -125,13 +133,13 @@ int hand_exit(char **args, int *cenPid){
         return 0;
 }
 
-int hand_release(char **args, int *cont){
+int hand_release(char **args, int *cont, int idCont){
     *cont=0;
     //TODO da fare la chiusura e la rimozione della fifo
     return 1;
 }
 
-int hand_switch(char **args, int *cont){
+int hand_switch(char **args, int *cont, int idCont){
     if(args[2]==NULL || args[3]!=NULL){
             printf("Errore nei parametri\n");
             printf("Usage: switch <label> <nuovostato>\n");
@@ -152,12 +160,10 @@ int hand_switch(char **args, int *cont){
         label[0] = args[1][0];//Prendo solo il primo carattere della label
         label[1] = '\0';
         //comando
-        sprintf(msg, "s %d %s %s",pid, label, args[2]); //Pid, label e il nuovo stato
-        printf("    scrittura lato padre: %s\n", msg);
+        sprintf(msg, "s %d %s %s",idCont, label, args[2]); //id, label e il nuovo stato
 
         int esito = write(fdManual, msg, strlen(msg) + 1);
-        kill(pid, SIGUSR1);
-        printf("Scritto sulla pipe con esito %d\n", esito);
+        kill(pid, SIGUSR2);
         //TODO
         //pause();
         //risposta da parte del dispositivo: 1 trovato, 0 non sono io
@@ -176,4 +182,8 @@ int hand_switch(char **args, int *cont){
         return -1;
     }
 
+}
+
+int hand_exit1(char **args, int* contPid, int contId){
+    return hand_exit(args, contPid);
 }

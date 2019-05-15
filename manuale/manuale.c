@@ -193,7 +193,7 @@ int cen_processCmd(char **command){
         }
         else{
             if(strcmp(command[0],control_builtin_cmd[i])==0)
-                return control_builtin_func[i](command, &controlloPid);
+                return control_builtin_func[i](command, &controlloPid, controlloId);
         }
     }
 
