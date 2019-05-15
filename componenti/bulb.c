@@ -65,7 +65,7 @@ void sighandle_usr1(int sig){
         char str[CEN_BUFSIZE];
         memset(str, 0, CEN_BUFSIZE);
         read(fd_read, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
-        printf("\n\tLettura da pipe %s  \n", str);
+        //printf("\n\tLettura da pipe sig1 %s  \n", str);
         
         char** arg = splitLine(str);
         int errnum = device_handle_command(arg);
@@ -87,12 +87,12 @@ void sighandle_usr2(int sig){
 
 int device_handle_command(char **args){
     //da fare come in functionDeclarations in file dispositivi
-    if(strcmp(args[0],builtin_func[0])==0){//getinfo
-        return dev_info(args);
+    if(strcmp(args[0],builtin_func[0])==0){//list
+        return dev_list(args);
     }else if(strcmp(args[0],builtin_func[1])==0){//changestate
         return dev_switch(args);
-    }else if(strcmp(args[0],builtin_func[2])==0){//list   
-        return dev_list(args);   
+    }else if(strcmp(args[0],builtin_func[2])==0){//info   
+        return dev_info(args);   
     }else if(strcmp(args[0],builtin_func[3])==0){//delete
         return dev_delete(args);
     }else if(strcmp(args[0], builtin_func[4])==0){//manual

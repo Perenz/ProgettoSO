@@ -119,13 +119,14 @@ char* broadcast_list(NodoPtr procList, char** comando, char* comando_compatto){
     char* list_answer = malloc(BUFSIZE*10);
     memset(answer, 0, ANSWER);
     memset(list_answer, 0, BUFSIZE*10);
-    printList(procList);
-    /*
+    //printList(procList);
+    
     while(nodo != NULL){
         //TODO gestire errori
         write(nodo->fd_writer,comando_compatto,strlen(comando_compatto));
         kill(nodo->data, SIGUSR1);            
         //TODO
+        
         pause();
         
         int err = ascolta_risposta(nodo, answer);
@@ -133,10 +134,12 @@ char* broadcast_list(NodoPtr procList, char** comando, char* comando_compatto){
         strcat(list_answer, answer);
         memset(answer,0,ANSWER);
         nodo = nodo->next;
+        
     }
     //return "0";
     return list_answer;
-    */
+    
+    
 }
 
 //ritorna 0 se non trovato
