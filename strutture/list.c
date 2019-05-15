@@ -1,4 +1,5 @@
 #include "listH.h"
+
 NodoPtr listInit(int data){
     NodoPtr toRtn = malloc(sizeof(Nodo));
     toRtn->data=data;

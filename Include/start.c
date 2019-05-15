@@ -84,11 +84,10 @@ int cen_start(){
     int status =1;
     int supportReadPid;
 
-
+    
     //Inserisco nella lista il pid corrente indicante la centraline stessa
     procList = listInit(getpid());
-    //dispList = listInit(-1);//FUCKMARCELLO 
-
+    dispList = listInit(-1);//FUCKMARCELLO 
 
     //Lancio i processi di supporto
     //getCenPid che comunica tramite FIFO con manuale.c

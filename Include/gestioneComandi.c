@@ -119,6 +119,8 @@ char* broadcast_list(NodoPtr procList, char** comando, char* comando_compatto){
     char* list_answer = malloc(BUFSIZE*10);
     memset(answer, 0, ANSWER);
     memset(list_answer, 0, BUFSIZE*10);
+    printList(procList);
+    /*
     while(nodo != NULL){
         //TODO gestire errori
         write(nodo->fd_writer,comando_compatto,strlen(comando_compatto));
@@ -134,6 +136,7 @@ char* broadcast_list(NodoPtr procList, char** comando, char* comando_compatto){
     }
     //return "0";
     return list_answer;
+    */
 }
 
 //ritorna 0 se non trovato

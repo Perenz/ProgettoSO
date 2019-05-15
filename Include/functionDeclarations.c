@@ -114,8 +114,12 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
     //printList(dispList);     
     printf("Stampo la lista dei dispositivi tramite il loro pid:");
     //printList(procList);
-    char tmp[30];
     NodoPtr Nodo = procList;
+
+
+    printf("\n");
+    printList(dispList);
+    
     NodoPtr NodoS = dispList->next; //escludo il -1 dalla lista
     //printList(Nodo);
     printf("\n\tCen %d accesa\n", Nodo->data);
@@ -131,7 +135,7 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
 
     printf("%s", answer);
 
-    
+    /*
     //TODO possibile metterlo in funzione "broadcast"
     while(Nodo != NULL){
         //TODO gestire errori
@@ -146,6 +150,7 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
         Nodo = Nodo->next;
     }
     printf("\n");
+    */
     
     return 1;
 }
@@ -287,7 +292,7 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
     signal(SIGCONT, sign_cont_handler);
     char* comando = malloc(5 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
     //tipo di comando
-    sprintf(comando, "info %s", args[1]);
+    sprintf(comando, "i %s", args[1]);
     //printf("scrittura lato padre: %s\n", comando);
     char* answer = broadcast(nodo, NULL, comando); 
 

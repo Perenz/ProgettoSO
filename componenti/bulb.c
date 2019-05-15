@@ -65,7 +65,7 @@ void sighandle_usr1(int sig){
         char str[CEN_BUFSIZE];
         memset(str, 0, CEN_BUFSIZE);
         read(fd_read, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
-        //printf("\n\tLettura da pipe %s  \n", str);
+        printf("\n\tLettura da pipe %s  \n", str);
         
         char** arg = splitLine(str);
         int errnum = device_handle_command(arg);
@@ -79,6 +79,7 @@ void sighandle_usr2(int sig){
         char str[CEN_BUFSIZE];
         //printf("Leggo dalla fifo manale\n");
         read(fd_manuale, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
+        printf("\n\tLettura da pipe %s  \n", str);
         char** arg = splitLine(str);
         int errnum = device_handle_command(arg);
     }
