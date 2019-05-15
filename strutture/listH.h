@@ -25,7 +25,6 @@ NodoPtr listInit(int);
 void printList(NodoPtr);
 NodoPtr insertLast(NodoPtr list, int data, int fd_reader,int fd_writer);
 void freeList(NodoPtr);
-int getNode(NodoPtr list, int pid, NodoPtr nodo_return);
-void spostaNode(NodoPtr listSrc, NodoPtr listDest, NodoPtr obj);
-
+int getNode(NodoPtr list, int pid, Nodo* nodo_return);
+void spostaNode(NodoPtr listSrc, NodoPtr listDest, Nodo obj);
 #endif

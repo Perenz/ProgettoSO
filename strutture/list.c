@@ -11,7 +11,7 @@ NodoPtr listInit(int data){
 
 void printList(NodoPtr list){
     while(list != NULL){
-        if(list->data != -1)//FUCKMARCELLO
+        if(list->data != -2)//FUCKMARCELLO
             printf("%d ", list->data);
             
         list=list->next;
@@ -82,12 +82,12 @@ void removeNode(NodoPtr list, int data){
         NodoPtr nodo = list;
         NodoPtr tmp = nodo->next;
         if(tmp == NULL){//La lista ha un elemento
-
-
+            
         }else{//la lista ha più di un elemento
             while(tmp != NULL){
+                printf("sti cazz\n");
                 if(tmp->data == data){
-                    //printf("Trovato\n");
+                    
                     nodo->next = tmp->next;
                     free(tmp);
                     //printList(list);
@@ -102,27 +102,29 @@ void removeNode(NodoPtr list, int data){
     }
 }
 
-void spostaNode(NodoPtr listSrc, NodoPtr listDest, NodoPtr obj){
-    printf("\n\n");
+void spostaNode(NodoPtr listSrc, NodoPtr listDest, Nodo obj){
+    printf("DISP LIST\n\n\t");
     printList(listSrc);
-    printf("\n\n");
+    printf("PROC LIST\n\n\t");
     printList(listDest);
-    removeNode(listSrc, obj->data);
-    insertLast(listDest, obj->data, obj->fd_reader, obj->fd_writer);
-    printf("\n\n");
+    removeNode(listSrc, obj.data);
+    insertLast(listDest, obj.data, obj.fd_reader, obj.fd_writer);
+    printf("DISP LIST\n\n\t");
     printList(listSrc);
-    printf("\n\n");
+     printf("PROC LIST\n\n\t");
     printList(listDest);
 }
 
-int getNode(NodoPtr list, int pid, NodoPtr nodo_return){
+int getNode(NodoPtr list, int pid, Nodo* nodo_return){
     NodoPtr toRtn = NULL;
     NodoPtr tmp = list;
     printf("PID CHE CERCO: %d\n", pid);
     while(tmp != NULL){
         printf("PID CHE TROVO: %d\t", pid);
         if(pid == tmp->data){
-            nodo_return = tmp;
+            nodo_return->data = tmp->data;
+            nodo_return->fd_reader = tmp->fd_reader;
+            nodo_return->fd_writer = tmp->fd_writer;
             return 1;
         }
         

@@ -133,7 +133,7 @@ char* broadcast_list(NodoPtr procList, char** comando, char* comando_compatto){
         //pause();
         
         int err = ascolta_risposta(nodo, answer);
-        strcat(list_answer,"\t\t-");
+        strcat(list_answer,"\t\t- ");
         strcat(list_answer, answer);
         memset(answer,0,ANSWER);
         nodo = nodo->next;

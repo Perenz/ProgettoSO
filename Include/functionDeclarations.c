@@ -117,50 +117,28 @@ void sign_cont_handler(int sig){
     Sintassi comunicata dalla centralina ai figli: l
 */
 int cen_list(char **args, NodoPtr procList, NodoPtr dispList){   
-
-    printList(dispList);   
-
-    printf("\nStampo la lista dei dispositivi tramite il loro pid:");
-    //printList(procList);
-    NodoPtr Nodo = procList;
-
-
-    printf("\n");
-    printList(dispList);
-    
-    NodoPtr NodoS = dispList->next; //escludo il -1 dalla lista
+    printf("\nStampo la lista dei dispositivi DISPONIBILI:");
+    NodoPtr nodo = procList;
+    NodoPtr nodoD = dispList->next; //escludo il -1 dalla lista
     //printList(Nodo);
-    printf("\n\tCen %d accesa\n", Nodo->data);
+    printf("\n\tCen %d accesa\n", nodo->data);
     //Escludo la centralina dal while e la stampo SINGOLARMENTE Modifica Paolo --> centralina non l'aggiungo
-    Nodo = Nodo->next;
-
+    nodo = nodo->next;
     signal(SIGCONT, sign_cont_handler);
     char* comando = malloc(10);
     sprintf(comando, "l");
     char* answer = malloc(1000);//DA STANDARIZZARE --> è molto grande perché raccoglie le info di tutti i dispositivi in una stringa
-    answer = broadcast_list(NodoS, NULL, comando);
-    
+    answer = broadcast_list(nodoD, NULL, comando);
+    printf("%s", answer);
 
+
+    printf("\nStampo la lista dei dispositivi COLLEGATI:\n");
+    //printList(procList);
+    signal(SIGCONT, sign_cont_handler);
+    memset(answer, 0, 1000);
+    answer = broadcast_list(nodo, NULL, comando);
     printf("%s", answer);
     free(answer);
-
-    //TODO da mettere appena procList non sarà vuota cioè quando funziona cen_link
-    /*
-    //TODO possibile metterlo in funzione "broadcast"
-    while(Nodo != NULL){
-        //TODO gestire errori
-        write(Nodo->fd_writer,"list\0",5);
-        kill(Nodo->data, SIGUSR1);            
-        //TODO
-        //pause();
-        int temp = read(Nodo->fd_reader,tmp,30);
-        printf("\t%s", tmp);
-        //memset(tmp,0,30);
-        //strcat(msg,tmp);
-        Nodo = Nodo->next;
-    }
-    printf("\n");
-    */
     
     return 1;
 }
@@ -310,11 +288,12 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
 
     if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
         printf("%s\n", answer);
+        free(comando);
+        free(answer);
     }else{//non ho trovato nessun dispositivo con quell'id
         printf("Nessun elemento ha questo id\n");        
     }
-    free(comando);
-    free(answer);
+    
     return 1; //esci che sennò va avanti    
 
 }
@@ -342,7 +321,7 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
     //caso 1
 
     //PORCO DIO MARCELLO DI MERDA E IL TUO -1
-    dispList = dispList->next;
+    NodoPtr node = dispList->next;
     if(atoi(args[3]) == 2){ //uguaglianza con id centralina
         
         command_id1 = malloc(50);//TODO
@@ -352,7 +331,7 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
         sprintf(command_id1, "i %s", args[1]);
         
         
-        char* answer_id1 = broadcast(dispList, NULL, command_id1);//mando a dispList
+        char* answer_id1 = broadcast(node, NULL, command_id1);//mando a dispList
         printf("%s\n", answer_id1);
         
         //verifico la condizione a1 (vedi sopra)
@@ -360,12 +339,12 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
             splitted_answer_id1 = splitLine(answer_id1);
             int pid_id1 = atoi(splitted_answer_id1[1]);
             //aT) se si trova in dispList sposto id1 in procList
-            NodoPtr nodo_rimuovere = malloc(sizeof(Nodo));
+            Nodo nodo_rimuovere;
            
 
             
-            int err = getNode(dispList, pid_id1, nodo_rimuovere);
-
+            int err = getNode(dispList, pid_id1, &nodo_rimuovere);
+            printf("Questo è il nodo da rimuovere: %d\n", nodo_rimuovere.data);
             
             if(err!= -1){//non c'è stato errore
                 spostaNode(dispList, procList, nodo_rimuovere);
