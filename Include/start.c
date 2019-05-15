@@ -1,14 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "gestioneComandi.c"
 #include "../strutture/listH.h"
 #include "functionDeclarations.c"
 
 
 #define CEN_DELIM " \t\r\n\a"
 #define CEN_BUFSIZE 128
-
 
 NodoPtr procList = NULL; //lista dei dispositivi collegati 
 NodoPtr dispList = NULL; //lista dei dispositivi disponibili (aggiunti ma non collegati a niente)
@@ -18,9 +16,9 @@ char* cen_getLine();
 char** cen_splitLine(char *line);
 int lanciaGetCenPid();
 
+
 int lanciaGetCenPid(){
     int pid;
-
     pid=fork();
     if(pid<0){
         perror("cen");
@@ -36,45 +34,6 @@ int lanciaGetCenPid(){
         return pid;
     }
 }
-
-
-int cen_start(){
-    char *command;
-    char **params;
-
-    size_t bufS = 0;
-    int status =1;
-    int supportReadPid;
-
-
-    //Inserisco nella lista il pid corrente indicante la centraline stessa
-    procList = listInit(getpid());
-    dispList = listInit(-1);
-
-
-    //Lancio i processi di supporto
-    //getCenPid che comunica tramite FIFO con manuale.c
-    supportReadPid = lanciaGetCenPid();
-    //TODO assicurarsi che il processo CENPIDREAD venga terminato anche quando si esce dal programma tramite ctr+C
-    //Cosi come tutte le componenti
-
-
-    //Continuo ad ascoltare in input su stdin
-    do{
-            printf("Inserisci il comando:>");
-            command = getLine();
-
-        //Splitta la linea in singoli parametri/argomenti
-        params = splitLine(command);
-        
-        //Esegue il comando
-        status = cen_processCmd(params, procList, dispList);
-    }while(status);
-
-    kill(supportReadPid, SIGQUIT);
-}
-
-
 
 int cen_processCmd(char **command, NodoPtr procList, NodoPtr dispList){
     //Esecuzione di un comando SINGOLO senza argomenti
@@ -102,12 +61,11 @@ int cen_processCmd(char **command, NodoPtr procList, NodoPtr dispList){
         return 1;
     }
     */
-    int i=0;
     //se inserisco un comando vuoto richiedo di inserire un nuovo comando
     if(command[0] == NULL)
         return 1;
 
-    for(i; i<cen_numCommands(); i++){
+    for(int i=0; i<cen_numCommands(); i++){
         if(strcmp(command[0],builtin_cmd[i])==0)
             return builtin_func[i](command, procList, dispList);
     }
@@ -116,6 +74,47 @@ int cen_processCmd(char **command, NodoPtr procList, NodoPtr dispList){
     printf("Comando non riconosciuto, digitare \"help\" per la lista\n");
     return 1;
 }
+
+
+int cen_start(){
+    char *command;
+    char **params;
+
+    size_t bufS = 0;
+    int status =1;
+    int supportReadPid;
+
+
+    //Inserisco nella lista il pid corrente indicante la centraline stessa
+    procList = listInit(getpid());
+    //dispList = listInit(-1);//FUCKMARCELLO 
+
+
+    //Lancio i processi di supporto
+    //getCenPid che comunica tramite FIFO con manuale.c
+    supportReadPid = lanciaGetCenPid();
+    //TODO assicurarsi che il processo CENPIDREAD venga terminato anche quando si esce dal programma tramite ctr+C
+    //Cosi come tutte le componenti
+
+
+    //Continuo ad ascoltare in input su stdin
+    do{
+            printf("Inserisci il comando:>");
+            command = getLine();
+
+        //Splitta la linea in singoli parametri/argomenti
+        params = splitLine(command);
+        //TODO potrei passare il comando non splittato così da poterlo mandare direttamente
+        //Esegue il comando
+        status = cen_processCmd(params, procList, dispList);
+    }while(status);
+
+    kill(supportReadPid, SIGQUIT);
+}
+
+
+
+
 
 
 

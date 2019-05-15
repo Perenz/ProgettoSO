@@ -9,9 +9,7 @@
 
 typedef struct Nodo{
     int data;
-
-    //NON DOVREBBE SERVIRMI, LI HO GIà NEL PROCESSO 
-    //TODO perché non uso solo l'int? perché mi serve comunicare il lato con cui scrivere della pipe per il dup
+    int linked;
     //File descriptor in cui il padre scrive e i figli leggono
     int fd_writer;
     //File descriptor in cui il padre legge e i figli scrivono 

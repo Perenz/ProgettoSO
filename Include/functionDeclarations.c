@@ -7,9 +7,13 @@
 #include <sys/stat.h>
 #include <signal.h>
 #include "../strutture/listH.h"
+#include "gestioneComandi.c"
 #include "addDevice.c"
 
 
+//#include "gestioneComandi.c"
+char* broadcast(NodoPtr procList, char** comando, char* comando_compatto);
+char* broadcast_list(NodoPtr procList, char** comando, char* comando_compatto);
 
 //Comandi centralina
 int cen_prova(char **args, NodoPtr procList, NodoPtr dispList);
@@ -106,23 +110,32 @@ void sign_cont_handler(int sig){
     Sintassi lato utente: list
     Sintassi comunicata dalla centralina ai figli: l
 */
-int cen_list(char **args, NodoPtr procList, NodoPtr dispList){        
+int cen_list(char **args, NodoPtr procList, NodoPtr dispList){   
+    //printList(dispList);     
     printf("Stampo la lista dei dispositivi tramite il loro pid:");
     //printList(procList);
     char tmp[30];
-    NodoPtr Nodo = dispList;
+    NodoPtr Nodo = procList;
+    NodoPtr NodoS = dispList->next; //escludo il -1 dalla lista
     //printList(Nodo);
     printf("\n\tCen %d accesa\n", Nodo->data);
-
     //Escludo la centralina dal while e la stampo SINGOLARMENTE Modifica Paolo --> centralina non l'aggiungo
     Nodo = Nodo->next;
 
     signal(SIGCONT, sign_cont_handler);
+    char* comando = malloc(10);
+    sprintf(comando, "l");
+    char* answer = malloc(1000);
+    answer = broadcast_list(NodoS, NULL, comando);
+    
 
+    printf("%s", answer);
+
+    
     //TODO possibile metterlo in funzione "broadcast"
     while(Nodo != NULL){
         //TODO gestire errori
-        write(Nodo->fd_writer,"l\0",2);
+        write(Nodo->fd_writer,"list\0",5);
         kill(Nodo->data, SIGUSR1);            
         //TODO
         //pause();
@@ -145,54 +158,38 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
 int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
     //TODO da modificare, pensavo che l'eliminazione avvenisse anche per tipo.
     if(args[1]==NULL){
-            printf("Argomenti non validi\n");
-            printf("Utilizzo: delete <id>\n");
-            return 1;
-    }else{
-        NodoPtr Nodo = procList;
-        //Escludo la centralina dal while
-        Nodo = Nodo->next;
+        printf("Argomenti non validi\n");
+        printf("Utilizzo: delete <id>\n");
+        return 1;
+    }else{  
+        NodoPtr nodo = dispList;
+        //escludo la centralina
+        nodo = nodo->next;
         signal(SIGCONT, sign_cont_handler);
-        char* tmp = malloc(1 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 2 per spazi e terminazione stringa
+        //compongo il comando
+        //passo NULL al posto che char** comando 
+        //la composizione del comando verrà fatta da una funzione che riassembla il comando passato in args
+        char* comando = malloc(6 + strlen(args[1]) + 3);//6 per il comando + lunghezza id (args[1]) + 2 per spazi e terminazione stringa
+        
         //tipo di comando
-        strcat(tmp,"d ");
-        //id dispositivo da spegnere
-        strcat(tmp, args[1]);
-        //delimitatore 
-        strcat(tmp, "\0");
-        printf("scrittura lato padre: %s\n", tmp);
-        while(Nodo != NULL){
-            
-            //scrivo il comando sulla pipe
-            write(Nodo->fd_writer, tmp, strlen(tmp));
-            //mando un segnale al figlio così si risveglia e legge il contenuto della pipe
-            kill(Nodo->data, SIGUSR1);
-            //printf("Mi metto in read dal figlio %d sul canale %d\n", Nodo->data, Nodo->fd[0]);
-            //pause();
-                
-            //TODO gestione errori
-            //leggo il pid del figlio così da poterlo togliere dalla lista di processi
-            char* answer = malloc(30);
-            int err = read(Nodo->fd_reader,answer, 30);
-            //pause();
-            //TODO se il figlio ritorna 0 esso non è figlio e perciò non lo elimino dalla lista
-            int ris = atoi(answer);
+        sprintf(comando, "d %s", args[1]);
+        printf("comando padre: %s\n", comando);
 
-            //printf("Lettura da pipe lato padre %d\n", ris);
-            if(ris!=0){
-                removeNode(procList, ris);
-                return 1;
-            }                
-            Nodo = Nodo->next;
-            //risveglio il figlio così può eliminarsi
-            //DOVREBBE FUNZIONAR ANCHE COSì, mi sa de no
-            //kill(Nodo->data, SIGUSR1);
-            //memset(tmp,0,30);
-            //strcat(msg,tmp);
-        }        
+        char** u = malloc(100);
+        char* answer = malloc(100);
+        answer = broadcast(nodo, NULL, comando);
+
+        if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
+            removeNode(dispList, atoi(answer));
+        }else{//non ho trovato nessun dispositivo con quell'id
+            printf("Nessun elemento ha questo id\n");
+        }
+        //printf("%s\n", answer);
+        
+          
         return 1; //esci che sennò va avanti           
     }
-    
+
     printf("Device indicato non riconosciuto\n");
     printf("Utilizzo: delete <id>\n");
     
@@ -211,25 +208,25 @@ int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
 //e questo processo terrà la lista dei processi aggiunti che poi dovranno essere
 //collegati per venire a far parte effettivamente del sistema.
 int cen_add(char **args, NodoPtr procList, NodoPtr dispList){
-        if(args[1]==NULL){
-                printf("Argomenti non validi\n");
-                printf("Utilizzo: add <device>\n");
-                printf("Comando 'device' per vedere la lista di quelli disponibili\n");
-                return 1;
+    if(args[1]==NULL){
+            printf("Argomenti non validi\n");
+            printf("Utilizzo: add <device>\n");
+            printf("Comando 'device' per vedere la lista di quelli disponibili\n");
+            return 1;
+    }
+    //3 device disponibili: bulb, window, fridge
+    else{
+        for(int i=0; i<device_number(); i++){
+            if(strcmp(args[1], builtin_device[i])==0)
+                    return add_device(bultin_dev_path[i], procList, dispList);
         }
-        //3 device disponibili: bulb, window, fridge
-        else{
-            for(int i=0; i<device_number(); i++){
-                if(strcmp(args[1], builtin_device[i])==0)
-                        return add_device(bultin_dev_path[i], procList, dispList);
-            }
-        }
+    }
 
-        printf("Device indicato non riconosciuto\n");
-        printf("Utilizzo: add <device>\n");
-        printf("Digitare il comando 'device' per la lista di quelli disponibili\n");
+    printf("Device indicato non riconosciuto\n");
+    printf("Utilizzo: add <device>\n");
+    printf("Digitare il comando 'device' per la lista di quelli disponibili\n");
 
-        return 1;        
+    return 1;        
 }
 /*
     Funzione: modifica <stato> di <label> del dispositivo con <id>
@@ -240,65 +237,32 @@ int cen_add(char **args, NodoPtr procList, NodoPtr dispList){
 //TODO
     //Cambiare sintassi <label> <stato>
 int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
-    if(args[1]==NULL                                            //primo argomento diverso da id (errori, bisogna verificar sia un numero)
-        || (strcmp(args[2], "interruttore")!=0 && strcmp(args[2], "terminazione")!=0)//label
-        || (strcmp(args[3], "1")!=0 && strcmp(args[3], "0")!=0)){//stato                                                                    
+    //TODO cambiare controllo, potrei farlo nel dispositivo
+    if(args[1]==NULL){                                          //primo argomento diverso da id (errori, bisogna verificar sia un numero)
 
         printf("Argomenti non validi\n");
         printf("Utilizzo: switch <id> <label> <pos>\n");
         printf("Comando 'device' per vedere la lista di quelli disponibili\n");
         return 1;
     }else{
-        NodoPtr Nodo = procList;
+        NodoPtr nodo = dispList;
         //Escludo la centralina dal while
-        Nodo = Nodo->next;
-
+        nodo = nodo->next;
         signal(SIGCONT, sign_cont_handler);
-        char* msg = malloc(strlen(args[1]) + strlen(args[2]) + 4);//1 per il comando, 4 per spazi di sep. e la terminazione
-        
-        char* label = malloc(2);//2 caratteri: label + terminazione
-        //prendo solo l'iniziale del tipo per identificare il tipo di dispositivo
-            //t per termostato
-            //i per interruttore
-        label[0] = args[2][0];
-        label[1] = '\0';
+        char* comando = malloc(4 + strlen(args[1]) + strlen(args[2]) + strlen(args[3]));//7 per il comando, 4 per spazi di sep. e la terminazione
         //comando
-        strcat(msg,"s ");
-        //id
-        strcat(msg,args[1]);
-        strcat(msg," ");
-        //label: interruttore o termostato //per ora solo iterruttore
-        strcat(msg, label);
-        strcat(msg," ");
-        //posizione accesa o spenta //per ora solo interruttore
-        strcat(msg, args[3]);
-        strcat(msg,"\0");
-            printf("    scrittura lato padre: %s\n", msg);
+        sprintf(comando, "s %s %s %s", args[1], args[2], args[3]);
+        //printf("scrittura lato padre: %s\n", comando);
 
-
-        while(Nodo != NULL){
-            write(Nodo->fd_writer, msg, strlen(msg) + 1);
-            kill(Nodo->data, SIGUSR1);
-            //TODO
-            //pause();
-            //risposta da parte del dispositivo: 1 trovato, 0 non sono io
-                //un'altra possibile risposta potrebbe essere: 
-                // <dettagli disp> <id> <pid> <stato interruttore> 
-            char* answer = malloc(30);
-            int err = read(Nodo->fd_reader, answer, 30);
-            
-            int risp = atoi(answer);
-            //ho trovato il dispositivo che stavo cercando ed ho cambiato il suo stato
-            if(risp == 1){
-                return 1 ; 
-            }
-            Nodo = Nodo->next;
-        }
-            
-            
-        return 1; //esci che sennò va avanti
-    
-            
+        char* answer = broadcast(nodo, NULL, comando);
+        if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
+            printf("%s\n", answer);//stampiamo una qualche risposta daje
+        }else{//non ho trovato nessun dispositivo con quell'id
+            printf("Nessun elemento ha questo id o errore nel comando\n");        
+        }          
+        
+        
+        return 1; //esci che sennò va avanti    
     }
     printf("Device indicato non riconosciuto\n");
     printf("Utilizzo: del <device> <num>\n");
@@ -313,43 +277,25 @@ int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
     TODO Sintassi comunicata dalla centralina :    i <id> (centralina comunica a processo specifico)
 */
 int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
-
     //TODO POSSIBILE UNIRE CON LIST DATO CHE è MOLTO SIMILE
-    NodoPtr Nodo = procList;
+    NodoPtr nodo = dispList;
     //Escludo la centralina dal while
-    Nodo = Nodo->next;
+    nodo = nodo->next;
+
+    //TODOMARCELLO
+    //da fare un secondo while o il metodo generale per la seconda lista
     signal(SIGCONT, sign_cont_handler);
-    char* tmp = malloc(1 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
+    char* comando = malloc(5 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
     //tipo di comando
-    strcat(tmp,"i ");
-    //id dispositivo da spegnere
-    strcat(tmp, args[1]);
-    //delimitatore 
-    strcat(tmp, "\0");
-    printf("scrittura lato padre: %s\n", tmp);
-    while(Nodo != NULL){
-        
-        //scrivo il comando sulla pipe
-        write(Nodo->fd_writer, tmp, strlen(tmp));
-        //mando un segnale al figlio così si risveglia e legge il contenuto della pipe
-        kill(Nodo->data, SIGUSR1);
-        //printf("Mi metto in read dal figlio %d sul canale %d\n", Nodo->data, Nodo->fd[0]);
-        //pause();
-            
-        //TODO gestione errori
-        //leggo il pid del figlio così da poterlo togliere dalla lista di processi
-        char* answer = malloc(30);
-        int err = read(Nodo->fd_reader,answer, 30);
-        //pause();
-        //TODO se il figlio ritorna 0 esso non è figlio e perciò non lo elimino dalla lista
-        
-        //printf("Lettura da pipe lato padre %d\n", ris);
-        if(strcmp(answer, "0")!=0){
-            printf("%s\n", answer);
-            return 1;
-        }                
-        Nodo = Nodo->next;
-    }        
+    sprintf(comando, "info %s", args[1]);
+    //printf("scrittura lato padre: %s\n", comando);
+    char* answer = broadcast(nodo, NULL, comando); 
+
+    if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
+        printf("%s\n", answer);
+    }else{//non ho trovato nessun dispositivo con quell'id
+        printf("Nessun elemento ha questo id\n");        
+    }
     return 1; //esci che sennò va avanti    
 
 }
@@ -357,9 +303,9 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
 int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
     int pidCercato;
     //TODO POSSIBILE UNIRE CON LIST DATO CHE è MOLTO SIMILE
-    NodoPtr Nodo = dispList;
+    NodoPtr nodo = dispList;
     //Escludo la centralina dal while
-    Nodo = Nodo->next;
+    nodo = nodo->next;
     signal(SIGCONT, sign_cont_handler);
     char* tmp = malloc(2 + 10 + 3);//2 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
     //tipo di comando
@@ -369,19 +315,19 @@ int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
     //delimitatore 
     strcat(tmp, "\n");
     //printf("scrittura lato padre: %s\n", tmp);
-    while(Nodo != NULL){
+    while(nodo != NULL){
         
         //scrivo il comando sulla pipe
-        write(Nodo->fd_writer, tmp, strlen(tmp));
+        write(nodo->fd_writer, tmp, strlen(tmp));
         //mando un segnale al figlio così si risveglia e legge il contenuto della pipe
-        kill(Nodo->data, SIGUSR1);
+        kill(nodo->data, SIGUSR1);
         //printf("Mi metto in read dal figlio %d sul canale %d\n", Nodo->data, Nodo->fd[0]);
         //pause();
             
         //TODO gestione errori
         //leggo il pid del figlio così da poterlo togliere dalla lista di processi
         char* answer = malloc(30);
-        int err = read(Nodo->fd_reader,answer, 30);
+        int err = read(nodo->fd_reader,answer, 30);
         //pause();
         //TODO se il figlio ritorna 0 esso non è figlio e perciò non lo elimino dalla lista
         
@@ -393,7 +339,7 @@ int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
             //printf("PidCercato è %d", pidCercato);
             return pidCercato;
         }                  
-        Nodo = Nodo->next;
+        nodo = nodo->next;
     }        
 
     //Se scorrendo tutti i processi l'ID non è stato trovato ritorno -1

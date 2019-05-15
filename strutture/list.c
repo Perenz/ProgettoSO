@@ -10,9 +10,29 @@ NodoPtr listInit(int data){
 
 void printList(NodoPtr list){
     while(list != NULL){
-        if(list->data != -1)
+        if(list->data != -1)//FUCKMARCELLO
             printf("%d ", list->data);
             
+        list=list->next;
+    }
+    printf("\n");
+}
+//stampa i dispositivi disponibili cioè quelli ancora non linkati
+void printDispList(NodoPtr list){
+    printf("Stampa dispositivi disponibili: \n");
+    while(list != NULL){
+        if(list->linked == 0)
+            printf("%d ", list->data);  
+        list=list->next;
+    }
+    printf("\n");
+}
+//stampa i dispositivi attivi cioè quelli attivi
+void printLinkedList(NodoPtr list){
+    printf("Stampa dispositivi attivi: \n");
+    while(list != NULL){
+        if(list->linked != 0)
+            printf("%d ", list->data);  
         list=list->next;
     }
     printf("\n");
@@ -33,7 +53,7 @@ NodoPtr insertLast(NodoPtr list, int data, int fd_reader,int fd_writer){
         NodoPtr toRtn = listInit(data);
         toRtn->fd_reader=fd_reader;
         toRtn->fd_writer=fd_writer;
-
+        toRtn->linked = 0;
         return toRtn;
     }
     
@@ -48,6 +68,7 @@ NodoPtr insertLast(NodoPtr list, int data, int fd_reader,int fd_writer){
     NodoPtr tmp = listInit(data);
     tmp->fd_reader=fd_reader;
     tmp->fd_writer=fd_writer;
+    tmp->linked = 0;
     n->next=tmp;
 
 

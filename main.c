@@ -11,9 +11,7 @@ void sigusr2_handler(int sig){
 int main(){
     signal(SIGUSR2, sigusr2_handler);
 
-
     cen_start();
 
     exit(0);
 }
-
