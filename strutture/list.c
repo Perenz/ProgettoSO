@@ -11,8 +11,7 @@ NodoPtr listInit(int data){
 
 void printList(NodoPtr list){
     while(list != NULL){
-        if(list->data != -2)//FUCKMARCELLO
-            printf("%d ", list->data);
+        printf("%d ", list->data);
             
         list=list->next;
     }
@@ -85,7 +84,6 @@ void removeNode(NodoPtr list, int data){
             
         }else{//la lista ha più di un elemento
             while(tmp != NULL){
-                printf("sti cazz\n");
                 if(tmp->data == data){
                     
                     nodo->next = tmp->next;
@@ -103,24 +101,26 @@ void removeNode(NodoPtr list, int data){
 }
 
 void spostaNode(NodoPtr listSrc, NodoPtr listDest, Nodo obj){
+    /*
     printf("DISP LIST\n\n\t");
     printList(listSrc);
     printf("PROC LIST\n\n\t");
     printList(listDest);
+    */
     removeNode(listSrc, obj.data);
     insertLast(listDest, obj.data, obj.fd_reader, obj.fd_writer);
+    /*
     printf("DISP LIST\n\n\t");
     printList(listSrc);
      printf("PROC LIST\n\n\t");
     printList(listDest);
+    */
 }
 
 int getNode(NodoPtr list, int pid, Nodo* nodo_return){
     NodoPtr toRtn = NULL;
     NodoPtr tmp = list;
-    printf("PID CHE CERCO: %d\n", pid);
     while(tmp != NULL){
-        printf("PID CHE TROVO: %d\t", pid);
         if(pid == tmp->data){
             nodo_return->data = tmp->data;
             nodo_return->fd_reader = tmp->fd_reader;

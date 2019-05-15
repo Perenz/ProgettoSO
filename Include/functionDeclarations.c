@@ -148,6 +148,7 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
     Sintassi lato utente:                          delete <id>
     Sintassi comunicata dalla centralina ai figli: d <id>
 */
+//delete funziona su dispList per ora
 int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
     //TODO da modificare, pensavo che l'eliminazione avvenisse anche per tipo.
     if(args[1]==NULL){
@@ -303,6 +304,8 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
     TODO Sintassi comunicata dalla centralina : 
 */
 int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
+    if(args[1]==NULL || args[2]==NULL || args[3]==NULL )//gestione errori alla Carlina
+        return -1;
     //2 casi da gestire: 
         //caso 1--> l'id2 è uguale a 2
             //a1) chiedo le info di id1 per vedere se si trova in dispList

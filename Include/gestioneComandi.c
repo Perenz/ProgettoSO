@@ -88,7 +88,6 @@ char* broadcast(NodoPtr procList, char** comando, char* comando_compatto){
     while(nodo != NULL){
         //TODO gestire errori
         printf("\tcomando padre: %s\n", comando_compatto);
-        printf("\ta : %d\n", nodo->data);
         write(nodo->fd_writer,comando_compatto, strlen(comando_compatto));
         kill(nodo->data, SIGUSR1);            
         //TODO
@@ -96,7 +95,6 @@ char* broadcast(NodoPtr procList, char** comando, char* comando_compatto){
 
         //gestione read diversa per ogni comando --> potrei farla qua la gestione
         int toRtn = ascolta_risposta(nodo, answer);
-        printf("\tRisposta: %s \n", answer);
         if(toRtn == 1){
             //printf("%s\n", answer);
             return answer;
