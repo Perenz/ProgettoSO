@@ -34,6 +34,9 @@ int device_number(){
 void sign_handler(int sig){
     return;
 }
+
+//qua basta una lista.
+
 //add device generale che viene chiamato dai dispositivi di controllo per "aggiungere"
 //un dispositivo che già esisteva (ergo con informazioni non di default)
 int add_device_generale(char* execPath, NodoPtr procList, NodoPtr dispList, char* info){
@@ -75,6 +78,7 @@ int add_device(char* execPath, NodoPtr procList, NodoPtr dispList){
     id+=1;
     char info[16];
     sprintf(info, "default %d", id);
+    
     add_device_generale(execPath, procList, dispList, info);
     return 1;
 }

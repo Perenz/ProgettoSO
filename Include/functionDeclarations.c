@@ -8,6 +8,7 @@
 #include "addDevice.c"
 //#include "gestioneComandi.c"
 char* broadcast(NodoPtr procList, char** comando, char* comando_compatto);
+char* broadcast_list(NodoPtr procList, char** comando, char* comando_compatto);
 
 //Comandi centralina
 int cen_prova(char **args, NodoPtr procList, NodoPtr dispList);
@@ -105,20 +106,26 @@ void sign_cont_handler(int sig){
     Sintassi comunicata dalla centralina ai figli: l
 */
 int cen_list(char **args, NodoPtr procList, NodoPtr dispList){   
-    printList(dispList);     
+    //printList(dispList);     
     printf("Stampo la lista dei dispositivi tramite il loro pid:");
     //printList(procList);
-    char tmp[30];
     NodoPtr Nodo = procList;
     NodoPtr NodoS = dispList->next; //escludo il -1 dalla lista
     //printList(Nodo);
     printf("\n\tCen %d accesa\n", Nodo->data);
-
     //Escludo la centralina dal while e la stampo SINGOLARMENTE Modifica Paolo --> centralina non l'aggiungo
     Nodo = Nodo->next;
 
     signal(SIGCONT, sign_cont_handler);
+    char* comando = malloc(10);
+    sprintf(comando, "list");
+    char* answer = malloc(1000);
+    answer = broadcast_list(NodoS, NULL, comando);
+    
 
+    printf("%s", answer);
+
+    /*
     //TODO possibile metterlo in funzione "broadcast"
     while(Nodo != NULL){
         //TODO gestire errori
@@ -147,6 +154,7 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
         //strcat(msg,tmp);
         NodoS = NodoS->next;
     }
+    */
     
     return 1;
 }
@@ -173,15 +181,17 @@ int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
         char* comando = malloc(6 + strlen(args[1]) + 3);//6 per il comando + lunghezza id (args[1]) + 2 per spazi e terminazione stringa
         
         //tipo di comando
-        //problema: https://en.wikipedia.org/wiki/Joel_Spolsky#Schlemiel_the_Painter.27s_algorithm
         sprintf(comando, "delete %s", args[1]);
         printf("comando padre: %s\n", comando);
 
         char** u = malloc(100);
         char* answer = malloc(100);
         answer = broadcast(nodo, NULL, comando);
+
         if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
             removeNode(dispList, atoi(answer));
+        }else{//non ho trovato nessun dispositivo con quell'id
+            printf("Nessun elemento ha questo id\n");
         }
         //printf("%s\n", answer);
         
@@ -236,49 +246,32 @@ int cen_add(char **args, NodoPtr procList, NodoPtr dispList){
 //TODO
     //Cambiare sintassi <label> <stato>
 int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
-    //TODO cambiare controllo 
-    if(args[1]==NULL                                            //primo argomento diverso da id (errori, bisogna verificar sia un numero)
-        || (strcmp(args[2], "interruttore")!=0 && strcmp(args[2], "terminazione")!=0)//label
-        || (strcmp(args[3], "1")!=0 && strcmp(args[3], "0")!=0)){//stato                                                                    
+    //TODO cambiare controllo, potrei farlo nel dispositivo
+    if(args[1]==NULL){                                          //primo argomento diverso da id (errori, bisogna verificar sia un numero)
 
         printf("Argomenti non validi\n");
         printf("Utilizzo: switch <id> <label> <pos>\n");
         printf("Comando 'device' per vedere la lista di quelli disponibili\n");
         return 1;
     }else{
-        NodoPtr nodo = procList;
+        NodoPtr nodo = dispList;
         //Escludo la centralina dal while
         nodo = nodo->next;
         signal(SIGCONT, sign_cont_handler);
-        char* comando = malloc(7 + strlen(args[1]) + strlen(args[2]) + 4);//7 per il comando, 4 per spazi di sep. e la terminazione
-        
-        char* label = malloc(2);//2 caratteri: label + terminazione
-        //prendo solo l'iniziale del tipo per identificare il tipo di dispositivo
-            //t per termostato
-            //i per interruttore
-        label[0] = args[2][0];
-        label[1] = '\0';
+        char* comando = malloc(4 + strlen(args[1]) + strlen(args[2]) + strlen(args[3]));//7 per il comando, 4 per spazi di sep. e la terminazione
         //comando
         sprintf(comando, "switch %s %s %s", args[1], args[2], args[3]);
-        /*
-        strcat(comando,"switch ");
-        //id
-        strcat(comando,args[1]);
-        strcat(comando," ");
-        //label: interruttore o termostato //per ora solo iterruttore
-        strcat(comando, label);
-        strcat(comando," ");
-        //posizione accesa o spenta //per ora solo interruttore
-        strcat(comando, args[3]);
-        strcat(comando,"\0");
-        */
-        printf("scrittura lato padre: %s\n", comando);
+        //printf("scrittura lato padre: %s\n", comando);
 
         char* answer = broadcast(nodo, NULL, comando);
-        printf("Risposta switch: %s", answer);            
-        return 1; //esci che sennò va avanti
-    
-            
+        if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
+            printf("%s\n", answer);//stampiamo una qualche risposta daje
+        }else{//non ho trovato nessun dispositivo con quell'id
+            printf("Nessun elemento ha questo id o errore nel comando\n");        
+        }          
+        
+        
+        return 1; //esci che sennò va avanti    
     }
     printf("Device indicato non riconosciuto\n");
     printf("Utilizzo: del <device> <num>\n");
@@ -294,7 +287,7 @@ int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
 */
 int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
     //TODO POSSIBILE UNIRE CON LIST DATO CHE è MOLTO SIMILE
-    NodoPtr nodo = procList;
+    NodoPtr nodo = dispList;
     //Escludo la centralina dal while
     nodo = nodo->next;
 
@@ -304,8 +297,16 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
     char* comando = malloc(5 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
     //tipo di comando
     sprintf(comando, "info %s", args[1]);
-    printf("scrittura lato padre: %s\n", comando);
-    char* answer = broadcast(nodo, NULL, comando);    
+    //printf("scrittura lato padre: %s\n", comando);
+    char* answer = broadcast(nodo, NULL, comando); 
+
+    if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
+        printf("%s\n", answer);
+    }else{//non ho trovato nessun dispositivo con quell'id
+        printf("Nessun elemento ha questo id\n");        
+    }
+
+
     return 1; //esci che sennò va avanti    
 
 }
@@ -334,7 +335,7 @@ int cen_link(char** args, NodoPtr procList){
 
 
     memset(command_id1, 0, 20);
-    sprintf(command_id1, "delete %s", args[1]);
+    sprintf(command_id1, "d %s", args[1]);
     cen_delete(procList, NULL, command_id1);
 
     memset(command_id2, 0, 50);

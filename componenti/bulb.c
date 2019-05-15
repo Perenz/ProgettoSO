@@ -11,7 +11,6 @@
 //TODO tale verrà linkata nel gestore generale dei processi di interazione
 #include "../Include/gestioneComandi.c"
 
-#define ANSWER 32
 
 int dev_getinfo(char **args);
 int dev_delete(char **args);
@@ -19,8 +18,10 @@ int dev_switch(char **args);
 int dev_list(char **args);
 int dev_info(char **args);
 void get_info_string(char* ans);
+void set_time();
 
-time_t tempoTotale;
+time_t tempoUltimaMisurazione;
+double tempoSecondi;
 int status;
 
 //TODO : potrei usare un unico node
@@ -51,8 +52,10 @@ void sighandle_usr1(int sig){
         //proviamo a leggere
         //potrei passare anche la lunghezza del messaggio
         char str[CEN_BUFSIZE];
+        memset(str, 0, CEN_BUFSIZE);
         read(fd_read, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
         //printf("\n\tLettura da pipe %s  \n", str);
+        
         char** arg = splitLine(str);
         int errnum = device_handle_command(arg);
     }
@@ -64,7 +67,8 @@ int device_handle_command(char **args){
     }else if(strcmp(args[0],builtin_func[1])==0){//changestate
         return dev_switch(args);
     }else if(strcmp(args[0],builtin_func[2])==0){//list
-        return dev_list(args);
+        
+        return dev_list(args);   
     }else if(strcmp(args[0],builtin_func[3])==0){//delete
         return dev_delete(args);
     }
@@ -79,17 +83,31 @@ void signhandle_quit(int sig){
     0 se NON sono il dispositivo in cui ho modificato lo stato
     1 se sono il dispositivo in cui ho modificato lo stato
 */
+//MANCA CONTROLLO LABEL E STATO
 int dev_switch(char **args){
     int id_change = atoi(args[1]);
-    if(id_change == id){
-        status = atoi(args[3]);//TODO
-
-            printf("Status dispositivo Bulb %d : %d\n", id, status);  
+    printf("%d", id_change);
+    if(id_change == id && 
+        strcmp(args[2], "accensione")==0 &&
+        (strcmp(args[3], "on")==0 ||  strcmp(args[3], "off")==0)){
+        
+        set_time();
+        char* answer = malloc(ANSWER);
+        if(strcmp(args[3], "on")==0){
+            status = 1;
+        }else{//uguale a off dato dal controllo precedente
+            status = 0;
+        }
+        //aggiorna il time prima di cambiare lo status
+        get_info_string(answer);
+            printf("%s", answer); //debug 
             printf("\033[1;32m"); //scrivo in verde 
             printf("\tNon sono felice e non sono triste. È questo il dilemma della mia vita: non so come definire il mio stato d’animo, mi manca sempre qualcosa.");
             printf("\033[0m\n"); //resetto per scriver in bianco
 
-        int esito = write(fd_write, "1\0", 2);
+
+
+        int esito = write(fd_write, answer, ANSWER);
         kill(idPar,SIGCONT);
     }else{
         int esito = write(fd_write, "0\0", 2);//TODO
@@ -126,18 +144,31 @@ int dev_info(char **args){
         kill(idPar,SIGCONT);
     }else{
         int esito = write(fd_write, "0\0", 2);
-        printf("Non restituisce info dato che id non coincide\n");
+        //printf("Non restituisce info dato che id non coincide\n");
         kill(idPar,SIGCONT);
     }
     
     //famo ritornare l'errore poi
     return 1;
 }
-
+void set_time(){
+     if(status==1){
+        time_t tmp;
+        time(&tmp);
+        tempoSecondi += (difftime(tmp, tempoUltimaMisurazione));
+        //la lampadina è accesa
+        tempoUltimaMisurazione = tmp;
+    }else{//utilizzato per gestire il caso di cambio di stato
+        time(&tempoUltimaMisurazione);
+    }
+}
 void get_info_string(char* ans){//TODO aggiungere timer
+    set_time();
     memset(ans, 0, ANSWER);
     //<info> := <tipo> <pid???> <id> <status> <time>
-    sprintf(ans, "bulb %d %d %d\n", pid, id, status);//TODO aggiungere timer
+    char* status_string = malloc(4);
+    status_string = status==1? "on" : "off";
+    sprintf(ans, "bulb %d %d %s %.2f\n", pid, id, status_string, tempoSecondi);//TODO aggiungere timer
     //sprintf(ans, "Bulb %d %d", pid, id);
     //strcat(ans ,(status==1? " accesa\0":" spenta\0"));
     //printf(": %s", ans);
@@ -149,13 +180,7 @@ void set_info(char* info){
     if(strcmp(info_split[0], "default")==0){
         id = atoi(info_split[1]);
         status = 0; 
-        time(&tempoTotale);
-        time_t prova;
-        sleep(2);
-        time(&prova);
-        double diff = difftime(prova,tempoTotale);
-        printf("%f\n", diff);
-        
+        tempoSecondi = 0; 
     }else{
         //<info> := <tipo> <pid???> <id> <status> <time>
         tipo = info_split[0][0];
@@ -165,8 +190,8 @@ void set_info(char* info){
         }else{//spenta
             status = 0;
         }
-
-        //il tempo brother
+        time(&tempoUltimaMisurazione);
+        //tempoSecondi = atoi(info_split[4]);
     }
 }
 
@@ -199,7 +224,7 @@ int dev_delete(char **args){
     }else{
         sprintf(msg, "%d", 0);
         int esito = write(fd_write, msg, strlen(msg));
-        printf("Non eliminato dato che pid non coincide\n");
+        printf("\tNon eliminato dato che pid non coincide\n");
         kill(idPar,SIGCONT);
     }
     //famo ritornare l'errore poi
@@ -228,7 +253,7 @@ int main(int argc, char *args[]){
 
     printf("\nLampadina creata\n");
     printf("Id: %d\n", id);
-    printf("Pid: %d\nPid padre: %d\n", pid, idPar);
+    printf("Pid: %d\nPid padre: %d\n\n", pid, idPar);
 
     //Invio segnale al padre
     int ris = kill(idPar, SIGCONT); 

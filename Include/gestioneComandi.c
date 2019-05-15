@@ -7,8 +7,12 @@
 
 #define CEN_DELIM " \t\r\n\a"
 #define CEN_BUFSIZE 128
+#define ANSWER 32
+
 int ascolta_risposta(NodoPtr nodo, char* answer);
 char* broadcast(NodoPtr procList, char** comando, char* comando_compatto);
+char* broadcast_list(NodoPtr procList, char** comando, char* comando_compatto);
+
 #define BUFSIZE 128
 char* getLine(){
     char *cmd=NULL;
@@ -75,7 +79,7 @@ char* broadcast(NodoPtr procList, char** comando, char* comando_compatto){
     */
     NodoPtr nodo = procList;
     //char* answer = malloc(BUFSIZE);
-    char* answer = malloc(CEN_BUFSIZE);
+    char* answer = malloc(ANSWER);
     while(nodo != NULL){
         //TODO gestire errori
         write(nodo->fd_writer,comando_compatto, strlen(comando_compatto));
@@ -89,11 +93,12 @@ char* broadcast(NodoPtr procList, char** comando, char* comando_compatto){
             //printf("%s\n", answer);
             return answer;
         }
-        memset(answer, 0, CEN_BUFSIZE);
+        memset(answer, 0, ANSWER);
         //memset(tmp,0,30);
         //strcat(msg,tmp);
         nodo = nodo->next;
     }
+    return "0";
 }
 
 //nell'hub manda e concatena
@@ -103,30 +108,32 @@ char* broadcast_list(NodoPtr procList, char** comando, char* comando_compatto){
     char* comando_compatto = malloc(BUFSIZE);
     comando_compatto = compatta(comando);
     */
+    
     NodoPtr nodo = procList;
-    char* answer = malloc(BUFSIZE);
+    char* answer = malloc(ANSWER);
     char* list_answer = malloc(BUFSIZE*10);
+    memset(answer, 0, ANSWER);
+    memset(list_answer, 0, BUFSIZE*10);
     while(nodo != NULL){
         //TODO gestire errori
         write(nodo->fd_writer,comando_compatto,strlen(comando_compatto));
         kill(nodo->data, SIGUSR1);            
         //TODO
-        //pause();
-
-        //gestione read diversa per ogni comando
+        pause();
+        
         int err = ascolta_risposta(nodo, answer);
-        strcat(list_answer,"\n");
+        strcat(list_answer,"\t\t-");
         strcat(list_answer, answer);
-        //memset(tmp,0,30);
-        //strcat(msg,tmp);
+        memset(answer,0,ANSWER);
         nodo = nodo->next;
     }
+    //return "0";
     return list_answer;
 }
 
 //ritorna 0 se non trovato
 int ascolta_risposta(NodoPtr nodo, char* answer){
-    int temp = read(nodo->fd_reader, answer, CEN_BUFSIZE);
+    int temp = read(nodo->fd_reader, answer, ANSWER);
     if(strcmp(&answer[0], "0") != 0){
         return 1;
     }else{
