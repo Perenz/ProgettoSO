@@ -233,8 +233,7 @@ int cen_add(char **args, NodoPtr procList, NodoPtr dispList){
     //Cambiare sintassi <label> <stato>
 int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
     //TODO cambiare controllo, potrei farlo nel dispositivo
-    if(args[1]==NULL){                                          //primo argomento diverso da id (errori, bisogna verificar sia un numero)
-
+    if(args[1]==NULL || args[2]==NULL || args[3]==NULL){         //primo argomento diverso da id (errori, bisogna verificar sia un numero)
         printf("Argomenti non validi\n");
         printf("Utilizzo: switch <id> <label> <pos>\n");
         printf("Comando 'device' per vedere la lista di quelli disponibili\n");
@@ -252,12 +251,13 @@ int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
         char* answer = broadcast(nodo, NULL, comando);
         if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
             printf("%s\n", answer);//stampiamo una qualche risposta daje
+            free(comando);
+            free(answer);
         }else{//non ho trovato nessun dispositivo con quell'id
-            printf("Nessun elemento ha questo id o errore nel comando\n");        
+            printf("Nessun elemento ha questo id o errore nel comando\n");    
         }          
         
-        free(comando);
-        free(answer);
+        
         return 1; //esci che sennò va avanti    
     }
     printf("Device indicato non riconosciuto\n");
@@ -281,18 +281,22 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
     //TODOMARCELLO
     //da fare un secondo while o il metodo generale per la seconda lista
     signal(SIGCONT, sign_cont_handler);
-    char* comando = malloc(5 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
-    //tipo di comando
-    sprintf(comando, "i %s", args[1]);
-    //printf("scrittura lato padre: %s\n", comando);
-    char* answer = broadcast(nodo, NULL, comando); 
+    if(args[1] != NULL){
+        char* comando = malloc(5 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
+        //tipo di comando
+        sprintf(comando, "i %s", args[1]);
+        //printf("scrittura lato padre: %s\n", comando);
+        char* answer = broadcast(nodo, NULL, comando); 
 
-    if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
-        printf("%s\n", answer);
-        free(comando);
-        free(answer);
-    }else{//non ho trovato nessun dispositivo con quell'id
-        printf("Nessun elemento ha questo id\n");        
+        if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
+            printf("%s\n", answer);
+            free(comando);
+            free(answer);
+        }else{//non ho trovato nessun dispositivo con quell'id
+            printf("Nessun elemento ha questo id\n");        
+        }
+    }else{
+        printf("Inserire: info <id> \n");
     }
     
     return 1; //esci che sennò va avanti    

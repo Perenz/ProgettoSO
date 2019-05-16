@@ -85,7 +85,15 @@ int dev_info(char **args){
     dev_info_gen(args, id, idPar, fd_write);
 }
 void set_time(){
-    set_time_gen(status, tempoSecondi, tempoUltimaMisurazione);
+    if(status==1){
+        time_t tmp;
+        time(&tmp);
+        tempoSecondi += (difftime(tmp, tempoUltimaMisurazione));
+        //la lampadina è accesa
+        tempoUltimaMisurazione = tmp;
+    }else{//utilizzato per gestire il caso di cambio di stato
+        time(&tempoUltimaMisurazione);
+    }
 }
 //COMANDO d <pid>
 /*restituisco in pipe:
@@ -122,6 +130,7 @@ int device_handle_command(char **args){
 //MANCA CONTROLLO LABEL E STATO
 int dev_switch(char **args){
     int id_change = atoi(args[1]);
+    printf("FRATELLIIIOOOOOO");
     printf("%d", id_change);
     if(id_change == id && 
         strcmp(args[2], "accensione")==0 &&

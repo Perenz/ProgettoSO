@@ -76,17 +76,7 @@ int dev_list_gen(char **args, int idPar, int fd_write){
     return 1;
 }
 
-void set_time_gen( int status, double tempoSecondi, time_t tempoUltimaMisurazione){
-     if(status==1){
-        time_t tmp;
-        time(&tmp);
-        tempoSecondi += (difftime(tmp, tempoUltimaMisurazione));
-        //la lampadina è accesa
-        tempoUltimaMisurazione = tmp;
-    }else{//utilizzato per gestire il caso di cambio di stato
-        time(&tempoUltimaMisurazione);
-    }
-}
+
 
 //COMANDO d <pid>
 /*restituisco in pipe:

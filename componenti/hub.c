@@ -18,7 +18,7 @@ NodoPtr dispList; //lista dei dispositivi collegati all'hub
 pid_t idPar;
 pid_t pid;
 int id;
-int status;
+int status; //1 acceso, 0 spento
 //File descriptor in cui il figlio legge e il padre scrive
 int fd_read;
 //File descriptor in cui il figlio scrive e il padre legge
@@ -38,11 +38,11 @@ void signhandle_quit(int sig){
 }
 
 char *builtin_func[]={
-    "list",//list
-    "switch",//changeState
-    "info",//getInfo
-    "delete", //delete
-    "link" //addDevice
+    "l",//list
+    "s",//changeState
+    "i",//getInfo
+    "d", //delete
+    "a" //addDevice    da cambiare scegliendo lettera corrispondente
 };
 
 void sign_cont_handler(int sig){
@@ -58,15 +58,16 @@ void sighandle_usr1(int sig){
         //proviamo a leggere
         //potrei passare anche la lunghezza del messaggio
         char str[CEN_BUFSIZE];
+        memset(str, 0, CEN_BUFSIZE);
         read(fd_read, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
         //printf("\n\tLettura da pipe %s  \n", str);
         char** arg = splitLine(str);
         int errnum = device_handle_command(arg);
+        printf("Hub finito SIGUSR1");
     }
 }
 int device_handle_command(char **args){
     //da fare come in functionDeclarations in file dispositivi
-    
     if(strcmp(args[0],builtin_func[0])==0 || strcmp(args[0],builtin_func[2])==0){//list o getinfo
         return dev_getinfo(args);
     }else if(strcmp(args[0],builtin_func[1])==0){//switch
@@ -96,9 +97,9 @@ int dev_changestate(char **args){
         
         per un'altra idea vedi functionDeclaration in metodo cen_switch
         */ 
-        status = atoi(args[3]);
+        status = (strcmp(args[3],"on")==0?1:0);
         printf("%s\n", args[3]);
-        printf("Status dispositivo Hub %d : %d\n", id, status);  
+        printf("Status dispositivo Hub %d : %s\n", id, (status==1?"acceso":"spento"));  
         printf("\033[1;32m"); //scrivo in verde 
         printf("\tNon sono felice e non sono triste. È questo il dilemma della mia vita: non so come definire il mio stato d’animo, mi manca sempre qualcosa.");
         printf("\033[0m\n"); //resetto per scriver in bianco
@@ -125,8 +126,9 @@ int dev_changestate(char **args){
 */
 int dev_getinfo(char **args){
     char* str = malloc(128);
+    printf("wewewewewe");
     if(args[0][0] == 'l'){//list
-        
+        printf("we cumpaa");
         sprintf(str, "%d Hub %d", pid, id);
         strcat(str ,(status==1?" accesa\n":" spenta\n"));
         NodoPtr Nodo = dispList;
@@ -368,6 +370,7 @@ int dev_link(char** command){
                 char* temp = malloc(10);
                 sprintf(temp, "%s", command[5]);
                 sprintf(info, "%d %d %s %.2f", atoi(command[3]), atoi(command[4]), temp, atof(command[6])); 
+                free(temp);
             }
             else if(command[3] == "w"){}
                 //{}
@@ -421,7 +424,7 @@ int main(int argc, char **args){
     pid = getpid(); // chiedo il mio pid
     idPar = getppid(); //chiedo il pid di mio padre
     dispList = listInit(getpid());
-    id = atoi(args[3]);
+    id = atoi(args[5]);
     //0 spenta
     //1 accesa
     status = 0; //equivalente a quello dei dispositivi collegati
