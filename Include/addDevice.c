@@ -50,8 +50,7 @@ int add_device_generale(char* execPath, NodoPtr list, char* info){
     pipe(fd_writer);
     pid=fork();
     if(pid == 0) {
-        // Child process
-        //TODO modifica fdTmp
+        printf("queste sono le info: %s", info);
         
         char fd_writer_Tmp[10];
         char fd_reader_Tmp[10];

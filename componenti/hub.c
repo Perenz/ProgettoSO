@@ -358,23 +358,24 @@ int dev_link(char** command){
         
         
         //se c'è default devo soltanto aggiungere il device senza preoccuparmi delle info ed è uguale per tutti
-        if(command[3] == "default"){
+        if(strcmp(command[3],"default") == 0){
             sprintf(info, "default %d", atoi(command[4]));
             for(int i=0; i<device_number(); i++){
             if(strcmp(command[3], builtin_device[i])==0)//non so in che posizione ci sia il tipo penso 3
                     return dev_add(bultin_dev_path[i], info);
             }
         }//se invece non c'è default controllo il dispositivo
+        //TODO DA CAMBIARE CON strkat
         else{ // in base al dispositivo so quanti parametri ha per le info e di conseguenza so quante info devo passare
-            if(command[3] == "b"){
+            if(strcmp(command[3], "b")==0){
                 char* temp = malloc(10);
                 sprintf(temp, "%s", command[5]);
                 sprintf(info, "%d %d %s %.2f", atoi(command[3]), atoi(command[4]), temp, atof(command[6])); 
                 free(temp);
             }
-            else if(command[3] == "w"){}
+            else if(strcmp(command[3],"w")==0 ){}
                 //{}
-            else if(command[3] == "f"){}
+            else if(strcmp(command[3], "f")==0) {}
                 //
             for(int i=0; i<device_number(); i++){
                 if(strcmp(command[3], builtin_device[i])==0)//non so in che posizione ci sia il tipo penso 3
@@ -391,10 +392,13 @@ int dev_link(char** command){
         
         while(Nodo != NULL){ 
             //scrivo il comando sulla pipe
+
+            /*MARCELLO TI DA WARNING PERCHè MANDI IN PIPE UN char** CHE DAREBBE UN ERROR A RUNTIME
             write(Nodo->fd_writer, command, strlen(command)); // come risolvere questo warning???
+            
             //mando un segnale al figlio così si risveglia e legge il contenuto della pipe
             kill(Nodo->data, SIGUSR1);
-                
+             */   
             //TODO gestione errori
             //leggo il pid del figlio così da poterlo togliere dalla lista di processi
             char* answer = malloc(30);
@@ -410,10 +414,12 @@ int dev_link(char** command){
             Nodo = Nodo->next;
         }
     }
+    return 1;
 }
 
 int dev_add(char* execPath, char* info){
     //add_device_generale(execPath, NULL, dispList, info);
+    return 1;
 }
 
 
@@ -424,6 +430,7 @@ int main(int argc, char **args){
     pid = getpid(); // chiedo il mio pid
     idPar = getppid(); //chiedo il pid di mio padre
     dispList = listInit(getpid());
+    //MANCA IL SET_INFO, sbaglia l'id
     id = atoi(args[5]);
     //0 spenta
     //1 accesa

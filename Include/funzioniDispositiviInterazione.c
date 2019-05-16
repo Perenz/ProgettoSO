@@ -1,12 +1,16 @@
 #include <signal.h>
 #include <time.h>
+#include "gestioneComandi.c"
+
+
 #define CEN_BUFSIZE 128
 #define ANSWER 32
-
-
-
-
-
+//PER ORA LE DEFINISCO QUI, POI VERRA FATTA UNA LIBRARY
+void sighandle1(int sig, int fd_read);
+void sighandle2(int sig, int fd_manuale);
+int dev_info_gen(char **args, int id, int idPar, int fd_write);
+int dev_list_gen(char **args, int idPar, int fd_write);
+int dev_delete_gen(char **args, int pid, int id, int idPar, int fd_write);
 
 
 //TODO I due handler sono compattabili in uno unico con controllo del tipo di segnale appena prima del read
@@ -47,6 +51,7 @@ int dev_info_gen(char **args, int id, int idPar, int fd_write){
     int id_info = atoi(args[1]);
     if(id == id_info){
         char* ans = malloc(ANSWER);
+        //MARCELLO SEI UN ZEBI, INFO ZEBI, INFO DEVI PASSARGLIELO COME PARAMETRO
         get_info_string(ans);
         int esito = write(fd_write, ans, strlen(ans)+1);
         //free(ans);

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "include/start.c"
+#include "Include/start.c"
 
 void sigusr2_handler(int sig){
     //printf("Sono nel signal handler della centralina\n");

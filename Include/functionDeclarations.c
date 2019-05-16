@@ -298,23 +298,20 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
 
     char* command_id1;
     char* command_id2;
-    char* answer_id1;
-    char* answer_id2;
+    char* answer_id1 = malloc(ANSWER);
+    char* answer_id2 = malloc(ANSWER);
     command_id1 = malloc(50);//TODO
     answer_id1 = malloc(50);
     //caso 1
 
-    NodoPtr node = dispList;
     if(atoi(args[3]) == 2){ //uguaglianza con id centralina
         
         
         char** splitted_answer_id1;
         memset(command_id1, 0, 50);
         sprintf(command_id1, "i %s", args[1]);
-        
-        
-        char* answer_id1 = broadcast(node, NULL, command_id1);//mando a dispList, non a procList
-        printf("%s\n", answer_id1);
+        answer_id1 = broadcast(dispList, NULL, command_id1);//mando a dispList, non a procList
+        //printf("%s\n", answer_id1);
         //verifico la condizione a1 (vedi sopra)
         if(strcmp(answer_id1, "0")!=0){//non mi interessa se esso è un hub o una lampadina, basta che esista
             splitted_answer_id1 = splitLine(answer_id1);
@@ -324,20 +321,17 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
             int err = getNode(dispList, pid_id1, &nodo_rimuovere);
             if(err!= -1){//non c'è stato errore
                 spostaNode(dispList, procList, nodo_rimuovere);
-                printf("\n\n");
+                printf("Link riuscito\n\n");
             }else{
-                printf("Porco cazzo\n");
+                printf("Qualcosa non ha funzionato\n");
             }
         }else{//significa che l'id1 non esiste in dispList
-            //devo provare con procList
-            printf("sono qui\n");
-            
+            //devo provare con procList            
             //memset(answer_id1, 0, 50);
             
-            node = procList->next; //salto la centralina
-            printList(node);
-            char* answer_id1 = broadcast(node, NULL, command_id1);//mando a procList
-            printf("%s\n", answer_id1);
+
+            //memset(answer_id1, 0, ANSWER);//possiamo aspettarci risposte molto grandi, attenz
+            answer_id1 = broadcast(procList, NULL, command_id1);//mando a procList
             if(strcmp(answer_id1, "0")!=0){//esiste
                 //int pid_id1 = atoi(splitted_answer_id1[1]);
                 //voglio ogni funzione chiamabile con parametro node, non con doppio fottuto parametro
@@ -345,16 +339,21 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
                 //se è un dispositivo di controllo esso si porterà dietro altrettanti dispositivi che dobbiamo ricreare
                 
                 //Passo l'id ed elimino il dispositivo con tale id
-                cen_delete(&args[0], node, NULL);
-                //splitted_answer_id1 = splitLine(answer_id1);
+                sprintf(command_id1, "delete %s", args[1]); //TODO fare che accetti anche direttamente una stringa
+                cen_delete_generale(splitLine(command_id1), procList);
 
-                char* tmp = strtok(answer_id1, "\n");
-                printf(": %s\n", tmp);
-                char** tmp_mat = splitLine(tmp);
-                
+
+                //tengo il tipo del dispositivo da aggiungere 
+                //
+
+                char* tipo_dispositivo[1];
+                //è per verificare che funzioni
+                tipo_dispositivo[0] = "bulb";
+                //aggiungo tale tipo di dispositivo passandogli le info
                 for(int i=0; i<device_number(); i++){
-                    if(strcmp(tmp_mat[0], builtin_device[i])==0)
-                        return add_device_generale(bultin_dev_path[i], procList, tmp);
+                    if(strcmp(tipo_dispositivo[0], builtin_device[i])==0){
+                        return add_device_generale(bultin_dev_path[i], procList, answer_id1);
+                    }
                 }
                 
                 //add_device_generale(tmp, procList, dispList);

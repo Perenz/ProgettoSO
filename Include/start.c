@@ -32,6 +32,8 @@ int lanciaGetCenPid(){
         //parent code
         return pid;
     }
+    //toglie il warning gg
+    return 1;
 }
 
 int cen_processCmd(char **command, NodoPtr procList, NodoPtr dispList){
@@ -84,6 +86,7 @@ int cen_start(){
     }while(status);
 
     kill(supportReadPid, SIGQUIT);
+    return 1;
 }
 
 
