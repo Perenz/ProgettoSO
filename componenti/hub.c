@@ -137,10 +137,12 @@ int dev_getinfo(char **args){
             kill(Nodo->data, SIGUSR1);            
             //TODO
             //pause();
-            int temp = read(Nodo->fd_reader,str,30);
+            char* temp = malloc(10);
+            temp = (char*)read(Nodo->fd_reader,str,30);
             //memset(tmp,0,30);
             //strcat(msg,tmp);            printf("\t%s", str);
             strcat(str, temp);
+            free(temp);
             Nodo = Nodo->next;
         }
 
@@ -165,10 +167,12 @@ int dev_getinfo(char **args){
                 kill(Nodo->data, SIGUSR1);            
                 //TODO
                 //pause();
-                int temp = read(Nodo->fd_reader,str,30);
+                char* temp =malloc(10);
+                temp = (char*)read(Nodo->fd_reader,str,30);
                 //memset(tmp,0,30);
                 //strcat(msg,tmp);            printf("\t%s", str);
                 strcat(str, temp);
+                free(temp);
                 Nodo = Nodo->next;
             }
             int esito = write(fd_write, msg, strlen(msg));
@@ -190,10 +194,13 @@ int dev_getinfo(char **args){
                 kill(Nodo->data, SIGUSR1);            
                 //TODO
                 //pause();
-                int temp = read(Nodo->fd_reader,str,30);
+                char* temp = malloc(10);
+                temp = (char*)read(Nodo->fd_reader,str,30);
                 //memset(tmp,0,30);
                 //strcat(msg,tmp);            printf("\t%s", str);
                 if(strcmp(temp, "0")!=0){
+                    free(temp);
+                
                     return 1;
                 } 
                 Nodo = Nodo->next;
@@ -244,8 +251,11 @@ int dev_delete(char **args){
             //id dispositivo da spegnere
 
             ////////////////////////
-            strcat(tmp, Nodo->data);  //probabile da sistemare e passare un array di char e non un intero?
+            char* temp = malloc(10);
+            sprintf(temp, "%d",Nodo->data);
+            strcat(tmp, temp);  //probabile da sistemare e passare un array di char e non un intero?
             ////////////////////////
+            free(temp);
 
             //delimitatore 
             strcat(tmp, "\0");
@@ -339,7 +349,7 @@ int dev_delete(char **args){
 //ho messo i : perché così riesco a dividere il comando in due parti
 //voglio le info uniche non diviso
 int dev_link(char** command){
-    if(command[2] == id){ // se sono io il dispositivo di controllo a cui va attaccato il nuovo dispositivo
+    if(atoi(command[2]) == id){ // se sono io il dispositivo di controllo a cui va attaccato il nuovo dispositivo
         
         char info[16]; //assegno ad info le informazioni prese da command -> non so in che ordine siano quindi aspetto
         //sprintf(info, "%d %d %s %.2f", command[3]); // basta verificare di che tipo è il dispositivo per sapere quante info devo leggere
@@ -347,15 +357,18 @@ int dev_link(char** command){
         
         //se c'è default devo soltanto aggiungere il device senza preoccuparmi delle info ed è uguale per tutti
         if(command[3] == "default"){
-            sprintf(info, "default %d", command[4]);
+            sprintf(info, "default %d", atoi(command[4]));
             for(int i=0; i<device_number(); i++){
             if(strcmp(command[3], builtin_device[i])==0)//non so in che posizione ci sia il tipo penso 3
                     return dev_add(bultin_dev_path[i], info);
             }
         }//se invece non c'è default controllo il dispositivo
         else{ // in base al dispositivo so quanti parametri ha per le info e di conseguenza so quante info devo passare
-            if(command[3] == "b")
-                sprintf(info, "%d %d %s %.2f", command[3], command[4], command[5], command[6]); 
+            if(command[3] == "b"){
+                char* temp = malloc(10);
+                sprintf(temp, "%s", command[5]);
+                sprintf(info, "%d %d %s %.2f", atoi(command[3]), atoi(command[4]), temp, atof(command[6])); 
+            }
             else if(command[3] == "w"){}
                 //{}
             else if(command[3] == "f"){}
@@ -375,7 +388,7 @@ int dev_link(char** command){
         
         while(Nodo != NULL){ 
             //scrivo il comando sulla pipe
-            write(Nodo->fd_writer, command, strlen(command));
+            write(Nodo->fd_writer, command, strlen(command)); // come risolvere questo warning???
             //mando un segnale al figlio così si risveglia e legge il contenuto della pipe
             kill(Nodo->data, SIGUSR1);
                 
