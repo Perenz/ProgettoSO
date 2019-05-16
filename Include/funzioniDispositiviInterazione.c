@@ -32,7 +32,6 @@ void sighandle2(int sig, int fd_manuale){
         char str[CEN_BUFSIZE];
         //printf("Leggo dalla fifo manale\n");
         read(fd_manuale, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
-        printf("\n\tLettura da pipe %s  \n", str);
         char** arg = splitLine(str);
         int errnum = device_handle_command(arg);
     }
