@@ -21,6 +21,9 @@ typedef struct Nodo{
 
 typedef Nodo* NodoPtr;
 
+NodoPtr removeHead(NodoPtr list);
+
+void removeNode(NodoPtr list, int data);
 NodoPtr listInit(int);
 void printList(NodoPtr);
 NodoPtr insertLast(NodoPtr list, int data, int fd_reader,int fd_writer);

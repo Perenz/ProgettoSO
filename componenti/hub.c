@@ -38,11 +38,11 @@ void signhandle_quit(int sig){
 }
 
 char *builtin_func[]={
-    "list",//list
-    "switch",//changeState
-    "info",//getInfo
-    "delete", //delete
-    "link" //addDevice
+    "l",//list
+    "s",//changeState
+    "i",//getInfo
+    "d", //delete
+    "a" //addDevice
 };
 
 void sign_cont_handler(int sig){
@@ -58,6 +58,8 @@ void sighandle_usr1(int sig){
         //proviamo a leggere
         //potrei passare anche la lunghezza del messaggio
         char str[CEN_BUFSIZE];
+        memset(str, 0, CEN_BUFSIZE);
+        printf("\n\tLettura da pipe sig1 %s  \n", str);
         read(fd_read, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
         //printf("\n\tLettura da pipe %s  \n", str);
         char** arg = splitLine(str);
@@ -397,7 +399,7 @@ int dev_link(char** command){
 }
 
 int dev_add(char* execPath, char* info){
-    add_device_generale(execPath, NULL, dispList, info);
+    //add_device_generale(execPath, NULL, dispList, info);
 }
 
 
@@ -421,7 +423,7 @@ int main(int argc, char **args){
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
 
 
-    printf("\nHub creato\n");
+    printf("\nHub creato: id: %d\n", id);
     printf("Pid: %d\nPid padre: %d\n", pid, idPar);
 
     //Invio segnale al padre

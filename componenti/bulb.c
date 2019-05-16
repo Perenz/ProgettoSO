@@ -65,7 +65,7 @@ void sighandle_usr1(int sig){
         char str[CEN_BUFSIZE];
         memset(str, 0, CEN_BUFSIZE);
         read(fd_read, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
-        //printf("\n\tLettura da pipe sig1 %s  \n", str);
+        
         
         char** arg = splitLine(str);
         int errnum = device_handle_command(arg);
@@ -279,11 +279,8 @@ int dev_delete(char **args){
         //TODO trovare un altro metodo
        
         sprintf(msg, "%d", pid);//pid inteso come pid
+
         int esito = write(fd_write, msg, strlen(msg)+1);
-        
-            printf("\033[1;31m"); //scrivo in rosso 
-            printf("\x1b[ \n\t«Dio mio, Dio mio, perché mi hai abbandonato?»\n");
-            printf("\033[0m\n"); //resetto per scriver in bianco
         free(msg);
         kill(idPar,SIGCONT);
 
@@ -309,7 +306,7 @@ int main(int argc, char *args[]){
     fd_write = atoi(args[2]);  
     
     set_info(args[3]);
-
+    //qui
 
     signal(SIGINT, sighandle_int);
     signal(SIGQUIT, signhandle_quit);

@@ -9,7 +9,7 @@
 #define CEN_BUFSIZE 128
 
 NodoPtr procList = NULL; //lista dei dispositivi collegati 
-NodoPtr dispList = NULL; //lista dei dispositivi disponibili (aggiunti ma non collegati a niente)
+NodoPtr dispList; //lista dei dispositivi disponibili (aggiunti ma non collegati a niente)
 
 int cen_processCmd(char **command, NodoPtr, NodoPtr);
 char* cen_getLine();
@@ -59,7 +59,8 @@ int cen_start(){
     
     //Inserisco nella lista il pid corrente indicante la centraline stessa
     procList = listInit(getpid());
-    dispList = listInit(-1);//FUCKMARCELLO 
+    //dispList = listInit(-1);//FUCKMARCELLO 
+    dispList = listInit(0);
 
     //Lancio i processi di supporto
     //getCenPid che comunica tramite FIFO con manuale.c

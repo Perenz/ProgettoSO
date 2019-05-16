@@ -1,5 +1,12 @@
 #include "listH.h"
 
+NodoPtr listInitStart(){
+    NodoPtr toRtn = malloc(sizeof(Nodo));
+    toRtn->data = 0;
+    toRtn->next = NULL;
+    return toRtn;
+}
+
 NodoPtr listInit(int data){
     NodoPtr toRtn = malloc(sizeof(Nodo));
     toRtn->data=data;
@@ -7,8 +14,6 @@ NodoPtr listInit(int data){
 
     return toRtn;
 }
-
-
 void printList(NodoPtr list){
     while(list != NULL){
         printf("%d ", list->data);
@@ -17,29 +22,6 @@ void printList(NodoPtr list){
     }
     printf("\n");
 }
-/*
-//stampa i dispositivi disponibili cioè quelli ancora non linkati
-void printDispList(NodoPtr list){
-    printf("Stampa dispositivi disponibili: \n");
-    while(list != NULL){
-        if(list->linked == 0)
-            printf("%d ", list->data);  
-        list=list->next;
-    }
-    printf("\n");
-}
-//stampa i dispositivi attivi cioè quelli attivi
-void printLinkedList(NodoPtr list){
-    printf("Stampa dispositivi attivi: \n");
-    while(list != NULL){
-        if(list->linked != 0)
-            printf("%d ", list->data);  
-        list=list->next;
-    }
-    printf("\n");
-}
-*/
-
 //Dealloco tutta ma meoria allocata dinamicamente per i nodi della lista
 void freeList(NodoPtr list){
     NodoPtr node;
@@ -72,23 +54,38 @@ NodoPtr insertLast(NodoPtr list, int data, int fd_reader,int fd_writer){
     tmp->fd_writer=fd_writer;
     tmp->linked = 0;
     n->next=tmp;
+
     return list;
 }
 
+
 //da sistemare
 void removeNode(NodoPtr list, int data){
+
+        ////////da sistemare, non toglie il primo, per ora risolvo facendo che il primo ha 0 e o bona
+
+
     if(list != NULL){//controllo che la lista non sia vuota
         NodoPtr nodo = list;
         NodoPtr tmp = nodo->next;
         if(tmp == NULL){//La lista ha un elemento
-            
+            /*
+            if(list->data == data){
+                list->data = 0;
+                return;
+            }
+            */
         }else{//la lista ha più di un elemento
+        /*
+            if(list->data == data){//il primo elemento è quello da togliere
+
+            }*/
             while(tmp != NULL){
                 if(tmp->data == data){
                     
                     nodo->next = tmp->next;
                     free(tmp);
-                    //printList(list);
+                    printList(list);
                     return;
                 }
                 nodo = nodo->next;
@@ -98,23 +95,15 @@ void removeNode(NodoPtr list, int data){
         }
 
     }
+
 }
 
+
+
+
 void spostaNode(NodoPtr listSrc, NodoPtr listDest, Nodo obj){
-    /*
-    printf("DISP LIST\n\n\t");
-    printList(listSrc);
-    printf("PROC LIST\n\n\t");
-    printList(listDest);
-    */
     removeNode(listSrc, obj.data);
     insertLast(listDest, obj.data, obj.fd_reader, obj.fd_writer);
-    /*
-    printf("DISP LIST\n\n\t");
-    printList(listSrc);
-     printf("PROC LIST\n\n\t");
-    printList(listDest);
-    */
 }
 
 int getNode(NodoPtr list, int pid, Nodo* nodo_return){
