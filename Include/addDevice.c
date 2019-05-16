@@ -7,7 +7,7 @@
 int id = 2;
 
 int add_device(char*, NodoPtr, NodoPtr);
-int add_device_generale(char* execPath, NodoPtr procList, NodoPtr dispList, char* info);
+int add_device_generale(char* execPath, NodoPtr list, char* info);
 void sign_handler(int);
 //device list
 char *builtin_device[]={
@@ -40,7 +40,7 @@ void sign_handler(int sig){
 
 //add device generale che viene chiamato dai dispositivi di controllo per "aggiungere"
 //un dispositivo che già esisteva (ergo con informazioni non di default)
-int add_device_generale(char* execPath, NodoPtr procList, NodoPtr dispList, char* info){
+int add_device_generale(char* execPath, NodoPtr list, char* info){
     //info verrà gestito da ogni 
     pid_t pid, wpid;
     int fd_reader[2];
@@ -65,7 +65,7 @@ int add_device_generale(char* execPath, NodoPtr procList, NodoPtr dispList, char
     } 
     else{
         signal(SIGCONT, sign_handler);
-        insertLast(dispList, pid, fd_reader[0],fd_writer[1]);
+        list = insertLast(list, pid, fd_reader[0],fd_writer[1]);
         //Vado in pausa per permettere al figlio di generarsi
         pause();
             
@@ -80,7 +80,7 @@ int add_device(char* execPath, NodoPtr procList, NodoPtr dispList){
     char info[16];
     sprintf(info, "default %d", id);
     
-    add_device_generale(execPath, procList, dispList, info);
+    add_device_generale(execPath, dispList, info);
     return 1;
 }
 

@@ -245,7 +245,7 @@ int main(int argc, char *args[]){
     fd_write = atoi(args[2]);  
     
     set_info(args[3]);
-
+    //qui
 
     signal(SIGINT, sighandle_int);
     signal(SIGQUIT, signhandle_quit);

@@ -413,7 +413,7 @@ int dev_link(char** command){
 }
 
 int dev_add(char* execPath, char* info){
-    add_device_generale(execPath, NULL, dispList, info);
+    //add_device_generale(execPath, NULL, dispList, info);
 }
 
 
@@ -437,7 +437,7 @@ int main(int argc, char **args){
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
 
 
-    printf("\nHub creato\n");
+    printf("\nHub creato: id: %d\n", id);
     printf("Pid: %d\nPid padre: %d\n", pid, idPar);
 
     //Invio segnale al padre
