@@ -10,6 +10,7 @@
 #define myFIFO "/tmp/miaFifo"
 
 void signhandle_quit(int sig){
+    remove(myFIFO);
     _exit(0);
 }
 
@@ -43,9 +44,10 @@ int main(){
             //Cioe il ppid di tale processo
             sprintf(msg, "%d", cenPid);
             write(fd, msg, strlen(msg)+1);
+            //Chiudo in scrittura
             close(fd);
         }
-        memset(msg,0,10);
+        memset(msg,0,10); //Resetto il buffer del messaggio
     }
     
     exit(0);

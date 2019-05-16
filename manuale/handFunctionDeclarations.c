@@ -118,6 +118,7 @@ int hand_exit(char **args, int *cenPid){
 int hand_release(char **args, int *cont, int idCont){
     *cont=0;
     //TODO da fare la chiusura e la rimozione della fifo
+    //Va fatta lato dispositivo
     return 1;
 }
 
@@ -152,7 +153,7 @@ int hand_switch(char **args, int *cont, int idCont){
         //Chiudo la Fifo in scrittura
         close(fdManual);
         //TODO
-        
+
         //risposta da parte del dispositivo: 1 trovato, 0 non sono io
             //un'altra possibile risposta potrebbe essere: 
             // <dettagli disp> <id> <pid> <stato interruttore> 
