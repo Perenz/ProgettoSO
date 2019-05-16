@@ -13,12 +13,12 @@
 #define CEN_DELIM " \t\r\n\a"
 #define CEN_BUFSIZE 128
 #define ANSWER 32
+#define BUFSIZE 128
 
 int ascolta_risposta(NodoPtr nodo, char* answer);
 char* broadcast(NodoPtr procList, char** comando, char* comando_compatto);
 char* broadcast_list(NodoPtr procList, char** comando, char* comando_compatto);
 
-#define BUFSIZE 128
 char* getLine(){
     char *cmd=NULL;
     //Dimensione buffer per riallocazione
@@ -38,7 +38,7 @@ char* getLine(){
 //Restituita una stringa la funzione la splitta in
 //diverse stringhe secondo i delimitatori specificati
 //nella macro CEN_DELIM
-char** splitLine(char *line){
+char** splitLine(char* line){
     int pos=0, bufS = CEN_BUFSIZE;
     char **commands = malloc(bufS * sizeof(char));
     char *cmd;

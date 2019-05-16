@@ -8,11 +8,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
 #include <time.h>
+#include "../Include/gestioneComandi.c"
+
+
 //ho spostato i metodi getLine e splitLine in una nuova libreria 
 //TODO tale verrà linkata nel gestore generale dei processi di interazione
-#include "../Include/gestioneComandi.c"
+
 
 
 int dev_getinfo(char **args);
@@ -25,6 +27,8 @@ int dev_list(char **args);
 int dev_info(char **args);
 void get_info_string(char* ans);
 void set_time();
+int device_handle_command(char **args);
+#include "../Include/funzioniDispositiviInterazione.c"
 
 time_t tempoUltimaMisurazione;
 double tempoSecondi;
@@ -42,49 +46,64 @@ pid_t idPar;
 pid_t pid;
 int id;
 
-int device_handle_command(char **args);
+
 char *builtin_func[]={
         "l",//list
         "s",//changeState
         "i",//getInfo
-        "d", //delete
+        "d",//delete
         "im"//getInfoManual
 };
+
 void sighandle_int(int sig) {
     if(sig==SIGQUIT)
         _exit(0);      
     //pause();
 }
-
-//TODO I due handler sono compattabili in uno unico con controllo del tipo di segnale appena prima del read
-//SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
+void signhandle_quit(int sig){
+    if(sig==SIGQUIT)
+        _exit(0);
+}
 void sighandle_usr1(int sig){
-    if(sig == SIGUSR1){
-        //proviamo a leggere
-        //potrei passare anche la lunghezza del messaggio
-        char str[CEN_BUFSIZE];
-        memset(str, 0, CEN_BUFSIZE);
-        read(fd_read, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
-        
-        
-        char** arg = splitLine(str);
-        int errnum = device_handle_command(arg);
-        //free arg bro
+    sighandle1(sig, fd_read);
+}
+void sighandle_usr2(int sig){
+    sighandle2(sig, fd_manuale);
+}
+//COMANDO   l
+/*restituisce in pipe
+    se comando è l: <informazioni>
+*/
+int dev_list(char **args){
+    dev_list_gen(args, idPar, fd_write);
+}
+//COMANDO   info <id>
+/*restituisce in pipe
+    <info> := <tipo> <pid???> <id> <status> <time>
+*/
+int dev_info(char **args){
+    dev_info_gen(args, id, idPar, fd_write);
+}
+void set_time(){
+    if(status==1){
+        time_t tmp;
+        time(&tmp);
+        tempoSecondi += (difftime(tmp, tempoUltimaMisurazione));
+        //la lampadina è accesa
+        tempoUltimaMisurazione = tmp;
+    }else{//utilizzato per gestire il caso di cambio di stato
+        time(&tempoUltimaMisurazione);
     }
+}
+//COMANDO d <pid>
+/*restituisco in pipe:
+    0 se NON sono il dispositivo da eliminare
+    pid se sono il dispositivo da eliminare
+*/
+int dev_delete(char **args){
+    dev_delete_gen(args, pid, id, idPar, fd_write);
 }
 
-void sighandle_usr2(int sig){
-    if(sig == SIGUSR2){
-        //proviamo a leggere
-        //potrei passare anche la lunghezza del messaggio
-        char str[CEN_BUFSIZE];
-        //printf("Leggo dalla fifo manale\n");
-        read(fd_manuale, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
-        printf("\n\tLettura da pipe %s  \n", str);
-        char** arg = splitLine(str);
-        int errnum = device_handle_command(arg);
-    }
-}
 
 int device_handle_command(char **args){
     //da fare come in functionDeclarations in file dispositivi
@@ -101,9 +120,7 @@ int device_handle_command(char **args){
     }
     return 1;
 }
-void signhandle_quit(int sig){
-    _exit(0);
-}
+
 
 //COMANDO switch <id> <label> <stato:on/off>
 /*restituisco in pipe:
@@ -113,6 +130,7 @@ void signhandle_quit(int sig){
 //MANCA CONTROLLO LABEL E STATO
 int dev_switch(char **args){
     int id_change = atoi(args[1]);
+    printf("FRATELLIIIOOOOOO");
     printf("%d", id_change);
     if(id_change == id && 
         strcmp(args[2], "accensione")==0 &&
@@ -145,53 +163,7 @@ int dev_switch(char **args){
     return 1;
 }
 
-//COMANDO   l
-/*restituisce in pipe
-    se comando è l: <informazioni>
-*/
-int dev_list(char **args){
-    char* ans = malloc(ANSWER);
-    get_info_string(ans);
-    int esito = write(fd_write, ans, strlen(ans)+1);
 
-    //free(ans);
-    kill(idPar,SIGCONT);
-    return 1;
-}
-
-
-//COMANDO   info <id>
-/*restituisce in pipe
-    <info> := <tipo> <pid???> <id> <status> <time>
-*/
-int dev_info(char **args){
-    int id_info = atoi(args[1]);
-    if(id == id_info){
-        char* ans = malloc(ANSWER);
-        get_info_string(ans);
-        int esito = write(fd_write, ans, strlen(ans)+1);
-        //free(ans);
-        kill(idPar,SIGCONT);
-    }else{
-        int esito = write(fd_write, "0\0", 2);
-        //printf("Non restituisce info dato che id non coincide\n");
-    }
-    kill(idPar,SIGCONT);
-    
-    //famo ritornare l'errore poi
-    return 1;
-}
-void set_time(){
-     if(status==1){
-        time_t tmp;
-        time(&tmp);
-        tempoSecondi += (difftime(tmp, tempoUltimaMisurazione));
-        //la lampadina è accesa
-        tempoUltimaMisurazione = tmp;
-    }else{//utilizzato per gestire il caso di cambio di stato
-        time(&tempoUltimaMisurazione);
-    }
-}
 void get_info_string(char* ans){//TODO aggiungere timer
     set_time();
     memset(ans, 0, ANSWER);
@@ -204,6 +176,7 @@ void get_info_string(char* ans){//TODO aggiungere timer
     //strcat(ans ,(status==1? " accesa\0":" spenta\0"));
     //printf(": %s", ans);
 }
+
 //DETERMINATO DAL COMANDO CHE VIENE MANDATO IN GET_INFO_STRING
 void set_info(char* info){
     char** info_split = splitLine(info);
@@ -261,40 +234,6 @@ int dev_manualControl(char **args){
     }
     kill(idPar,SIGCONT);
 
-    return 1;
-}
-
-//COMANDO d <pid>
-/*restituisco in pipe:
-    0 se NON sono il dispositivo da eliminare
-    pid se sono il dispositivo da eliminare
-*/
-int dev_delete(char **args){
-    //printf("pid: %d\n",pid);
-    int id_delete = atoi(args[1]);
-    char* msg = malloc(ANSWER);//potrei fare il log10 dell'pid per trovare il numero di cifre
-
-    if(id == id_delete){//guardo se il tipo e l'pid coincidono
-        //scrivo sulla pipe che sono io quello che deve essere ucciso e scrivo anche il mio pid, la centralina dovrà toglierlo dalla lista
-        //TODO trovare un altro metodo
-       
-        sprintf(msg, "%d", pid);//pid inteso come pid
-
-        int esito = write(fd_write, msg, strlen(msg)+1);
-        free(msg);
-        kill(idPar,SIGCONT);
-
-        exit(0);
-
-    }else{
-        sprintf(msg, "%d", 0);
-        int esito = write(fd_write, msg, strlen(msg)+1);
-        //printf("\tNon eliminato dato che pid non coincide\n");
-        free(msg);
-        kill(idPar,SIGCONT);
-    }
-    
-    //famo ritornare l'errore poi
     return 1;
 }
 

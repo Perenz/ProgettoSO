@@ -21,8 +21,11 @@ typedef struct Nodo{
 
 typedef Nodo* NodoPtr;
 
+<<<<<<< HEAD
 NodoPtr removeHead(NodoPtr list);
 
+=======
+>>>>>>> bfd5aaca98d07e124104403e592be3d12b205f12
 void removeNode(NodoPtr list, int data);
 NodoPtr listInit(int);
 void printList(NodoPtr);

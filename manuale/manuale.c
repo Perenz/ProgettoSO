@@ -1,41 +1,27 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include "./handFunctionDeclarations.c"
-
 
 #define CEN_DELIM " \t\r\n\a"
 #define CEN_BUFSIZE 128
+#define myFIFO "/tmp/miaFifo"
 
 int cen_processCmd(char **command);
 char* cen_getLine();
 char** cen_splitLine(char *line);
-//Variabili che indica il pid del dispositivo su cui si sta agendo manualmente
-//Di default uguale a 0, cioè non ho ancora effettuato il "collegamento" con alcun dispositivo
+//Variabili che indicano il pid e l'id del dispositivo su cui si sta agendo manualmente
+//Di default uguali a 0, cioè non ho ancora effettuato il "collegamento" con alcun dispositivo
 int controlloPid=0;
 int controlloId=0;
+
+//Variabile per memorizzare il pid della centralina
 int cenPid;
 
-//Lettura del comando identica a quanto fatto per la centralina in start.c
-
-
-//DUBBIO: Come ottengo il pid della centralina?:
-//Si potrebbe aprire una FIFO nella centralina in readonly anche se non l'altro estremo (manuale.c) non è ancora presente (Ciò e permesso)
-// https://stackoverflow.com/questions/48697193/how-to-wait-for-the-other-end-of-a-named-pipe-to-be-open
-//Poi quando avvio manuale.c apro la fifo sia write che read, scrivo a centralina che poi potrà rispondere perchè ora c'è l'altro estremo
-//Mi serve comunque il pid della centralina per mandare il signal che dice ci leggere dalla fifo
-
-
-/*Cambio il processCmd in questo modo:
+/*Cambio la funzione processCmd processCmd in questo modo:
     - Se controllo == 0
-        Significa che nessun dispositivo è al momento controllato quindi si dovrà effettuare il collegamento digitando il nome,id o pid del 
+        Significa che nessun dispositivo è al momento controllato quindi si dovrà effettuare il collegamento digitando il nome o id del 
         dispositivo su cui vogliamo agire.
         Tramite la centralina (ricercaNellAlbero) torniamo il pid del dispositivo con tale nome/id cosi da poter istanziare una
         FIFO tra manuale.c ed il dispositivo interessato.
@@ -46,17 +32,16 @@ int cenPid;
     - Se controllo != 0
         Significa che stiamo gia controllando un dispositivo e possiamo quindi impartire i vari comandi come:
             - switch ...
-            - status ...
+            - release
             - ...
             - quit/exit
 
 */
 
-#define myFIFO "/tmp/miaFifo"
+
 
 int getCenPid(){
     int fd;
-    //char *fifo="./test/newFifo";
     char msg[20] = "hand";
 
     //La apro per write only
@@ -74,6 +59,7 @@ int getCenPid(){
 
     close (fd);
 
+    //Ritorno il pid della centralina
     return atoi(msg);
 }
 
@@ -125,14 +111,6 @@ char* cen_getLine(){
     //Dimensione buffer per riallocazione
     size_t  bufS = 0;
     getline(&cmd, &bufS, stdin);
-
-    /*
-     * Non più necessario come lo splitLine
-     *
-    //Rimuovo newLine \n a fine stringa
-    cmd = strtok(cmd, "\n");
-    */
-
     return cmd;
 }
 
@@ -180,14 +158,19 @@ int cen_processCmd(char **command){
         return 1;
 
 
+    //In base alla situazione in cui mi trovo (controllo dispositivo o no) devo controllare su un numero possibilmente diverso di comandi
     for(i; i<cen_numCommands(controlloPid); i++){
         if(controlloPid==0){
+            //Controllo sui comandi disponibili quando non controllo alcun dispositivo
             if(strcmp(command[0],noControl_builtin_cmd[i])==0){
                 controlloPid=noControl_builtin_func[i](command, &cenPid);
                 if(controlloPid==-1){
+                    //Il -1 indica "errore" e quindi resetto il Pid del dipositivo controllato e ritorno 1 per proseguire
                     controlloPid=0;
                     return 1;
                 }else{
+                    //Pid trovato e diverso da -1
+                    //Setto correttamente anche la variabile contenente l'id del dispositivo controllato
                     controlloId=atoi(command[1]);
                     inizializzaFifo(controlloPid);
                     return controlloPid;
@@ -195,6 +178,7 @@ int cen_processCmd(char **command){
             }
         }
         else{
+            //Controllo sui comandi disponibili quando controllo un dispositivo
             if(strcmp(command[0],control_builtin_cmd[i])==0)
                 return control_builtin_func[i](command, &controlloPid, controlloId);
         }

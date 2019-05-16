@@ -18,7 +18,7 @@ NodoPtr dispList; //lista dei dispositivi collegati all'hub
 pid_t idPar;
 pid_t pid;
 int id;
-int status;
+int status; //1 acceso, 0 spento
 //File descriptor in cui il figlio legge e il padre scrive
 int fd_read;
 //File descriptor in cui il figlio scrive e il padre legge
@@ -42,7 +42,7 @@ char *builtin_func[]={
     "s",//changeState
     "i",//getInfo
     "d", //delete
-    "a" //addDevice
+    "a" //addDevice    da cambiare scegliendo lettera corrispondente
 };
 
 void sign_cont_handler(int sig){
@@ -59,16 +59,15 @@ void sighandle_usr1(int sig){
         //potrei passare anche la lunghezza del messaggio
         char str[CEN_BUFSIZE];
         memset(str, 0, CEN_BUFSIZE);
-        printf("\n\tLettura da pipe sig1 %s  \n", str);
         read(fd_read, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
         //printf("\n\tLettura da pipe %s  \n", str);
         char** arg = splitLine(str);
         int errnum = device_handle_command(arg);
+        printf("Hub finito SIGUSR1");
     }
 }
 int device_handle_command(char **args){
     //da fare come in functionDeclarations in file dispositivi
-    
     if(strcmp(args[0],builtin_func[0])==0 || strcmp(args[0],builtin_func[2])==0){//list o getinfo
         return dev_getinfo(args);
     }else if(strcmp(args[0],builtin_func[1])==0){//switch
@@ -98,9 +97,9 @@ int dev_changestate(char **args){
         
         per un'altra idea vedi functionDeclaration in metodo cen_switch
         */ 
-        status = atoi(args[3]);
+        status = (strcmp(args[3],"on")==0?1:0);
         printf("%s\n", args[3]);
-        printf("Status dispositivo Hub %d : %d\n", id, status);  
+        printf("Status dispositivo Hub %d : %s\n", id, (status==1?"acceso":"spento"));  
         printf("\033[1;32m"); //scrivo in verde 
         printf("\tNon sono felice e non sono triste. È questo il dilemma della mia vita: non so come definire il mio stato d’animo, mi manca sempre qualcosa.");
         printf("\033[0m\n"); //resetto per scriver in bianco
@@ -127,8 +126,9 @@ int dev_changestate(char **args){
 */
 int dev_getinfo(char **args){
     char* str = malloc(128);
+    printf("wewewewewe");
     if(args[0][0] == 'l'){//list
-        
+        printf("we cumpaa");
         sprintf(str, "%d Hub %d", pid, id);
         strcat(str ,(status==1?" accesa\n":" spenta\n"));
         NodoPtr Nodo = dispList;
@@ -139,10 +139,12 @@ int dev_getinfo(char **args){
             kill(Nodo->data, SIGUSR1);            
             //TODO
             //pause();
-            int temp = read(Nodo->fd_reader,str,30);
+            char* temp = malloc(10);
+            temp = (char*)read(Nodo->fd_reader,str,30);
             //memset(tmp,0,30);
             //strcat(msg,tmp);            printf("\t%s", str);
             strcat(str, temp);
+            free(temp);
             Nodo = Nodo->next;
         }
 
@@ -167,10 +169,12 @@ int dev_getinfo(char **args){
                 kill(Nodo->data, SIGUSR1);            
                 //TODO
                 //pause();
-                int temp = read(Nodo->fd_reader,str,30);
+                char* temp =malloc(10);
+                temp = (char*)read(Nodo->fd_reader,str,30);
                 //memset(tmp,0,30);
                 //strcat(msg,tmp);            printf("\t%s", str);
                 strcat(str, temp);
+                free(temp);
                 Nodo = Nodo->next;
             }
             int esito = write(fd_write, msg, strlen(msg));
@@ -192,10 +196,13 @@ int dev_getinfo(char **args){
                 kill(Nodo->data, SIGUSR1);            
                 //TODO
                 //pause();
-                int temp = read(Nodo->fd_reader,str,30);
+                char* temp = malloc(10);
+                temp = (char*)read(Nodo->fd_reader,str,30);
                 //memset(tmp,0,30);
                 //strcat(msg,tmp);            printf("\t%s", str);
                 if(strcmp(temp, "0")!=0){
+                    free(temp);
+                
                     return 1;
                 } 
                 Nodo = Nodo->next;
@@ -246,8 +253,11 @@ int dev_delete(char **args){
             //id dispositivo da spegnere
 
             ////////////////////////
-            strcat(tmp, Nodo->data);  //probabile da sistemare e passare un array di char e non un intero?
+            char* temp = malloc(10);
+            sprintf(temp, "%d",Nodo->data);
+            strcat(tmp, temp);  //probabile da sistemare e passare un array di char e non un intero?
             ////////////////////////
+            free(temp);
 
             //delimitatore 
             strcat(tmp, "\0");
@@ -341,7 +351,7 @@ int dev_delete(char **args){
 //ho messo i : perché così riesco a dividere il comando in due parti
 //voglio le info uniche non diviso
 int dev_link(char** command){
-    if(command[2] == id){ // se sono io il dispositivo di controllo a cui va attaccato il nuovo dispositivo
+    if(atoi(command[2]) == id){ // se sono io il dispositivo di controllo a cui va attaccato il nuovo dispositivo
         
         char info[16]; //assegno ad info le informazioni prese da command -> non so in che ordine siano quindi aspetto
         //sprintf(info, "%d %d %s %.2f", command[3]); // basta verificare di che tipo è il dispositivo per sapere quante info devo leggere
@@ -349,15 +359,19 @@ int dev_link(char** command){
         
         //se c'è default devo soltanto aggiungere il device senza preoccuparmi delle info ed è uguale per tutti
         if(command[3] == "default"){
-            sprintf(info, "default %d", command[4]);
+            sprintf(info, "default %d", atoi(command[4]));
             for(int i=0; i<device_number(); i++){
             if(strcmp(command[3], builtin_device[i])==0)//non so in che posizione ci sia il tipo penso 3
                     return dev_add(bultin_dev_path[i], info);
             }
         }//se invece non c'è default controllo il dispositivo
         else{ // in base al dispositivo so quanti parametri ha per le info e di conseguenza so quante info devo passare
-            if(command[3] == "b")
-                sprintf(info, "%d %d %s %.2f", command[3], command[4], command[5], command[6]); 
+            if(command[3] == "b"){
+                char* temp = malloc(10);
+                sprintf(temp, "%s", command[5]);
+                sprintf(info, "%d %d %s %.2f", atoi(command[3]), atoi(command[4]), temp, atof(command[6])); 
+                free(temp);
+            }
             else if(command[3] == "w"){}
                 //{}
             else if(command[3] == "f"){}
@@ -377,7 +391,7 @@ int dev_link(char** command){
         
         while(Nodo != NULL){ 
             //scrivo il comando sulla pipe
-            write(Nodo->fd_writer, command, strlen(command));
+            write(Nodo->fd_writer, command, strlen(command)); // come risolvere questo warning???
             //mando un segnale al figlio così si risveglia e legge il contenuto della pipe
             kill(Nodo->data, SIGUSR1);
                 
@@ -410,7 +424,7 @@ int main(int argc, char **args){
     pid = getpid(); // chiedo il mio pid
     idPar = getppid(); //chiedo il pid di mio padre
     dispList = listInit(getpid());
-    id = atoi(args[3]);
+    id = atoi(args[5]);
     //0 spenta
     //1 accesa
     status = 0; //equivalente a quello dei dispositivi collegati
