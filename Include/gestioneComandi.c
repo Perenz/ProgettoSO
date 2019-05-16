@@ -89,8 +89,9 @@ char* broadcast(NodoPtr procList, char** comando, char* comando_compatto){
         int toRtn = ascolta_risposta(nodo, answer);
         if(toRtn == 1){
             return answer;
+            printf("qui: %s\n", answer);
         }
-        memset(answer, 0, ANSWER);
+        //memset(answer, 0, ANSWER);
         nodo = nodo->next;
     }
     return "0";
@@ -123,6 +124,8 @@ char* broadcast_list(NodoPtr procList, char** comando, char* comando_compatto){
 int ascolta_risposta(NodoPtr nodo, char* answer){
     int temp = read(nodo->fd_reader, answer, ANSWER);
     if(strcmp(&answer[0], "0") != 0){
+
+
         return 1;
     }else{
         return 0;

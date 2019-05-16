@@ -14,9 +14,9 @@
 //#include "gestioneComandi.c"
 char* broadcast(NodoPtr procList, char** comando, char* comando_compatto);
 char* broadcast_list(NodoPtr procList, char** comando, char* comando_compatto);
-int cen_single_list(char **args, NodoPtr list); // per ora la metto qua, poi andrà in funzioniDispositiviControllati
+int cen_list_generale(char **args, NodoPtr list); // per ora la metto qua, poi andrà in funzioniDispositiviControllati
 int cen_delete_generale(char **args, NodoPtr list);
-
+int cen_info_generale(char **args, NodoPtr list);
 //Comandi centralina
 int cen_prova(char **args, NodoPtr procList, NodoPtr dispList);
 int cen_clear(char **args, NodoPtr procList, NodoPtr dispList);
@@ -111,7 +111,7 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
     printf("\n\tStampo la lista dei dispositivi COLLEGATI:");
     printf("\n\tCen %d accesa\n", procList->data);
     //Escludo la centralina dal while e la stampo SINGOLARMENTE
-    cen_list_generale(args, procList);
+    int err = cen_list_generale(args, procList);
     printf("\n\tStampo la lista dei dispositivi DISPONIBILI:\n");
     cen_list_generale(args, dispList);
     return 1;
@@ -245,25 +245,25 @@ int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
 int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
     int err = cen_info_generale(args, dispList);
     int err2 = cen_info_generale(args, procList);
+
     if(err == -1 && err2 == -1)
         printf("Nessun dispositivo con questo id trovato.\n");
     return 1;
 }
 int cen_info_generale(char **args, NodoPtr list){
     signal(SIGCONT, sign_cont_handler);
+    char* answer = malloc(ANSWER);
     if(args[1] != NULL){
         char* comando = malloc(5 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
         //tipo di comando
         sprintf(comando, "i %s", args[1]);
         //printf("scrittura lato padre: %s\n", comando);
-        char* answer = broadcast(list, NULL, comando); 
-
+        answer = broadcast(list, NULL, comando); 
         if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
-            printf("%s\n", answer);
+            printf("\t%s\n", answer);
             free(comando);
             free(answer);
-        }else{//non ho trovato nessun dispositivo con quell'id
-            printf("Nessun elemento ha questo id\n");        
+            return 1;
         }
     }else{
         printf("Inserire: info <id> \n");
