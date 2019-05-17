@@ -88,13 +88,10 @@ int cen_exit(char **args, NodoPtr procList, NodoPtr dispList){
     //Dealloco le liste
     freeList(procList);
     freeList(dispList);
-<<<<<<< HEAD
 
     //Rimuovo la fifo usata dal manuale per ottenere il pid dei dispositivi
     remove("/tmp/manCenFifo");
 
-=======
->>>>>>> 1f929fd2238f7f248055a60100357dff46328433
     return 0;
 }
 int cen_help(char **args, NodoPtr procList, NodoPtr dispList){
