@@ -18,7 +18,6 @@ void signhandle_quit(int sig){
 int main(){
     int fd;
     char msg[10];
-    char *fifo = "../fifo/manualeCenFifo";
     //Variabile per memorizzare il parent pid
     //QUindi il pid della centralina
     int cenPid=getppid();

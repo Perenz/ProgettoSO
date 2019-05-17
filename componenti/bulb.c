@@ -38,7 +38,7 @@ int fd_read;
 //File descriptor in cui il figlio scrive e il padre legge
 int fd_write;
 
-int fd_manuale;
+int fd_manuale=0;
 char tipo = 'b';
 pid_t idPar;
 pid_t pid;
@@ -53,14 +53,15 @@ char *builtin_func[]={
         "im"//getInfoManual
 };
 
-void sighandle_int(int sig) {
-    if(sig==SIGQUIT)
-        _exit(0);      
-    //pause();
-}
 void signhandle_quit(int sig){
-    if(sig==SIGQUIT)
+    char fifo[30];
+    if(sig==SIGQUIT){
+        if(fd_manuale!=0){
+            sprintf(fifo, "/tmp/fifoManComp%d", pid);
+            remove(fifo);
+        }
         _exit(0);
+    }
 }
 void sighandle_usr1(int sig){
     sighandle1(sig, fd_read);
@@ -247,7 +248,6 @@ int main(int argc, char *args[]){
     
     set_info(args[3]);
 
-    signal(SIGINT, sighandle_int);
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
     signal(SIGUSR2, sighandle_usr2); //Alla ricezione di SIGUSR2 leggere il comanda sulla fifo direttamente connessa al manuale
