@@ -152,14 +152,13 @@ char** cen_splitLine(char *line){
 
 
 int cen_processCmd(char **command){
-    int i=0;
     //se inserisco un comando vuoto richiedo di inserire un nuovo comando
     if(command[0] == NULL)
         return 1;
 
 
     //In base alla situazione in cui mi trovo (controllo dispositivo o no) devo controllare su un numero possibilmente diverso di comandi
-    for(i; i<cen_numCommands(controlloPid); i++){
+    for(int i=0; i<cen_numCommands(controlloPid); i++){
         if(controlloPid==0){
             //Controllo sui comandi disponibili quando non controllo alcun dispositivo
             if(strcmp(command[0],noControl_builtin_cmd[i])==0){

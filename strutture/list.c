@@ -116,8 +116,6 @@ int getNode(NodoPtr list, int pid, Nodo* nodo_return){
             nodo_return->fd_writer = tmp->fd_writer;
             return 1;
         }
-        
-
         tmp = tmp->next;
     }
     return -1;

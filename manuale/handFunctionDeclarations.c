@@ -97,14 +97,13 @@ int hand_help(char **args, int *cenPid){
     printf("Centralina per controllo domotico\n");
     printf("Comandi accettati se non si controlla alcun dispositivo:\n");
 
-    int i=0;
-    for(i; i<cen_numCommands(0);i++){
+    for(int i=0; i<cen_numCommands(0);i++){
         printf("> %s\n", noControl_builtin_cmd[i]);
     }
 
     printf("Comandi accettati mentre si controlla qualche dispositivo:\n");
-    i=0;
-    for(i; i<cen_numCommands(1);i++){
+    
+    for(int i=0; i<cen_numCommands(1);i++){
         printf("> %s\n", control_builtin_cmd[i]);
     }
 

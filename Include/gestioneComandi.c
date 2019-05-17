@@ -70,10 +70,10 @@ char** splitLine(char* line){
     commands[pos]=NULL;
     return commands;
 }
-
+/*
 char* compatta(char** comando){
    
-}
+}*/
 
 //da mettere in function declaration
 char* broadcast(NodoPtr procList, char** comando, char* comando_compatto){
@@ -90,7 +90,7 @@ char* broadcast(NodoPtr procList, char** comando, char* comando_compatto){
         if(toRtn == 1){
             return answer;
         }
-        memset(answer, 0, ANSWER);
+        //memset(answer, 0, ANSWER);
         nodo = nodo->next;
     }
     return "0";

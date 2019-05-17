@@ -9,7 +9,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <time.h>
-#include "../Include/gestioneComandi.c"
 
 
 //ho spostato i metodi getLine e splitLine in una nuova libreria 
@@ -21,7 +20,6 @@ int dev_getinfo(char **args);
 int dev_delete(char **args);
 int dev_changestate(char **args);
 int dev_manualControl(char **);
-
 int dev_switch(char **args);
 int dev_list(char **args);
 int dev_info(char **args);
@@ -75,14 +73,16 @@ void sighandle_usr2(int sig){
     se comando è l: <informazioni>
 */
 int dev_list(char **args){
-    dev_list_gen(args, idPar, fd_write);
+    int err = dev_list_gen(args, idPar, fd_write);
+    return err;
 }
 //COMANDO   info <id>
 /*restituisce in pipe
     <info> := <tipo> <pid???> <id> <status> <time>
 */
 int dev_info(char **args){
-    dev_info_gen(args, id, idPar, fd_write);
+    int err = dev_info_gen(args, id, idPar, fd_write);
+    return err;
 }
 void set_time(){
     if(status==1){
@@ -101,7 +101,8 @@ void set_time(){
     pid se sono il dispositivo da eliminare
 */
 int dev_delete(char **args){
-    dev_delete_gen(args, pid, id, idPar, fd_write);
+    int err = dev_delete_gen(args, pid, id, idPar, fd_write);
+    return err;
 }
 
 
@@ -189,7 +190,7 @@ void set_info(char* info){
         //<info> := <tipo> <pid???> <id> <status> <time>
         tipo = info_split[0][0];
         id = atoi(info_split[2]);
-        if(strcmp(info_split[3], "accesa")){
+        if(strcmp(info_split[3], "on")==0){
             status = 1;
         }else{//spenta
             status = 0;
@@ -245,7 +246,6 @@ int main(int argc, char *args[]){
     fd_write = atoi(args[2]);  
     
     set_info(args[3]);
-    //qui
 
     signal(SIGINT, sighandle_int);
     signal(SIGQUIT, signhandle_quit);
