@@ -12,7 +12,7 @@
 
 #define CEN_DELIM " \t\r\n\a"
 #define CEN_BUFSIZE 128
-#define ANSWER 32
+#define ANSWER 64
 #define BUFSIZE 128
 
 int ascolta_risposta(NodoPtr nodo, char* answer);
