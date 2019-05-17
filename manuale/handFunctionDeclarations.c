@@ -67,26 +67,45 @@ int hand_control(char **args, int *cenPid){
     else{
             //Uso una fifo tra manuale e centralina
             char *manCenFifo = "/tmp/manCenFifo";
-            mkfifo(manCenFifo, 0666);
+            if(mkfifo(manCenFifo, 0666)<0){
+                fprintf(stderr, "Errore nella creazione della fifo %s %s", manCenFifo, strerror(errno));
+            }
             //Mando signal a centralina per aprire la fifo in READ_ONLY
             kill(*cenPid, SIGUSR2);
             //Apro la fifo in WRITEONLY
             fd = open(manCenFifo, O_WRONLY);
+            if(fd<0){
+                fprintf(stderr, "Errore nell'apertura in WRITE ONLY della fifo %s %s", manCenFifo, strerror(errno));
+            }
             char msg[20];
             strcat(msg, "contpid ");
             strcat(msg, args[1]); //args1 conterrà l'id del dispositivo che si vuole controllare
             
-            write(fd, msg,strlen(msg)+1);
+            if(write(fd, msg,strlen(msg)+1)<0){
+                fprintf(stderr, "Errore nella scrittura sulla fifo %s %s", manCenFifo, strerror(errno));
+            }
             close(fd); //Chiudo in scrittura
 
             //Ascolto per la risposta
             //Apro pipe in lettura
             fd = open(manCenFifo, O_RDONLY);
-            read(fd,msg,20);
+            if(fd<0){
+                fprintf(stderr, "Errore nell'apertura in READ ONLY della fifo %s %s", manCenFifo, strerror(errno));
+            }
+
+            
+            if(read(fd,msg,20)<0){
+                fprintf(stderr, "Errore nella lettura dalla fifo %s %s", manCenFifo, strerror(errno));
+            }
             close(fd); //Chiudo in lettura
             int pidCerc=atoi(msg);
 
             //Ritorno il pid corrispondente all'id indicato come argomento
+            if(pidCerc==-1){
+                printf("ID indicato non riconosciuto\nL'ID inserito deve essere un dispositivo valido\n");
+            }
+
+            remove(manCenFifo);
             return pidCerc;
     }
 }
@@ -144,9 +163,15 @@ int hand_switch(char **args, int *cont, int idCont){
 
         //Apro la fifo in scrittura
         fdManual=open(fifoManDisp, O_WRONLY);
+        if(fdManual<0){
+            fprintf(stderr, "Errore in apertura WRITE ONLY della fifo %s %s", fifoManDisp, strerror(errno));
+        }
 
         //Scrivo sulla fifo il messaggio ed invio SIGUSR2 al dispositivo per indicare che è stato scritto un nuovo comando nella fifo
         write(fdManual, msg, strlen(msg) + 1);
+        if(fdManual<0){
+            fprintf(stderr, "Errore in scrittura sulla fifo %s %s", fifoManDisp, strerror(errno));
+        }
         kill(pid, SIGUSR2);
 
         //Chiudo la Fifo in scrittura

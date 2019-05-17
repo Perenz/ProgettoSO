@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
 #include "./handFunctionDeclarations.c"
 
 #define CEN_DELIM " \t\r\n\a"
@@ -46,16 +47,32 @@ int getCenPid(){
 
     //La apro per write only
     fd = open(myFIFO, O_WRONLY);
+    
+    //Gestisco l'errore
+    if(fd<0){
+        fprintf(stderr, "Errore nell'apertura della fifo %s: %s", myFIFO, strerror(errno));
+    }
 
     //Invio msg "hand" sulla fifo
-    int esito = write(fd, msg, strlen(msg)+1);
+    if(write(fd, msg, strlen(msg)+1)<0){
+        fprintf(stderr, "Errore nella scrittura su fifo %s: %s", myFIFO, strerror(errno));
+
+    }
 
     //Chiudo il Write only
     close(fd);
 
     //Apro in read
     fd = open(myFIFO, O_RDONLY);
-    read(fd, msg, 10);
+    if(fd<0){
+        fprintf(stderr, "Errore nell'apertura della fifo %s: %s", myFIFO, strerror(errno));
+    }
+
+    
+    if(read(fd, msg, 10)<0){
+        fprintf(stderr, "Errore nella lettura da fifo %s: %s", myFIFO, strerror(errno));
+
+    }
 
     close (fd);
 
@@ -76,9 +93,6 @@ int main(){
 
     signal(SIGQUIT, sigquit_handler);
     //Passo 1: Prendere il pid della centralina grazie ad il processo di support
-    //Creo la fifo
-    //TODO, provare a non fare il mkfifo e fare solo l'open utilizzando la fifo aperta dal READ
-    mkfifo(myFIFO, 0666);
 
     //printf("Ecco il pid %d", getCenPid());
     cenPid=getCenPid();
