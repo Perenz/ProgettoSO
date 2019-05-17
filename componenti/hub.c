@@ -360,7 +360,8 @@ int dev_link(char** command){
         //se c'è default devo soltanto aggiungere il device senza preoccuparmi delle info ed è uguale per tutti
         if(strcmp(command[3],"default") == 0){
             sprintf(info, "default %d", atoi(command[4]));
-            for(int i=0; i<device_number(); i++){
+            int i;
+            for(i=0; i<device_number(); i++){
             if(strcmp(command[3], builtin_device[i])==0)//non so in che posizione ci sia il tipo penso 3
                     return dev_add(bultin_dev_path[i], info);
             }
@@ -377,7 +378,8 @@ int dev_link(char** command){
                 //{}
             else if(strcmp(command[3], "f")==0) {}
                 //
-            for(int i=0; i<device_number(); i++){
+            int i;
+            for(i=0; i<device_number(); i++){
                 if(strcmp(command[3], builtin_device[i])==0)//non so in che posizione ci sia il tipo penso 3
                     return dev_add(bultin_dev_path[i], info);
             }

@@ -39,7 +39,8 @@ int lanciaGetCenPid(){
 int cen_processCmd(char **command, NodoPtr procList, NodoPtr dispList){
     if(command[0] == NULL)
         return 1;
-    for(int i=0; i<cen_numCommands(); i++){
+    int i;
+    for(i=0; i<cen_numCommands(); i++){
         if(strcmp(command[0],builtin_cmd[i])==0)
             return builtin_func[i](command, procList, dispList);
     }

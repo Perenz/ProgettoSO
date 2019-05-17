@@ -100,7 +100,8 @@ int cen_help(char **args, NodoPtr procList, NodoPtr dispList){
     printf("Centralina per controllo domotico\n");
     printf("Digitare i seguenti comandi:\n");
 
-    for(int i=0; i<cen_numCommands();i++){
+    int i;
+    for(i=0; i<cen_numCommands();i++){
         printf("> %s\n", builtin_cmd[i]);
     }
     return 1;
@@ -192,7 +193,8 @@ int cen_add(char **args, NodoPtr procList, NodoPtr dispList){
     }
     //3 device disponibili: bulb, window, fridge
     else{
-        for(int i=0; i<device_number(); i++){
+        int i;
+        for(i=0; i<device_number(); i++){
             if(strcmp(args[1], builtin_device[i])==0)
                     return add_device(bultin_dev_path[i], procList, dispList);
         }
@@ -351,7 +353,8 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
                 //è per verificare che funzioni
                 tipo_dispositivo[0] = "bulb";
                 //aggiungo tale tipo di dispositivo passandogli le info
-                for(int i=0; i<device_number(); i++){
+                int i;
+                for(i=0; i<device_number(); i++){
                     if(strcmp(tipo_dispositivo[0], builtin_device[i])==0){
                         return add_device_generale(bultin_dev_path[i], procList, answer_id1);
                     }
