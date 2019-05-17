@@ -1,4 +1,14 @@
-all: compilaCmd compilaMain compilaManuale
+define NEWLINE
+
+endef
+
+help:
+	$(info Progetto SO realizzato da:Paolo Tasin, Stefano Perenzoni e Marcello Rigotti)
+	$(NEWLINE)
+	$(info Centralina per controllo domotico)
+
+
+build: compilaCmd compilaMain compilaManuale
 
 compilaCmd:
 	gcc -std=gnu90 -o componenti/BULB componenti/bulb.c
