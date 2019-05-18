@@ -19,11 +19,11 @@ char *builtin_device[]={
 };
 
 char *bultin_dev_path[]={
-        "./componenti/BULB",
-        "./componenti/WINDOW",
-        "./componenti/FRIDGE",
-        "./componenti/TIMER",
-        "./componenti/HUB"
+        "./binaries/BULB",
+        "./binaries/WINDOW",
+        "./binaries/FRIDGE",
+        "./binaries/TIMER",
+        "./binaries/HUB"
 };
 
 

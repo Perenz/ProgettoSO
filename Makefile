@@ -17,20 +17,20 @@ help:
 build: compilaCmd compilaMain compilaManuale
 
 compilaCmd:
-	gcc -std=gnu90 -o componenti/BULB componenti/bulb.c
-	gcc -std=gnu90 -o componenti/FRIDGE componenti/fridge.c
-	gcc -std=gnu90 -o componenti/WINDOW componenti/window.c
-	gcc -std=gnu90 -o componenti/HUB componenti/hub.c
-	gcc -std=gnu90 -o componenti/TIMER componenti/timer.c
+	gcc -std=gnu90 -o binaries/BULB componenti/bulb.c
+	gcc -std=gnu90 -o binaries/FRIDGE componenti/fridge.c
+	gcc -std=gnu90 -o binaries/WINDOW componenti/window.c
+	gcc -std=gnu90 -o binaries/HUB componenti/hub.c
+	gcc -std=gnu90 -o binaries/TIMER componenti/timer.c
 
 compilaManuale:
-	gcc -std=gnu90 -o supporto/CENPIDREAD supporto/getCenPid.c
-	gcc -std=gnu90 -o manuale/CENPIDWRITE manuale/manuale.c
+	gcc -std=gnu90 -o binaries/CENPIDREAD supporto/getCenPid.c
+	gcc -std=gnu90 -o binaries/CENPIDWRITE manuale/manuale.c
 
 compilaMain:
 	gcc -std=gnu90 -o PRINCIPALE strutture/list.c main.c
 
-binary=PRINCIPALE supporto/CENPIDREAD manuale/CENPIDWRITE componenti/BULB componenti/FRIDGE componenti/WINDOW componenti/HUB componenti/TIMER
+binary=PRINCIPALE binaries/CENPIDREAD binaries/CENPIDWRITE binaries/BULB binaries/FRIDGE binaries/WINDOW binaries/HUB binaries/TIMER
 
 clean:
 	rm -f $(binary)
