@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h> //uso questa libreria per controllare che sia una cifra
 #include <signal.h>
 #include <assert.h>
 #include <sched.h>
@@ -72,6 +73,16 @@ void sighandle_usr1(int sig){
 void sighandle_usr2(int sig){
     sighandle2(sig, fd_manuale);
 }
+void sighandle_alarm(int sig){
+    if(sig == SIGALRM){
+        set_time();
+        status = 0;
+        printf("\033[1;32m"); //scrivo in verde 
+        printf("\nFridge %d richiuso in automatico\n", id);
+        printf("\033[0m\n"); //resetto per scriver in bianco
+        alarm(0);
+    }
+}
 //COMANDO   l
 /*restituisce in pipe
     se comando è l: <informazioni>
@@ -140,17 +151,18 @@ int dev_switch(char **args){
     printf("FRATELLIIIOOOOOO\n");
     printf("%d", id_change);
     if(id_change == id && ((strcmp(args[2], "apertura")==0 && (strcmp(args[3], "on")==0 ||  strcmp(args[3], "off")==0))
-        || (strcmp(args[2], "termostato")==0 && isdigit(args[3])))){
+        || (strcmp(args[2], "termostato")==0 && (args[3] >= '0' || args[3] <= '9')))){
         set_time();
         if(strcmp(args[2], "apertura")==0){
-            if(strcmp(args[3], "on")==0)
+            if(strcmp(args[3], "on")==0){
                 status = 1;
-            else{ //se c'è off lo chiudo se era ancora aperto
+                alarm(delay);
+            }else{ //se c'è off lo chiudo se era ancora aperto
                 set_time();
                 status = 0;
             }
         }else{
-            temperatura = atoi(args[3]);
+                temperatura = atoi(args[3]);
         }
         char* answer = malloc(ANSWER);
         //aggiorna il time prima di cambiare lo status
@@ -258,6 +270,7 @@ int main(int argc, char **args){
     
     set_info(args[3]);
 
+    signal(SIGALRM, sighandle_alarm);
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
     signal(SIGUSR2, sighandle_usr2); //Alla ricezione di SIGUSR2 leggere il comanda sulla fifo direttamente connessa al manuale

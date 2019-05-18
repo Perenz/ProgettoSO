@@ -225,8 +225,8 @@ int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
         signal(SIGCONT, sign_cont_handler);
         char* comando = malloc(4 + strlen(args[1]) + strlen(args[2]) + strlen(args[3]));//7 per il comando, 4 per spazi di sep. e la terminazione
         //comando
-        sprintf(comando, "s %s %s", args[1], args[2]);
-        strcat(comando,(isdigit(args[3])?(args[3]):(args[3])));
+        sprintf(comando, "s %s %s %s", args[1], args[2], args[3]);
+        //strcat(comando,(isdigit(args[3])?(args[3]):(args[3])));
         //printf("scrittura lato padre: %s\n", comando);
         char* answer = broadcast(procList, NULL, comando);
         if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
