@@ -6,6 +6,12 @@ help:
 	$(info Progetto SO realizzato da:Paolo Tasin, Stefano Perenzoni e Marcello Rigotti)
 	$(NEWLINE)
 	$(info Centralina per controllo domotico)
+	$(NEWLINE)
+	$(info Digitare 'make build' per compilare l'intero sistema e generare gli eseguibili)
+	$(NEWLINE)
+	$(info Digitare 'make exec' per compilare l'intero sistema, generare ed infine eseguire gli eseguibili)
+	$(NEWLINE)
+	$(info Digitare 'make clean' per rimuovere gli eseguibili)
 
 
 build: compilaCmd compilaMain compilaManuale
@@ -24,14 +30,14 @@ compilaManuale:
 compilaMain:
 	gcc -std=gnu90 -o PRINCIPALE strutture/list.c main.c
 
-binaries=PRINCIPALE supporto/CENPIDREAD manuale/CENPIDWRITE componenti/BULB componenti/FRIDGE componenti/WINDOW componenti/HUB componenti/TIMER
+binary=PRINCIPALE supporto/CENPIDREAD manuale/CENPIDWRITE componenti/BULB componenti/FRIDGE componenti/WINDOW componenti/HUB componenti/TIMER
 
 clean:
-	rm -f $(binaries)
+	rm -f $(binary)
 
 hand:
 	gcc -std=gnu90 -o manuale/CENPIDWRITE manuale/manuale.c
 	manuale/CENPIDWRITE
 
-exec: all
+exec: build
 	./PRINCIPALE
