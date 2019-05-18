@@ -8,7 +8,13 @@ void sigusr2_handler(int sig){
     return getManualPid(procList, dispList);
 }
 
+void sigint_handler(int sig) {
+    char** nul;
+    cen_exit(nul, procList, dispList);
+}
+
 int main(){
+    signal(SIGINT, sigint_handler);
     signal(SIGUSR2, sigusr2_handler);
 
     cen_start();
