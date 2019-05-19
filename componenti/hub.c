@@ -238,7 +238,7 @@ int main(int argc, char **args){
        sprintf(info, "%d", id+1);
        add_device_generale("./componenti/HUB", dispList, info);
    }
-   if(id < 7){
+   if(id < 4){
        sprintf(info, "%d", id+1);
        add_device_generale("./componenti/HUB", dispList, info);
        sprintf(info, "%d", id+1);
@@ -246,22 +246,7 @@ int main(int argc, char **args){
    }
     sprintf(info, "default %d", id+1);
     
-    if(id==3){
-        sprintf(info, "%d", id+1);
-        add_device_generale("./componenti/HUB", dispList, info);
-        sprintf(info, "default %d", id+23);
-        add_device_generale("./componenti/BULB", dispList, info);
-        sprintf(info, "default %d", id+3);
-        add_device_generale("./componenti/BULB", dispList, info);
-    }
-    if(id==4){
-        sprintf(info, "%d", id+1);
-        add_device_generale("./componenti/HUB", dispList, info);
-        sprintf(info, "default %d", id+23);
-        add_device_generale("./componenti/HUB", dispList, info);
-        sprintf(info, "default %d", id+3);
-        add_device_generale("./componenti/HUB", dispList, info);
-    }
+
     
     
    
@@ -281,7 +266,7 @@ int main(int argc, char **args){
 
     //Child va in pausa
     while(1){
-        //printf("Sono in pausa\n");
+        printf("Sono in pausa\n");
         pause();
     }
 
