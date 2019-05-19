@@ -7,16 +7,9 @@
 #include <sys/stat.h>
 #include <signal.h>
 #include "../strutture/listH.h"
+#include "../strutture/comandiH.h"
 #include "gestioneComandi.c"
 #include "addDevice.c"
-
-
-//#include "gestioneComandi.c"
-char* broadcast(NodoPtr procList, char** comando, char* comando_compatto);
-char* broadcast_list(NodoPtr procList, char** comando, char* comando_compatto);
-int cen_list_generale(char **args, NodoPtr list); // per ora la metto qua, poi andrà in funzioniDispositiviControllati
-int cen_delete_generale(char **args, NodoPtr list);
-int cen_info_generale(char **args, NodoPtr list);
 //Comandi centralina
 int cen_prova(char **args, NodoPtr procList, NodoPtr dispList);
 int cen_clear(char **args, NodoPtr procList, NodoPtr dispList);
@@ -107,36 +100,44 @@ int cen_help(char **args, NodoPtr procList, NodoPtr dispList){
     return 1;
 }
 
-void sign_cont_handler(int sig){
-        return;
-}
 
-int cen_list(char **args, NodoPtr procList, NodoPtr dispList){ 
-    //control_list(args, una list);
-    printf("\n\tStampo la lista dei dispositivi COLLEGATI:");
-    printf("\n\tCen %d accesa\n", procList->data);
-    //Escludo la centralina dal while e la stampo SINGOLARMENTE
-    int err = cen_list_generale(args, procList);
-    printf("\n\tStampo la lista dei dispositivi DISPONIBILI:\n");
-    cen_list_generale(args, dispList);
-    return 1;
-}
+
+
+
 /*
     Funzione: elenca tutti i dispositivi con <nome>, quelli attivi con <nome> <id> 
     Sintassi lato utente: list
     Sintassi comunicata dalla centralina ai figli: l
 */
-int cen_list_generale(char **args, NodoPtr list){ 
+int cen_list(char **args, NodoPtr procList, NodoPtr dispList){ 
     signal(SIGCONT, sign_cont_handler);
-    char* comando = malloc(10);
-    sprintf(comando, "l");
-    char* answer = malloc(1000);//DA STANDARIZZARE --> è molto grande perché raccoglie le info di tutti i dispositivi in una stringa
-    answer = broadcast_list(list, NULL, comando);
-    printf("%s", answer);
-    free(answer);     
+    cmd comando;
+    comando.tipo_comando = 'l';
+    comando.profondita = 0;
+    int err = 0;
+    //array_risposte* answer_disp = malloc(sizeof(array_risposte));
+    //initArray(answer_disp, 10);
+    //array_risposte* answer_proc = malloc(sizeof(array_risposte));
+
+    //initArray(answer_disp, 10);
+
+    //manca la stampa della centralina
+    printf("\n\tStampo la lista dei dispositivi COLLEGATI:\n");
+    printf("\nCENTRALINA VAGINA\n");
+    err = broadcast_centralina(procList, comando, NULL);  
+    //gestione err
+    printf("\n\tStampo la lista dei dispositivi DISPONIBILI:\n");
+    //gestione eerr
+    err = broadcast_centralina(dispList, comando, NULL);
+
+    printf("\nHo il controllo\n");
+    
+    /*non riesco a deallocarli correttamente
+        freeArray(answer_disp);
+        freeArray(answer_proc);
+    */
     return 1;
 }
-
 /*
     Funzione: rimuove il dispositivo <id>, se di controllo elimina anche i dispositivi sottostanti
     Sintassi lato utente:                          delete <id>
@@ -145,40 +146,43 @@ int cen_list_generale(char **args, NodoPtr list){
 //delete funziona su dispList per ora
 int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
     //TODO da modificare, pensavo che l'eliminazione avvenisse anche per tipo.
-    if(args[1]==NULL){
+    if(args[1]==NULL /*|| atoi(args[1]) < 2*/){
         printf("Argomenti non validi\n");
         printf("Utilizzo: delete <id>\n");
         return 1;
-    }else{  
-        //tolgo la centralina
-        int err = cen_delete_generale(args, procList);
-        //controllo errori
-        err = cen_delete_generale(args, dispList);
-        return 1;//TODO      
+    }else{
+        int err;
+        signal(SIGCONT, sign_cont_handler);
+        cmd comando;
+        comando.tipo_comando = 'd';
+        if(strcmp(args[1], "--all")==0){
+            comando.forzato = 1;
+        }else{
+            comando.forzato = 0;
+            comando.id = atoi(args[1]);
+        }
+        array_risposte* answer_disp = malloc(sizeof(array_risposte));
+        initArray(answer_disp, 10);
+        array_risposte* answer_proc = malloc(sizeof(array_risposte));
+
+        initArray(answer_disp, 10);
+        err = broadcast_centralina(dispList, comando, answer_disp);
+        //gestione err
+        err = broadcast_centralina(procList, comando, answer_proc);
+        
+        //print answer_disp e answer_proc
+        /*
+        freeArray(answer_disp);
+        freeArray(answer_proc);   
+        */   
     }
+    /*GESTIONE ID non esistente
     printf("Device indicato non riconosciuto\n");
     printf("Utilizzo: delete <id>\n");
+    */
     
     return 1;
 }
-int cen_delete_generale(char **args, NodoPtr list){
-    signal(SIGCONT, sign_cont_handler);
-    //compongo il comando
-    char* comando = malloc(6 + strlen(args[1]) + 3);//6 per il comando + lunghezza id (args[1]) + 2 per spazi e terminazione stringa
-    //tipo di comando
-    sprintf(comando, "d %s", args[1]); 
-    char* answer = broadcast(list, NULL, comando);
-    if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
-        removeNode(list, atoi(answer));
-        free(comando);
-        free(answer);
-    }else{//non ho trovato nessun dispositivo con quell'id
-        return -1;
-    }
-    return 1; //esci che sennò va avanti     
-}
-
-
 /*
     Funzione: aggiunge un device al sistema e ne mostra i dettagli
     Sintassi lato utente:                          add <tipo>
@@ -206,6 +210,7 @@ int cen_add(char **args, NodoPtr procList, NodoPtr dispList){
 
     return 1;        
 }
+
 /*
     Funzione: modifica <stato> di <label> del dispositivo con <id>
         (label sta per interruttore o termostato) //per ora realizzo solo interruttore
@@ -213,7 +218,7 @@ int cen_add(char **args, NodoPtr procList, NodoPtr dispList){
     Sintassi comunicata dalla centralina :         s <id> <label> <stato>
 */
 //TODO
-    //Cambiare sintassi <label> <stato> //da generalizzare
+    //Cambiare sintassi <label> <stato> //da generalizzare AAAAAAèAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
     //TODO cambiare controllo, potrei farlo nel dispositivo
     if(args[1]==NULL || args[2]==NULL || args[3]==NULL){         //primo argomento diverso da id (errori, bisogna verificar sia un numero)
@@ -222,6 +227,7 @@ int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
         printf("Comando 'device' per vedere la lista di quelli disponibili\n");
         return 1;
     }else{
+        /*
         signal(SIGCONT, sign_cont_handler);
         char* comando = malloc(4 + strlen(args[1]) + strlen(args[2]) + strlen(args[3]));//7 per il comando, 4 per spazi di sep. e la terminazione
         //comando
@@ -236,6 +242,7 @@ int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
         }else{//non ho trovato nessun dispositivo con quell'id
             printf("Nessun elemento ha questo id o errore nel comando\n");    
         }          
+        */
         return 1; //esci che sennò va avanti    
     }
     printf("Device indicato non riconosciuto\n");
@@ -250,41 +257,22 @@ int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
     TODO Sintassi comunicata dalla centralina :    i <id> (centralina comunica a processo specifico)
 */  //da generalizzare 
 int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
-    int err = cen_info_generale(args, dispList);
-    int err2 = cen_info_generale(args, procList);
-
-    if(err == -1 && err2 == -1)
-        printf("Nessun dispositivo con questo id trovato.\n");
-    return 1;
-}
-int cen_info_generale(char **args, NodoPtr list){
     signal(SIGCONT, sign_cont_handler);
-    char* answer = malloc(ANSWER);
-    if(args[1] != NULL){
-        char* comando = malloc(5 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
-        //tipo di comando
-        sprintf(comando, "i %s", args[1]);
-        //printf("scrittura lato padre: %s\n", comando);
-        answer = broadcast(list, NULL, comando); 
-        if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
-            printf("\t%s\n", answer);
-            free(comando);
-            free(answer);
-            return 1;
-        }
-    }else{
-        printf("Inserire: info <id> \n");
-    }
+    cmd comando;
+    comando.tipo_comando = 'i';
+    comando.id = atoi(args[1]);
+    //risp* answer = broadcast_centralina(procList, comando);
+    //answer = broadcast_centralina(dispList, comando);
     
-    return -1; //esci che sennò va avanti   
-
+    //gestione non c'è nessun dispositivo con questo id
+    return 1;
 }
 
 /*
     Funzione: collega due dispositivi (uno deve essere di controllo) 
     Sintassi lato utente:                          link <id1> to <id2>
     TODO Sintassi comunicata dalla centralina : 
-*/
+*///AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
     if(args[1]==NULL || args[2]==NULL || args[3]==NULL )//gestione errori alla Carlina
         return -1;
@@ -298,107 +286,10 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
             //chiedo le info di id2 per vedere se è un dispositivo di interazione collegabile (stesso tipo) ad id1
             //delete id1
             //link id1 to id2
-
-    char* command_id1;
-    char* command_id2;
-    char* answer_id1 = malloc(ANSWER);
-    char* answer_id2 = malloc(ANSWER);
-    command_id1 = malloc(50);//TODO
-    answer_id1 = malloc(50);
-    //caso 1
-
-    if(atoi(args[3]) == 2){ //uguaglianza con id centralina
-        
-        
-        char** splitted_answer_id1;
-        memset(command_id1, 0, 50);
-        sprintf(command_id1, "i %s", args[1]);
-        answer_id1 = broadcast(dispList, NULL, command_id1);//mando a dispList, non a procList
-        //printf("%s\n", answer_id1);
-        //verifico la condizione a1 (vedi sopra)
-        if(strcmp(answer_id1, "0")!=0){//non mi interessa se esso è un hub o una lampadina, basta che esista
-            splitted_answer_id1 = splitLine(answer_id1);
-            int pid_id1 = atoi(splitted_answer_id1[1]);
-            //aT) se si trova in dispList sposto id1 in procList
-            Nodo nodo_rimuovere;
-            int err = getNode(dispList, pid_id1, &nodo_rimuovere);
-            if(err!= -1){//non c'è stato errore
-                spostaNode(dispList, procList, nodo_rimuovere);
-                printf("Link riuscito\n\n");
-            }else{
-                printf("Qualcosa non ha funzionato\n");
-            }
-        }else{//significa che l'id1 non esiste in dispList
-            //devo provare con procList            
-            //memset(answer_id1, 0, 50);
-            
-
-            //memset(answer_id1, 0, ANSWER);//possiamo aspettarci risposte molto grandi, attenz
-            answer_id1 = broadcast(procList, NULL, command_id1);//mando a procList
-            if(strcmp(answer_id1, "0")!=0){//esiste
-                //int pid_id1 = atoi(splitted_answer_id1[1]);
-                //voglio ogni funzione chiamabile con parametro node, non con doppio fottuto parametro
-                //in info ho un bel malloppo, se è un dispositivo di interazione niente paura, mi basta un add device generale 
-                //se è un dispositivo di controllo esso si porterà dietro altrettanti dispositivi che dobbiamo ricreare
-                
-                //Passo l'id ed elimino il dispositivo con tale id
-                sprintf(command_id1, "delete %s", args[1]); //TODO fare che accetti anche direttamente una stringa
-                cen_delete_generale(splitLine(command_id1), procList);
-
-
-                //tengo il tipo del dispositivo da aggiungere 
-                //
-
-                char* tipo_dispositivo[1];
-                //è per verificare che funzioni
-                tipo_dispositivo[0] = "bulb";
-                //aggiungo tale tipo di dispositivo passandogli le info
-                int i;
-                for(i=0; i<device_number(); i++){
-                    if(strcmp(tipo_dispositivo[0], builtin_device[i])==0){
-                        return add_device_generale(bultin_dev_path[i], procList, answer_id1);
-                    }
-                }
-                
-                //add_device_generale(tmp, procList, dispList);
-                 
-            }else{
-                printf("Dispositivo %s non esiste\n", args[1]);
-            }
-            
-        }   
-    }else{//il dispositivo id2 non è la centralina
-
-
-    }
-
-    /*
-    command_id1 = malloc(50);//TODO
-    command_id2 = malloc(50);//TODO
-    memset(command_id1, 0, 50);
-    memset(command_id2, 0, 50);
-
-    sprintf(command_id1, "i %s", args[1]);
-    sprintf(command_id1, "i %s", args[3]);
-
-    answer_id1 = broadcast(procList, NULL, command_id1);
-    answer_id2 = broadcast(procList, NULL, command_id2);
-
-    //Verifico che id2 sia un hub
-
-
-    //Verifico che id1 esista
-
-
-    memset(command_id1, 0, 20);
-    sprintf(command_id1, "d %s", args[1]);
-    cen_delete(procList, NULL, command_id1);
-
-    memset(command_id2, 0, 50);
-    //SINTASSI "link <id1> <id2> <infoid1>" 
-    sprintf(command_id2, "link %s %s : %s", args[1], args[2], args[3]);
-
-    */
+    cmd command_id1;
+    cmd command_id2;
+    risp* answer_id1;
+    risp* answer_id2;
     return 1;
 }
 

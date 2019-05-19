@@ -16,8 +16,7 @@ NodoPtr listInit(int data){
 }
 void printList(NodoPtr list){
     while(list != NULL){
-        printf("%d ", list->data);
-            
+        printf("%d ", list->data);   
         list=list->next;
     }
     printf("\n");
@@ -85,7 +84,6 @@ void removeNode(NodoPtr list, int data){
                     
                     nodo->next = tmp->next;
                     free(tmp);
-                    printList(list);
                     return;
                 }
                 nodo = nodo->next;

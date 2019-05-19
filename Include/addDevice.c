@@ -4,7 +4,7 @@
 #include <signal.h>
 #include "../strutture/listH.h"
 
-int id = 2;
+int id_gen = 2;
 
 int add_device(char*, NodoPtr, NodoPtr);
 int add_device_generale(char* execPath, NodoPtr list, char* info);
@@ -49,12 +49,11 @@ int add_device_generale(char* execPath, NodoPtr list, char* info){
     pipe(fd_reader); //creo la pipe
     pipe(fd_writer);
     pid=fork();
-    if(pid == 0) {
-        printf("queste sono le info: %s", info);
-        
+    if(pid == 0) {        
         char fd_writer_Tmp[10];
         char fd_reader_Tmp[10];
-
+        close(fd_reader[0]);
+        close(fd_writer[1]);
         sprintf(fd_writer_Tmp,"%d", (fd_writer[0]));
         sprintf(fd_reader_Tmp,"%d", (fd_reader[1]));
         char *args[]={execPath,fd_writer_Tmp, fd_reader_Tmp , info, NULL}; 
@@ -63,7 +62,9 @@ int add_device_generale(char* execPath, NodoPtr list, char* info){
         perror("errore fork");
     } 
     else{
-        signal(SIGCONT, sign_handler);
+        signal(SIGCONT, sign_handler);//?
+        close(fd_reader[1]);
+        close(fd_writer[0]);
         list = insertLast(list, pid, fd_reader[0],fd_writer[1]);
         //Vado in pausa per permettere al figlio di generarsi
         pause();
@@ -75,9 +76,9 @@ int add_device_generale(char* execPath, NodoPtr list, char* info){
 
 int add_device(char* execPath, NodoPtr procList, NodoPtr dispList){
     //add device di default chiamato dalla centralina quando viene aggiunto un dispositivo
-    id+=1;
+    id_gen+=1;
     char info[16];
-    sprintf(info, "default %d", id);
+    sprintf(info, "default %d", id_gen);
     
     add_device_generale(execPath, dispList, info);
     return 1;

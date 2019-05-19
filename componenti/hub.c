@@ -24,441 +24,364 @@ int fd_read;
 //File descriptor in cui il figlio scrive e il padre legge
 int fd_write;
 
-int dev_getinfo(char **args);
-int dev_delete(char **args);
-int dev_changestate(char **args);
-int dev_link(char **command);
+int dev_list(cmd);
+int dev_switch(cmd);
+int dev_info(cmd);
+int dev_delete(cmd);
+int dev_link(cmd);
+
+void get_info_string(char*);//TODO aggiungere timer
+void set_info(char*);
+
 //int dev_link(char** args);
-int device_handle_command(char **args);
-int dev_add(char* execPath, char* info);
+int device_handle_command(cmd);
+void h_sigstop_handler ( int sig ) ;
+//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+int dev_add(char*, char*);
 
 
 void signhandle_quit(int sig){
+    signal(SIGQUIT, signhandle_quit);
     _exit(0);
 }
 
-char *builtin_func[]={
+
+
+
+char *builtin_command[5]={
     "l",//list
-    "s",//changeState
+    "s",//switch
     "i",//getInfo
     "d", //delete
     "a" //addDevice    da cambiare scegliendo lettera corrispondente
 };
+int (*builtin_func_hub[]) (cmd comando) = {
+        &dev_list,
+        &dev_switch,
+        &dev_info,
+        &dev_delete,
+        &dev_link,
+};
+int cont_numCommands(){
+    return (sizeof(builtin_command)/ sizeof(char*));
+}
 
-void sign_cont_handler(int sig){
+void sign_cont_handler_hub(int sig){
+    signal(SIGCONT, sign_cont_handler_hub);
     return;
 }
-
+void h_sigstop_handler ( int sig ) {
+  printf("Never happens (%d)\n",sig);
+}
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
-//
 void sighandle_usr1(int sig){
+    signal(SIGCONT, sign_cont_handler);
+    signal(SIGUSR1, sighandle_usr1);
     if(sig == SIGUSR1){
+        cmd comando;
+        int err_signal;
+        read(fd_read, &comando, sizeof(cmd));
+        int errnum = device_handle_command(comando);
+        //printf("Termino %d\n", id);
+        err_signal = kill(idPar, SIGCONT);
+        if(err_signal != 0)
+            perror("errore in invio segnale");
 
-        printf("HUB in handler sigusr1\n");
-        //proviamo a leggere
-        //potrei passare anche la lunghezza del messaggio
-        char str[CEN_BUFSIZE];
-        memset(str, 0, CEN_BUFSIZE);
-        read(fd_read, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
-        //printf("\n\tLettura da pipe %s  \n", str);
-        char** arg = splitLine(str);
-        int errnum = device_handle_command(arg);
-        printf("Hub finito SIGUSR1");
+        //printf("Termina in modo adeguato.\n");
+        return;
     }
 }
-int device_handle_command(char **args){
+
+//USATO PER SVEGLIARE IL PROCESSO
+void sighandle_usr2(int sig){
+    signal(SIGUSR2, sighandle_usr2);
+    if(sig == SIGUSR2){
+        return;
+    }
+}
+
+int device_handle_command(cmd comando){
     //da fare come in functionDeclarations in file dispositivi
-    if(strcmp(args[0],builtin_func[0])==0 || strcmp(args[0],builtin_func[2])==0){//list o getinfo
-        return dev_getinfo(args);
-    }else if(strcmp(args[0],builtin_func[1])==0){//switch
-        return dev_changestate(args);
-    }else if(strcmp(args[0],builtin_func[3])==0){//delete
-        return dev_delete(args);
-    }else if(strcmp(args[0],builtin_func[4])==0){//addDevice
-        return dev_link(args);
+    int i;
+    for(i=0; i<cont_numCommands(); i++){
+        char tmp = *builtin_command[i];
+        if(comando.tipo_comando==tmp)
+            return builtin_func_hub[i](comando);
     }
     return 1;
 }
+int rispondi(risp risposta_controllore, cmd comando){
+    risposta_controllore.termina_comunicazione = 0;
+    risposta_controllore.pid = pid;
+    //vado io in controllo e mando le varie risposte al papi
+    //attenz, buono che salto il primo
+    broadcast_controllo(dispList->next, comando, idPar, fd_write, risposta_controllore);
+    return 1;
+}
 
-//COMANDO s <pid> <label> <stato:1/0>
-/*restituisco in pipe:
-    0 se NON sono il dispositivo in cui ho modificato lo stato
-    1 se sono il dispositivo in cui ho modificato lo stato
-*/
-int dev_changestate(char **args){
-    int id_change = atoi(args[1]);
-    printf("%d\n", id_change);
-    if(id_change == id){//devo confrontare lo stato
-        /* potremo scriver un messaggio del tipo: dispositivo <pid> acceso / spento
-        char* msg = malloc(10);//potrei fare il log10 dell'pid per trovare il numero di cifre
-        sprintf(msg, "d %d", pid);//pid inteso come pid
+int dev_list(cmd comando){
+    risp risposta_controllore;
+    risposta_controllore.profondita = comando.profondita+1;
+    comando.profondita++;
+    risposta_controllore.id = id;
+    risposta_controllore.considera = 1;
+    char* info = malloc(ANSWER);
+    get_info_string(info);
+    strcpy(risposta_controllore.info, info);
+
+    rispondi(risposta_controllore, comando);
+
+
+    return 1;
+}
+//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+int dev_switch(cmd comando){
+//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    return 1;
+}
+int dev_info(cmd comando){
+//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    return 1;
+}
+int dev_delete(cmd comando){
+//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    risp risposta_controllore;
+    if(comando.forzato == 1 || comando.id == id){//comando --all 
+        risposta_controllore.id = id;
+        risposta_controllore.considera = 1;
+        risposta_controllore.eliminato = 1;
+        risposta_controllore.pid = pid;
+        comando.forzato = 1;//indico ai miei figli di eliminarsi
         
-        int esito = write(fd_write, msg, strlen(msg)+1);
+        char* info = malloc(ANSWER);
+        get_info_string(info);
+        strcpy(risposta_controllore.info, info);
         
-        per un'altra idea vedi functionDeclaration in metodo cen_switch
-        */ 
-        status = (strcmp(args[3],"on")==0?1:0);
-        printf("%s\n", args[3]);
-        printf("Status dispositivo Hub %d : %s\n", id, (status==1?"acceso":"spento"));  
-        printf("\033[1;32m"); //scrivo in verde 
-        printf("\tNon sono felice e non sono triste. È questo il dilemma della mia vita: non so come definire il mio stato d’animo, mi manca sempre qualcosa.");
+        rispondi(risposta_controllore, comando);
+        printf("\033[1;31m"); //scrivo in rosso 
+            printf("\t\tMUOIO\n");
         printf("\033[0m\n"); //resetto per scriver in bianco
 
-        char* msg = malloc(10);
-        int esito = write(fd_write, "1\0", 2);
-        kill(idPar,SIGCONT);
-    }else{
-        int esito = write(fd_write, "0\0", 2);//TODO
-        printf("here\n\n");
-        kill(idPar,SIGCONT);
-    }
-    //famo ritornare l'errore poi
-    return 1;
-}
-
-//COMANDO i <tipo> <pid> o
-//        l
-/*restituisce in pipe
-    se comando è l: <informazioni>
-    se comando è i:
-        se <pid> == id_dispositivo: <informazioni>
-        else 0; TODO segnale errore
-*/
-int dev_getinfo(char **args){
-    char* str = malloc(128);
-    printf("wewewewewe");
-    if(args[0][0] == 'l'){//list
-        printf("we cumpaa");
-        sprintf(str, "%d Hub %d", pid, id);
-        strcat(str ,(status==1?" accesa\n":" spenta\n"));
-        NodoPtr Nodo = dispList;
-        Nodo = Nodo->next; //escludo il mio pid!
-        while(Nodo != NULL){
-            //TODO gestire errori
-            write(Nodo->fd_writer,"l\0",2);
-            kill(Nodo->data, SIGUSR1);            
-            //TODO
-            //pause();
-            char* temp = malloc(10);
-            temp = (char*)read(Nodo->fd_reader,str,30);
-            //memset(tmp,0,30);
-            //strcat(msg,tmp);            printf("\t%s", str);
-            strcat(str, temp);
-            free(temp);
-            Nodo = Nodo->next;
-        }
-
-        //printf("Pipe su cui scrivo %d, pipe su cui leggo %d \n", fd_write, fd_read);
-
-        int esito = write(fd_write, str, strlen(str)+1);
-        kill(idPar,SIGCONT);
-        //pause();
-    }else if(args[0][0] == 'i'){//info
-        int id_info = atoi(args[1]);
-        char* msg = malloc(10);
-
-
-        if(id == id_info){//guardo se il tipo e l'pid coincidono in tal caso stampo il mio stato e quello di tutti i dispositivi collegati
-            sprintf(msg, "%d Hub %d",pid, id);
-            strcat(msg ,(status==1?" accesa\n":" spenta\n"));
-            NodoPtr Nodo = dispList;
-            Nodo = Nodo->next; //escludo il mio pid!
-            while(Nodo != NULL){
-                //TODO gestire errori
-                write(Nodo->fd_writer,"l\0",2);
-                kill(Nodo->data, SIGUSR1);            
-                //TODO
-                //pause();
-                char* temp =malloc(10);
-                temp = (char*)read(Nodo->fd_reader,str,30);
-                //memset(tmp,0,30);
-                //strcat(msg,tmp);            printf("\t%s", str);
-                strcat(str, temp);
-                free(temp);
-                Nodo = Nodo->next;
-            }
-            int esito = write(fd_write, msg, strlen(msg));
-            
-            kill(idPar,SIGCONT);
-        }else{
-            NodoPtr Nodo = dispList;
-            Nodo = Nodo->next; //escludo il mio pid!
-            while(Nodo != NULL){
-                char* tmp = malloc(1 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
-                //tipo di comando
-                strcat(tmp,"i ");
-                //id dispositivo da spegnere
-                strcat(tmp, args[1]);
-                //delimitatore 
-                strcat(tmp, "\0");
-                //TODO gestire errori
-                write(Nodo->fd_writer, tmp, strlen(tmp));
-                kill(Nodo->data, SIGUSR1);            
-                //TODO
-                //pause();
-                char* temp = malloc(10);
-                temp = (char*)read(Nodo->fd_reader,str,30);
-                //memset(tmp,0,30);
-                //strcat(msg,tmp);            printf("\t%s", str);
-                if(strcmp(temp, "0")!=0){
-                    free(temp);
-                
-                    return 1;
-                } 
-                Nodo = Nodo->next;
-            }
-            sprintf(msg, "%d", 0);
-            int esito = write(fd_write, msg, strlen(msg));
-            printf("Non restituisce info dato che pid non coincide\n");
-            kill(idPar,SIGCONT);
-        }
-    }
-    //famo ritornare l'errore poi
-    return 1;
-}
-
-
-//COMANDO d <pid>
-/*restituisco in pipe:
-    0 se NON sono il dispositivo da eliminare (anche se il dispositivo era uno dei miei figli ed è stato correttamente eliminato)
-    pid se sono il dispositivo da eliminare
-*/
-int dev_delete(char **args){
-    //printf("pid: %d\n",pid);
-    int id_delete = atoi(args[1]);
-    char* msg = malloc(10);//potrei fare il log10 dell'pid per trovare il numero di cifre
-    signal(SIGCONT, sign_cont_handler);
-
-
-    if(id == id_delete){//guardo se il tipo e l'pid coincidono
-        //scrivo sulla pipe che sono io quello che deve essere ucciso e scrivo anche il mio pid, la centralina dovrà toglierlo dalla lista
-        //TODO trovare un altro metodo
-       
-        sprintf(msg, "%d", pid);//pid inteso come pid
-        printf("pid in messaggio: %s\n",msg);
-        int esito = write(fd_write, msg, strlen(msg));
-        
-        printf("\033[1;31m"); //scrivo in rosso 
-        printf("\x1b[ \n\t«Dio mio, Dio mio, perché mi hai abbandonato?»\n");
-        printf("\033[0m"); //resetto per scriver in bianco
-
-        NodoPtr Nodo = dispList;
-        //Escludo il mio pid dal while
-        Nodo = Nodo->next;
-        
-        while(Nodo != NULL){ // se avevo dispositivi collegati mando un messaggio di delete ad ognuno di essei con il loro pid per farli eliminare!
-            char* tmp = malloc(1 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 2 per spazi e terminazione stringa
-            //tipo di comando
-            strcat(tmp,"d ");
-            //id dispositivo da spegnere
-
-            ////////////////////////
-            char* temp = malloc(10);
-            sprintf(temp, "%d",Nodo->data);
-            strcat(tmp, temp);  //probabile da sistemare e passare un array di char e non un intero?
-            ////////////////////////
-            free(temp);
-
-            //delimitatore 
-            strcat(tmp, "\0");
-            //scrivo il comando sulla pipe
-            write(Nodo->fd_writer, tmp, strlen(tmp));
-            //mando un segnale al figlio così si risveglia e legge il contenuto della pipe
-            kill(Nodo->data, SIGUSR1);
-            //printf("Mi metto in read dal figlio %d sul canale %d\n", Nodo->data, Nodo->fd[0]);
-            //pause();
-                
-            //TODO gestione errori
-            //leggo il pid del figlio così da poterlo togliere dalla lista di processi
-            char* answer = malloc(30);
-            int err = read(Nodo->fd_reader,answer, 30);
-            //pause();
-            //TODO se il figlio ritorna 0 esso non è figlio e perciò non lo elimino dalla lista
-            int ris = atoi(answer);
-
-            //printf("Lettura da pipe lato padre %d\n", ris);
-            if(ris!=0){
-                removeNode(dispList, ris);
-            }                
-            Nodo = Nodo->next;
-            //risveglio il figlio così può eliminarsi
-            //DOVREBBE FUNZIONAR ANCHE COSì, mi sa de no
-            //kill(Nodo->data, SIGUSR1);
-            //memset(tmp,0,30);
-            //strcat(msg,tmp);
-        }
-        printf("Eliminazione avvenuta con successo\n\n");
-        kill(idPar,SIGCONT);
-
         exit(0);
+    }else{
+        risposta_controllore.considera = 0;//non considerarmi, non sono stato eliminato
+        risposta_controllore.eliminato = 0;
+        char* info = malloc(ANSWER);
+        get_info_string(info);
+        strcpy(risposta_controllore.info, info);
 
-    }else{ // nel caso il pid non sia il mio (HUB) inoltro il messaggio ai miei filgi così che controllino se devono essere eliminati
-        NodoPtr Nodo = dispList;
-        //Escludo la centralina dal while
-        Nodo = Nodo->next;
-
-        while(Nodo != NULL){ 
-            char* tmp = malloc(1 + strlen(args[1]) + 3);//1 per il comando + lunghezza id (args[1]) + 2 per spazi e terminazione stringa
-            //tipo di comando
-            strcat(tmp,"d ");
-            //id dispositivo da spegnere
-            strcat(tmp, args[1]); 
-            //delimitatore 
-            strcat(tmp, "\0");
-            //scrivo il comando sulla pipe
-            write(Nodo->fd_writer, tmp, strlen(tmp));
-            //mando un segnale al figlio così si risveglia e legge il contenuto della pipe
-            kill(Nodo->data, SIGUSR1);
-            //printf("Mi metto in read dal figlio %d sul canale %d\n", Nodo->data, Nodo->fd[0]);
-            //pause();
-                
-            //TODO gestione errori
-            //leggo il pid del figlio così da poterlo togliere dalla lista di processi
-            char* answer = malloc(30);
-            int err = read(Nodo->fd_reader,answer, 30);
-            //pause();
-            //TODO se il figlio ritorna 0 esso non è figlio e perciò non lo elimino dalla lista
-            int ris = atoi(answer);
-
-            //printf("Lettura da pipe lato padre %d\n", ris);
-            if(ris!=0){
-                removeNode(dispList, ris);
-                return 1;
-            }                
-            Nodo = Nodo->next;
-            //risveglio il figlio così può eliminarsi
-            //DOVREBBE FUNZIONAR ANCHE COSì, mi sa de no
-            //kill(Nodo->data, SIGUSR1);
-            //memset(tmp,0,30);
-            //strcat(msg,tmp);
-        }
-        sprintf(msg, "%d", 0);
-        int esito = write(fd_write, msg, strlen(msg));
-        kill(idPar,SIGCONT);
+        rispondi(risposta_controllore, comando);
     }
-    //famo ritornare l'errore poi
+
+    
+    
+    
     return 1;
 }
-
-//come addDevice della centralina, solo che è interno all'hub e quindi sarà l'hub a generare i processi
-//TODO sistemare gli argomenti passati in modo che ci sia il path corretto per l'eseguibile e quindi sistemare la gestione degli argomenti passati
-//va anche aggiunto un controllo per verificare che, se non è il primo dispositivo aggiunto all'hub, sia dello stesso dipo di quelli già presenti
-//possibile passarlo come parametro(?)
-
-
-
-//SINTASSI "link <id1> <id2> : <infoid1>"
-//ho messo i : perché così riesco a dividere il comando in due parti
-//voglio le info uniche non diviso
-int dev_link(char** command){
-    if(atoi(command[2]) == id){ // se sono io il dispositivo di controllo a cui va attaccato il nuovo dispositivo
-        
-        char info[16]; //assegno ad info le informazioni prese da command -> non so in che ordine siano quindi aspetto
-        //sprintf(info, "%d %d %s %.2f", command[3]); // basta verificare di che tipo è il dispositivo per sapere quante info devo leggere
-        
-        
-        //se c'è default devo soltanto aggiungere il device senza preoccuparmi delle info ed è uguale per tutti
-        if(strcmp(command[3],"default") == 0){
-            sprintf(info, "default %d", atoi(command[4]));
-            int i;
-            for(i=0; i<device_number(); i++){
-            if(strcmp(command[3], builtin_device[i])==0)//non so in che posizione ci sia il tipo penso 3
-                    return dev_add(bultin_dev_path[i], info);
-            }
-        }//se invece non c'è default controllo il dispositivo
-        //TODO DA CAMBIARE CON strkat
-        else{ // in base al dispositivo so quanti parametri ha per le info e di conseguenza so quante info devo passare
-            if(strcmp(command[3], "b")==0){
-                char* temp = malloc(10);
-                sprintf(temp, "%s", command[5]);
-                sprintf(info, "%d %d %s %.2f", atoi(command[3]), atoi(command[4]), temp, atof(command[6])); 
-                free(temp);
-            }
-            else if(strcmp(command[3],"w")==0 ){}
-                //{}
-            else if(strcmp(command[3], "f")==0) {}
-                //
-            int i;
-            for(i=0; i<device_number(); i++){
-                if(strcmp(command[3], builtin_device[i])==0)//non so in che posizione ci sia il tipo penso 3
-                    return dev_add(bultin_dev_path[i], info);
-            }
-        }
-    }
-    //forse da sostituire con broadcast generale???
-    //da sostituire con broadcast generale!!!!!!!
-    else{ // se non sono io id2 inoltro ai miei figli il comando 
-        NodoPtr Nodo = dispList;
-        //Escludo me stesso
-        Nodo = Nodo->next;
-        
-        while(Nodo != NULL){ 
-            //scrivo il comando sulla pipe
-
-            /*MARCELLO TI DA WARNING PERCHè MANDI IN PIPE UN char** CHE DAREBBE UN ERROR A RUNTIME
-            write(Nodo->fd_writer, command, strlen(command)); // come risolvere questo warning???
-            
-            //mando un segnale al figlio così si risveglia e legge il contenuto della pipe
-            kill(Nodo->data, SIGUSR1);
-             */   
-            //TODO gestione errori
-            //leggo il pid del figlio così da poterlo togliere dalla lista di processi
-            char* answer = malloc(30);
-            int err = read(Nodo->fd_reader,answer, 30);
-            //pause();
-            //TODO se il figlio ritorna 0 esso non è figlio e perciò non lo elimino dalla lista
-            int ris = atoi(answer);
-
-            //printf("Lettura da pipe lato padre %d\n", ris);
-            if(ris!=0){
-                return 1;
-            }                
-            Nodo = Nodo->next;
-        }
-    }
+//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+int dev_link(cmd comando){
     return 1;
 }
-
-int dev_add(char* execPath, char* info){
-    //add_device_generale(execPath, NULL, dispList, info);
-    return 1;
+void set_info(char* info){
+    char** info_split = splitLine(info);
+    //<infoDefault> := default <id>
+    if(strcmp(info_split[0], "default")==0){
+        id = atoi(info_split[1]);
+    }else{
+        //<info> := <id>
+        id = atoi(info_split[0]);
+    }
 }
 
-
-
+void get_info_string(char* ans){//TODO aggiungere timer
+    //TODO 
+    sprintf(ans, "hub %d %d", pid, id);
+}
 
 
 int main(int argc, char **args){
+    dispList = listInit(getpid());
+
+    //UGUALE A BULB 
     pid = getpid(); // chiedo il mio pid
     idPar = getppid(); //chiedo il pid di mio padre
-    dispList = listInit(getpid());
-    //MANCA IL SET_INFO, sbaglia l'id
-    id = atoi(args[5]);
-    //0 spenta
-    //1 accesa
-    status = 0; //equivalente a quello dei dispositivi collegati
 
-    //leggo args per prendere gli argomenti passati(puntatore al lato di scrittura della pipe)
     fd_read = atoi(args[1]);
     fd_write = atoi(args[2]);
+    //MANCA IL SET_INFO, sbaglia l'id
+    set_info(args[3]);
 
+    signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
-
+    signal(SIGSTOP,h_sigstop_handler);
 
     printf("\nHub creato: id: %d\n", id);
+    printf("Id: %d\n", id);
     printf("Pid: %d\nPid padre: %d\n", pid, idPar);
+    int i=0;
+
+    //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+    //PROVA
+    /*
+    
+    add_device_generale("./componenti/BULB", dispList, info);
+    sprintf(info, "default %d", id+1);
+    add_device_generale("./componenti/BULB", dispList, info);
+    sprintf(info, "default %d", id+1);
+    add_device_generale("./componenti/HUB", dispList, info);
+    */
+
+   char* info = malloc(ANSWER);
+   if(id < 7){
+       sprintf(info, "%d", id+1);
+       add_device_generale("./componenti/HUB", dispList, info);
+   }
+   if(id < 7){
+       sprintf(info, "%d", id+1);
+       add_device_generale("./componenti/HUB", dispList, info);
+       sprintf(info, "%d", id+1);
+       add_device_generale("./componenti/BULB", dispList, info);
+   }
+    sprintf(info, "default %d", id+1);
+    
+    if(id==3){
+        sprintf(info, "%d", id+1);
+        add_device_generale("./componenti/HUB", dispList, info);
+        sprintf(info, "default %d", id+23);
+        add_device_generale("./componenti/BULB", dispList, info);
+        sprintf(info, "default %d", id+3);
+        add_device_generale("./componenti/BULB", dispList, info);
+    }
+    if(id==4){
+        sprintf(info, "%d", id+1);
+        add_device_generale("./componenti/HUB", dispList, info);
+        sprintf(info, "default %d", id+23);
+        add_device_generale("./componenti/HUB", dispList, info);
+        sprintf(info, "default %d", id+3);
+        add_device_generale("./componenti/HUB", dispList, info);
+    }
+    
+    
+   
+
+    
+
+    
+
+       
+    
+    
+
+    
 
     //Invio segnale al padre
-    int ris = kill(idPar, SIGCONT); 
+    int ris = kill(idPar, SIGCONT);
 
     //Child va in pausa
     while(1){
-        //printf("Child va in pausa\n");
+        //printf("Sono in pausa\n");
         pause();
     }
 
-
     printf("Child ora termina\n");   
     exit(0);
+}
+//i vari parametri potrebbero essere levati se messo in hub
+int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, risp risposta_to_padre){
+    signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
+    signal(SIGQUIT, signhandle_quit);
+    signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
+    signal(SIGSTOP,h_sigstop_handler);
+    //nodo rappresenta il figlio, nell'hub passo il successivo dato che il primo nodo 
+    //è sè stesso
+    NodoPtr nodo = list;
+    //risposta che verrà mandata al padre (se ho figli)
+    risp answer;
+    int err_signal;//errore kill
+    //debug printf("Mando il messaggio di me stesso alla centralina %d\n", id);
+    //scrivo al padre la risposta del dispositivo di controllo contenente le sue info
+    //il padre potrebbe essere un dispositivo diverso dalla centralina
+    write(fd_papi, &risposta_to_padre, sizeof(risp));
+    //mando un segnale al padre per comunicargli di leggere dalla pipe
+    
+    //err_signal = kill(pid_papi, SIGCONT);
+    if(err_signal != 0)
+        perror("errore in invio segnale");
+    //GESTIONE SE L'HUB è DA ELIMINARE
+    /*
+    //da eliminare quando finisco con i figli
+    if(risposta_to_padre.eliminato == 1){
+        to_delete = 1;
+        risposta_to_padre.eliminato = 0;
+    }
+    */
+    //finchè ho figli
+    while(nodo != NULL){
+        //imposto il read dalla pipe come non bloccante
+        /*
+        int flags = fcntl(nodo->fd_reader, F_GETFL, 0);
+        fcntl(nodo->fd_reader, F_SETFL, flags | O_NONBLOCK);
+        */
+        //Mando il comando a mio figlio che lo gestirà
+        write(nodo->fd_writer, &comando, sizeof(comando));
+        err_signal = kill(nodo->data, SIGUSR1); 
+        //Mando un segnale per comunicare a mio figlio di gestire il comando
+        if(err_signal != 0)
+            perror("errore in invio segnale");
+        while(1){
+            //Leggo la risposta --> viene letta dopo che mi è arrivato un segnale SIGCONT
+            //dato che è bloccante
+            read(nodo->fd_reader, &answer, sizeof(risp));
+                //debug printf("Leggo la risposta in %d, %s\n", id, answer.info);
+            //se è un messaggio di terminazione devo uscire dal ciclo di ascolto e andare 
+            //al nodo successivo
+            if(answer.termina_comunicazione == 1){
+                break;
+            }else{
+                //Il delete non funziona se fatto non al primo nodo 
+                //se non è un messaggio di terminazione significa che il figlio ha ancora risp da comunicare
+                //nel caso dei dispositivi di interazione (o controllo senza figli) verrà mandato
+                //1 messaggio contenente le informazioni e un successivo messaggio di terminazione
+
+                //finchè tutti i figli non avranno mandato il messaggio di terminazione
+                //continuerà a mandare risposte, quando tutti avranno mandato il messaggio di terminazione
+                //egli manderà 1 messaggio di terminazione alla centralina (qui)
+
+                //scrivo a mio padre la risposta che ho appena letto
+                write(fd_papi, &answer, sizeof(risp));
+                //err_signal = kill(pid_papi, SIGCONT); 
+                if(err_signal != 0)
+                    perror("errore in invio segnale");
+                //Mi metto in pausa per permettere a mio padre di leggere la risposta
+                //sono sicuro che non rimango in pausa dato che ho verificato che 
+                //answer.terminazione fosse diverso da 1
+                //kill(getpid(), SIGSTOP);
+                //pause();
+                //mando un segnale al figlio per comunicare di continuare la comunicazione
+                //write(nodo->data, &answer, sizeof(risp));
+                
+                err_signal = kill(nodo->data, SIGCONT);
+
+                if(err_signal != 0)
+                    perror("errore in invio segnale");
+                //mi metto in pausa così da permettere al figlio di comunicare: 
+                    //messaggio di terminazione o
+                    //ulteriore risposta con terminazione = 0 
+                if(answer.eliminato == 1){//questo vale quando risalgo
+                    printList(list);
+                    removeNode(list, answer.pid);
+                    printf("Dispositivo eliminato: %s in %d\n", answer.info, id);
+                    answer.eliminato = 0;
+                }
+            }
+        }
+        nodo = nodo->next;
+    }
+    //comunico al padre di aver finito di comunicare mettendo il parametro termina comunicazione = 1
+    risposta_to_padre.termina_comunicazione = 1;
+    write(fd_papi, &risposta_to_padre,sizeof(risp));
+    //do il controllo a mio padre quando ritorno nel signal
+    return 1;
 }

@@ -1,59 +1,104 @@
 #include <signal.h>
 #include <time.h>
-#include "gestioneComandi.c"
+#include "../strutture/comandiH.h"
+//#include "../strutture/comandinonvacazz.c"
+//#include "gestioneComandi.c"
 
-
+#define ANSWER 64
 #define CEN_BUFSIZE 128
-#define ANSWER 32
+#define CEN_DELIM " \t\r\n\a"
+
+
 //PER ORA LE DEFINISCO QUI, POI VERRA FATTA UNA LIBRARY
-void sighandle1(int sig, int fd_read);
+void sighandle1(int sig, int fd_read, int);
 void sighandle2(int sig, int fd_manuale);
-int dev_info_gen(char **args, int id, int idPar, int fd_write);
-int dev_list_gen(char **args, int idPar, int fd_write);
-int dev_delete_gen(char **args, int pid, int id, int idPar, int fd_write);
+int dev_info_gen(cmd comando, int id, int idPar, int fd_write);
+int dev_list_gen(cmd comando, int idPar, int fd_write);
+int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write);
+int rispondi(risp answer, cmd comando, int fd_write, int pidPapi);
+char** splitLine(char* line);
+//NON HO VOGLIA DI RISOLV L'ERRORE
+
+char** splitLine(char* line){
+    int pos=0, bufS = CEN_BUFSIZE;
+    char **commands = malloc(bufS * sizeof(char));
+    char *cmd;
+
+    //IF error in the allocation of commands
+    if(!commands){
+        fprintf(stderr, "cen: allocation (malloc) error\n");
+        //Exit with error
+        exit(1);
+    }
+
+    cmd=strtok(line, CEN_DELIM);
+    while(cmd!=NULL){
+        commands[pos++]=cmd;
+
+        //Realocation of the buffer if we have exceeded its size
+        if(pos >= bufS){
+            bufS += CEN_BUFSIZE;
+            commands = realloc(commands, bufS * sizeof(char));
+            //IF error in the allocation of commands
+            if(!commands){
+                fprintf(stderr, "cen: allocation (malloc) error\n");
+                //Exit with error
+                exit(1);
+            }
+        }
+        cmd = strtok(NULL, CEN_DELIM);
+    }
+    commands[pos]=NULL;
+    return commands;
+}
 
 
 //TODO I due handler sono compattabili in uno unico con controllo del tipo di segnale appena prima del read
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
-void sighandle1(int sig, int fd_read){
+void sighandle1(int sig, int fd_read, int pid_padre){
     if(sig == SIGUSR1){
-        //proviamo a leggere
-        //potrei passare anche la lunghezza del messaggio
-        char str[CEN_BUFSIZE];
-        memset(str, 0, CEN_BUFSIZE);
-        read(fd_read, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
-        //printf("\n\tLettura da pipe sig1 %s  \n", str);
-        
-        char** arg = splitLine(str);
-        int errnum = device_handle_command(arg);
-        //free arg bro
+        cmd comando;
+        read(fd_read, &comando, sizeof(cmd));
+        int errnum = device_handle_command(comando);
+        //    kill(pid_padre, SIGCONT);
+    
     }
 }
 void sighandle2(int sig, int fd_manuale){
     if(sig == SIGUSR2){
-        //proviamo a leggere
-        //potrei passare anche la lunghezza del messaggio
-        char str[CEN_BUFSIZE];
-        //printf("Leggo dalla fifo manale\n");
-        read(fd_manuale, str, CEN_BUFSIZE);//uso 10 per intanto, vedi sopra poi
-        char** arg = splitLine(str);
-        int errnum = device_handle_command(arg);
+        //PERCHÈ NON USI SIG1??????????????????'
+        cmd comando;
+        read(fd_manuale, &comando, sizeof(cmd));//uso 10 per intanto, vedi sopra poi
+
+        //printf("\n\tLettura da pipe sig1 %s  \n", str);
+        int errnum = device_handle_command(comando);
     }
 }
 
+int rispondi(risp answer, cmd comando, int fd_write, int pidPapi){
+    answer.profondita = comando.profondita+1;
+    comando.profondita+=1;
+    answer.termina_comunicazione = 0;
+    write(fd_write, &answer, sizeof(answer));
 
+
+    answer.termina_comunicazione = 1;
+    write(fd_write, &answer, sizeof(answer));
+    return 1;
+}
 
 //COMANDO   info <id>
 /*restituisce in pipe
     <info> := <tipo> <pid???> <id> <status> <time>
 */
-int dev_info_gen(char **args, int id, int idPar, int fd_write){
-    int id_info = atoi(args[1]);
-    if(id == id_info){
-        char* ans = malloc(ANSWER);
-        //MARCELLO SEI UN ZEBI, INFO ZEBI, INFO DEVI PASSARGLIELO COME PARAMETRO
-        get_info_string(ans);
-        int esito = write(fd_write, ans, strlen(ans)+1);
+//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+//GUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LIST
+int dev_info_gen(cmd comando, int id, int idPar, int fd_write){
+    if(id == comando.id){
+        risp answer;
+        //NON SO SE ANDRÀ COSÌ
+        get_info_string(answer.info);
+        int esito = write(fd_write, &answer, sizeof(risp));
         //free(ans);
         kill(idPar,SIGCONT);
     }else{
@@ -70,13 +115,18 @@ int dev_info_gen(char **args, int id, int idPar, int fd_write){
 /*restituisce in pipe
     se comando è l: <informazioni>
 */
-int dev_list_gen(char **args, int idPar, int fd_write){
-    char* ans = malloc(ANSWER);
-    get_info_string(ans);
-    int esito = write(fd_write, ans, strlen(ans)+1);
+int dev_list_gen(cmd comando, int idPar, int fd_write){
+    char* info = malloc(ANSWER);
+    get_info_string(info);
+    risp answer;
+    answer.considera = 1;
+    /*
+    answer.foglia = 1;
+    answer.termina_comunicazione = 1;
+    */
+    strcpy(answer.info, info);
+    rispondi(answer, comando, fd_write, idPar);
 
-    //free(ans);
-    kill(idPar,SIGCONT);
     return 1;
 }
 
@@ -87,34 +137,34 @@ int dev_list_gen(char **args, int idPar, int fd_write){
     0 se NON sono il dispositivo da eliminare
     pid se sono il dispositivo da eliminare
 */
-int dev_delete_gen(char **args, int pid, int id, int idPar, int fd_write){
-    //printf("pid: %d\n",pid);
-    int id_delete = atoi(args[1]);
-    char* msg = malloc(ANSWER);//potrei fare il log10 dell'pid per trovare il numero di cifre
+//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
-    if(id == id_delete){//guardo se il tipo e l'pid coincidono
-        //scrivo sulla pipe che sono io quello che deve essere ucciso e scrivo anche il mio pid, la centralina dovrà toglierlo dalla lista
-        //TODO trovare un altro metodo
-       
-        sprintf(msg, "%d", pid);//pid inteso come pid
-        int esito = write(fd_write, msg, strlen(msg)+1);
-        
+int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write){
+    //printf("pid: %d\n",pid);
+    risp answer;
+    if(id == comando.id || comando.forzato){
+        answer.pid = pid;
+        answer.id = id;
+        answer.considera = 1;
+        answer.eliminato = 1;
+        /*
+        answer.foglia = 1;
+        answer.termina_comunicazione = 1;
+        */
+        char* info = malloc(ANSWER);
+        get_info_string(info);
+        strcpy(answer.info, info);
             printf("\033[1;31m"); //scrivo in rosso 
             printf("\x1b[ \n\t«Dio mio, Dio mio, perché mi hai abbandonato?»\n");
             printf("\033[0m\n"); //resetto per scriver in bianco
-        free(msg);
-        kill(idPar,SIGCONT);
-
+        rispondi(answer, comando, fd_write, pid);
         exit(0);
-
     }else{
-        sprintf(msg, "%d", 0);
-        int esito = write(fd_write, msg, strlen(msg)+1);
-        //printf("\tNon eliminato dato che pid non coincide\n");
-        free(msg);
-        kill(idPar,SIGCONT);
+        answer.pid = pid;
+        answer.id = id;
+        answer.considera = 1;
+        answer.eliminato = 0;
+        rispondi(answer, comando, fd_write, pid);
     }
-    
-    //famo ritornare l'errore poi
     return 1;
 }

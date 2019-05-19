@@ -7,31 +7,50 @@
 #include <signal.h>
 #include <unistd.h>
 #include "../strutture/listH.h"
-
+#include "../strutture/comandiH.h"
+#include "../strutture/comandinonvacazz.c"
 
 
 #define CEN_DELIM " \t\r\n\a"
 #define CEN_BUFSIZE 128
-#define ANSWER 64
 #define BUFSIZE 128
+#define ANSWER 64
 
-int ascolta_risposta(NodoPtr nodo, char* answer);
-char* broadcast(NodoPtr procList, char** comando, char* comando_compatto);
-char* broadcast_list(NodoPtr procList, char** comando, char* comando_compatto);
 
+//////////NON MI COMPILA SE LI METTO IN COMANDI.C OIBO
+
+void initArray(array_risposte *a, size_t initialSize) {
+    a->array = (risp*)malloc(initialSize * sizeof(risp));
+    a->used = 0;
+    a->size = initialSize;
+}
+
+void insertArray(array_risposte *a, risp element) {
+    if (a->used == a->size) {
+        a->size *= 2;
+        a->array = (risp *)realloc(a->array, a->size * sizeof(risp));
+    }
+    a->array[a->used++] = element;
+}
+
+void freeArray(array_risposte *a) {
+    free(a->array);
+    a->array = NULL;
+    a->used = a->size = 0;
+}
+
+
+
+//char* getLine();
+int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, risp risposta_to_padre);
+//char** splitLine(char* line);
+
+int broadcast_centralina(NodoPtr list, cmd comando, array_risposte* answer);
 char* getLine(){
     char *cmd=NULL;
     //Dimensione buffer per riallocazione
     size_t  bufS = 0;
     getline(&cmd, &bufS, stdin);
-
-    /*
-     * Non più necessario come lo splitLine
-     *
-    //Rimuovo newLine \n a fine stringa
-    cmd = strtok(cmd, "\n");
-    */
-
     return cmd;
 }
 
@@ -70,64 +89,94 @@ char** splitLine(char* line){
     commands[pos]=NULL;
     return commands;
 }
-/*
-char* compatta(char** comando){
-   
-}*/
+void sign_cont_handler(int sig){
+    signal(SIGCONT, sign_cont_handler);
+    //printf("Arrivato segnale\n");
+    return;
+}
+int broadcast_centralina(NodoPtr list, cmd comando, array_risposte* answertoltoperora){
+    //Setto il gestore di SIGCONT, l'ho giò settato ma per sicurezza lo risetto
+    signal(SIGCONT, sign_cont_handler);
+    int err_signal;//errore kill
+    //Salto il primo nodo della lista dato che appartiene alla centralina
+    NodoPtr nodo = list->next;
+    //TODO restabilire l'array dinamico di risposte
+    risp answer_tmp;//Risposta che verrà inserita in un array di risposte
+    //Imposto a zero la terminazione della comunicazione che fa continuare il ciclio di comunicazione con i figli
+    answer_tmp.termina_comunicazione = 0;
 
-//da mettere in function declaration
-char* broadcast(NodoPtr procList, char** comando, char* comando_compatto){
-    NodoPtr nodo = procList;
-    char* answer = malloc(ANSWER);
-    //SALTO IL PRIMO BIG PROBLEM
-    nodo = nodo->next;
+    risp array_risposte[1000];//array statico di risposte PROVA
+    int i = 0;//indice array statico delle risposte PROVA
+
+
+    //Finchè ho figli prova ad instaurare la comunicazione
     while(nodo != NULL){
-        //TODO gestire errori
-        write(nodo->fd_writer,comando_compatto, strlen(comando_compatto));
-        kill(nodo->data, SIGUSR1);            
-        //gestione read diversa per ogni comando --> potrei farla qua la gestione
-        int toRtn = ascolta_risposta(nodo, answer);
-        if(toRtn == 1){
-            return answer;
+        //Setto la lettura in pipe come non bloccante
+        /*
+        int flags = fcntl(nodo->fd_reader, F_GETFL, 0);
+        fcntl(nodo->fd_reader, F_SETFL, flags | O_NONBLOCK);
+        */
+
+        //mando il comando al figlio nodo 
+        write(nodo->fd_writer, &comando, sizeof(comando));
+        //Comunico al figlio di gestire il comando appena inviato
+        err_signal = kill(nodo->data, SIGUSR1); 
+        if(err_signal != 0)
+            perror("errore in invio segnale");
+
+        //Finchè il figlio non mi manda un messaggio con terminazione == 1 significa che 
+        //ha ancora dei figli e perciò devo rimanere in ascolto e gestire le sue risposte
+        while(1){
+            //Leggo la risposta --> viene letta dopo che mi è arrivato un segnale SIGCONT
+            //dato che la read è bloccante
+            //debug printf("\tMi metto in ascolto in centralina\n");
+            read(nodo->fd_reader, &answer_tmp, sizeof(risp));
+            //se è un messaggio di terminazione devo uscire dal ciclo di ascolto e andare 
+            //al nodo successivo
+            if(answer_tmp.termina_comunicazione == 1){
+                //debug printf("Il messaggio è di terminazione\n");
+
+                break;
+            }else{
+                if(answer_tmp.considera == 1){
+                    array_risposte[i] = answer_tmp;
+                    int j;
+                    for(j=0;j<array_risposte[i].profondita; j++){
+                        printf("  ");  
+                    }printf("|__"); 
+                    printf("%s\n", array_risposte[i].info);
+                    
+                    i++;
+                }
+                if(answer_tmp.eliminato == 1){
+                    removeNode(list, answer_tmp.pid);
+                }
+                //se non è un messaggio di terminazione significa che il figlio ha ancora risp da comunicare
+                //nel caso dei dispositivi di interazione (o controllo senza figli) verrà mandato
+                //1 messaggio contenente le informazioni e un successivo messaggio di terminazione
+
+                //nel caso di dispositivi di controllo con figli continueranno a mandare messaggi
+                //il primo messaggio sarà quello relativo al dispositivo di controllo in question
+                //finchè tutti i figli non avranno mandato il messaggio di terminazione
+                //continuerà a mandare risposte, quando tutti avranno mandato il messaggio di terminazione
+                //egli manderà 1 messaggio di terminazione alla centralina (qui)
+
+                //inserisco il messaggio nell'array e incremento l'indice
+                
+                //printf("\t\t\t%s\n", answer_tmp.info);
+
+                //mando un segnale al figlio per comunicare di continuare la comunicazione dato 
+                //che ho letto la sua risposta
+                err_signal = kill(nodo->data, SIGCONT); 
+                if(err_signal != 0)
+                    perror("errore in invio segnale");
+                //andrò in pausa perché all'inizio del while c'è la read bloccante
+            }
         }
-        //memset(answer, 0, ANSWER);
         nodo = nodo->next;
     }
-    return "0";
-}
-//nell'hub manda e concatena
-char* broadcast_list(NodoPtr procList, char** comando, char* comando_compatto){
-    //SALTO IL PRIMO BIG PROBLEM
-    NodoPtr nodo = procList->next;
-    char* answer = malloc(ANSWER);
-    char* list_answer = malloc(BUFSIZE*10);
-    memset(answer, 0, ANSWER);
-    memset(list_answer, 0, BUFSIZE*10);
-    while(nodo != NULL){
-        //TODO gestire errori
-        write(nodo->fd_writer,comando_compatto,strlen(comando_compatto));
-        kill(nodo->data, SIGUSR1);            
-        //gestire errori
-        int err = ascolta_risposta(nodo, answer);
-        strcat(list_answer,"\t\t- ");
-        strcat(list_answer, answer);
-        memset(answer,0,ANSWER);
-        nodo = nodo->next;
-    }
-    //return "0";
-    return list_answer;
-    
-    
-}
-//ritorna 0 se non trovato
-int ascolta_risposta(NodoPtr nodo, char* answer){
-    int temp = read(nodo->fd_reader, answer, ANSWER);
-    if(strcmp(&answer[0], "0") != 0){
-        return 1;
-    }else{
-        return 0;
-    }
-
+    printf("Numero dispositivi: %d\n", i);
+    return 1;
 }
 
 

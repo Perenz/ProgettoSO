@@ -62,7 +62,6 @@ int cen_start(){
     
     //Inserisco nella lista il pid corrente indicante la centraline stessa
     procList = listInit(getpid());
-    //dispList = listInit(-1);//FUCKMARCELLO 
     dispList = listInit(0);
 
     //Lancio i processi di supporto
