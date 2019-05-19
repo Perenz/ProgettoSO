@@ -129,8 +129,6 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
     printf("\n\tStampo la lista dei dispositivi DISPONIBILI:\n");
     //gestione eerr
     err = broadcast_centralina(dispList, comando, NULL);
-
-    printf("\nHo il controllo\n");
     
     /*non riesco a deallocarli correttamente
         freeArray(answer_disp);

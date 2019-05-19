@@ -169,13 +169,8 @@ int dev_delete(cmd comando){
         char* info = malloc(ANSWER);
         get_info_string(info);
         strcpy(risposta_controllore.info, info);
-
         rispondi(risposta_controllore, comando);
     }
-
-    
-    
-    
     return 1;
 }
 //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
@@ -214,7 +209,6 @@ int main(int argc, char **args){
     signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
-    signal(SIGSTOP,h_sigstop_handler);
 
     printf("\nHub creato: id: %d\n", id);
     printf("Id: %d\n", id);
@@ -224,14 +218,6 @@ int main(int argc, char **args){
     //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
     //PROVA
-    /*
-    
-    add_device_generale("./componenti/BULB", dispList, info);
-    sprintf(info, "default %d", id+1);
-    add_device_generale("./componenti/BULB", dispList, info);
-    sprintf(info, "default %d", id+1);
-    add_device_generale("./componenti/HUB", dispList, info);
-    */
 
    char* info = malloc(ANSWER);
    if(id < 7){
@@ -241,74 +227,35 @@ int main(int argc, char **args){
    if(id < 4){
        sprintf(info, "%d", id+1);
        add_device_generale("./componenti/HUB", dispList, info);
-       sprintf(info, "%d", id+1);
+       sprintf(info, "%default ", id+1);
        add_device_generale("./componenti/BULB", dispList, info);
    }
-    sprintf(info, "default %d", id+1);
-    
-
-    
-    
-   
-
-    
-
-    
-
-       
-    
-    
-
-    
-
     //Invio segnale al padre
     int ris = kill(idPar, SIGCONT);
 
     //Child va in pausa
     while(1){
-        printf("Sono in pausa\n");
         pause();
     }
 
     printf("Child ora termina\n");   
     exit(0);
 }
-//i vari parametri potrebbero essere levati se messo in hub
+//i vari parametri potrebbero essere levati se messo in hub TODO, serve anche al timer però
 int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, risp risposta_to_padre){
     signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
-    signal(SIGQUIT, signhandle_quit);
-    signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
-    signal(SIGSTOP,h_sigstop_handler);
+    signal(SIGUSR1, sighandle_usr1);
     //nodo rappresenta il figlio, nell'hub passo il successivo dato che il primo nodo 
     //è sè stesso
     NodoPtr nodo = list;
     //risposta che verrà mandata al padre (se ho figli)
     risp answer;
     int err_signal;//errore kill
-    //debug printf("Mando il messaggio di me stesso alla centralina %d\n", id);
     //scrivo al padre la risposta del dispositivo di controllo contenente le sue info
-    //il padre potrebbe essere un dispositivo diverso dalla centralina
+    //il padre potrebbe essere un dispositivo diverso dalla centralina ma comunque sarà in ascolto
     write(fd_papi, &risposta_to_padre, sizeof(risp));
-    //mando un segnale al padre per comunicargli di leggere dalla pipe
-    
-    //err_signal = kill(pid_papi, SIGCONT);
-    if(err_signal != 0)
-        perror("errore in invio segnale");
-    //GESTIONE SE L'HUB è DA ELIMINARE
-    /*
-    //da eliminare quando finisco con i figli
-    if(risposta_to_padre.eliminato == 1){
-        to_delete = 1;
-        risposta_to_padre.eliminato = 0;
-    }
-    */
     //finchè ho figli
     while(nodo != NULL){
-        //imposto il read dalla pipe come non bloccante
-        /*
-        int flags = fcntl(nodo->fd_reader, F_GETFL, 0);
-        fcntl(nodo->fd_reader, F_SETFL, flags | O_NONBLOCK);
-        */
         //Mando il comando a mio figlio che lo gestirà
         write(nodo->fd_writer, &comando, sizeof(comando));
         err_signal = kill(nodo->data, SIGUSR1); 
@@ -325,48 +272,38 @@ int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, ri
             if(answer.termina_comunicazione == 1){
                 break;
             }else{
-                //Il delete non funziona se fatto non al primo nodo 
+                //Il delete non funziona se fatto non al primo nodo o con delete --all OIBO
                 //se non è un messaggio di terminazione significa che il figlio ha ancora risp da comunicare
                 //nel caso dei dispositivi di interazione (o controllo senza figli) verrà mandato
                 //1 messaggio contenente le informazioni e un successivo messaggio di terminazione
 
                 //finchè tutti i figli non avranno mandato il messaggio di terminazione
-                //continuerà a mandare risposte, quando tutti avranno mandato il messaggio di terminazione
-                //egli manderà 1 messaggio di terminazione alla centralina (qui)
-
+                //continuerà a mandare risposte in su nell'albero verso la centralina, quando tutti avranno mandato il messaggio di terminazione
+                //egli manderà 1 messaggio di terminazione al padre
                 //scrivo a mio padre la risposta che ho appena letto
                 write(fd_papi, &answer, sizeof(risp));
                 //err_signal = kill(pid_papi, SIGCONT); 
                 if(err_signal != 0)
                     perror("errore in invio segnale");
-                //Mi metto in pausa per permettere a mio padre di leggere la risposta
-                //sono sicuro che non rimango in pausa dato che ho verificato che 
-                //answer.terminazione fosse diverso da 1
-                //kill(getpid(), SIGSTOP);
-                //pause();
-                //mando un segnale al figlio per comunicare di continuare la comunicazione
-                //write(nodo->data, &answer, sizeof(risp));
-                
+                //mando un segnale al figlio per comunicare di continuare la comunicazione                
                 err_signal = kill(nodo->data, SIGCONT);
 
                 if(err_signal != 0)
                     perror("errore in invio segnale");
-                //mi metto in pausa così da permettere al figlio di comunicare: 
-                    //messaggio di terminazione o
-                    //ulteriore risposta con terminazione = 0 
-                if(answer.eliminato == 1){//questo vale quando risalgo
-                    printList(list);
+                //messaggio di terminazione o
+                //ulteriore risposta con terminazione = 0 
+                if(answer.eliminato == 1){//questo vale quando risalgo, se il dispositivo è da eliminare lo tolgo dalla lista dei processi
+                    //printList(list);
                     removeNode(list, answer.pid);
                     printf("Dispositivo eliminato: %s in %d\n", answer.info, id);
-                    answer.eliminato = 0;
+                    answer.eliminato = 0;//setto a 0 sennò lo toglie anche il padre che non lo ha nella lista 
                 }
             }
         }
         nodo = nodo->next;
     }
-    //comunico al padre di aver finito di comunicare mettendo il parametro termina comunicazione = 1
+    //comunico al padre di aver finito di comunicare mettendo il parametro termina_comunicazione = 1
     risposta_to_padre.termina_comunicazione = 1;
     write(fd_papi, &risposta_to_padre,sizeof(risp));
-    //do il controllo a mio padre quando ritorno nel signal
     return 1;
 }
