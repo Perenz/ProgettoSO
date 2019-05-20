@@ -25,7 +25,7 @@ int lanciaGetCenPid(){
         exit(0);
     }else if(pid == 0){
         //Child code
-        char *args[]={"./supporto/CENPIDREAD",NULL}; 
+        char *args[]={"./binaries/CENPIDREAD",NULL}; 
         execvp(args[0],args);
     }
     else if(pid >0){
