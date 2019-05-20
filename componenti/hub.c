@@ -113,9 +113,10 @@ int device_handle_command(cmd comando){
 int rispondi(risp risposta_controllore, cmd comando){
     risposta_controllore.termina_comunicazione = 0;
     risposta_controllore.pid = pid;
+
     //vado io in controllo e mando le varie risposte al papi
     //attenz, buono che salto il primo
-    broadcast_controllo(dispList->next, comando, idPar, fd_write, risposta_controllore);
+    broadcast_controllo(dispList, comando, idPar, fd_write, risposta_controllore);
     return 1;
 }
 
@@ -223,10 +224,6 @@ int main(int argc, char **args){
    if(id < 7){
        sprintf(info, "%d", id+1);
        add_device_generale("./componenti/HUB", dispList, info);
-   }
-   if(id < 4){
-       sprintf(info, "%d", id+1);
-       add_device_generale("./componenti/HUB", dispList, info);
        sprintf(info, "%default ", id+1);
        add_device_generale("./componenti/BULB", dispList, info);
    }
@@ -245,9 +242,10 @@ int main(int argc, char **args){
 int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, risp risposta_to_padre){
     signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
     signal(SIGUSR1, sighandle_usr1);
+    
     //nodo rappresenta il figlio, nell'hub passo il successivo dato che il primo nodo 
     //è sè stesso
-    NodoPtr nodo = list;
+    NodoPtr nodo = list->next;
     //risposta che verrà mandata al padre (se ho figli)
     risp answer;
     int err_signal;//errore kill
@@ -259,6 +257,7 @@ int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, ri
         //Mando il comando a mio figlio che lo gestirà
         write(nodo->fd_writer, &comando, sizeof(comando));
         err_signal = kill(nodo->data, SIGUSR1); 
+        int pid_figlio = nodo->data;
         //Mando un segnale per comunicare a mio figlio di gestire il comando
         if(err_signal != 0)
             perror("errore in invio segnale");
@@ -272,32 +271,31 @@ int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, ri
             if(answer.termina_comunicazione == 1){
                 break;
             }else{
+                
                 //Il delete non funziona se fatto non al primo nodo o con delete --all OIBO
                 //se non è un messaggio di terminazione significa che il figlio ha ancora risp da comunicare
                 //nel caso dei dispositivi di interazione (o controllo senza figli) verrà mandato
                 //1 messaggio contenente le informazioni e un successivo messaggio di terminazione
-
-                //finchè tutti i figli non avranno mandato il messaggio di terminazione
-                //continuerà a mandare risposte in su nell'albero verso la centralina, quando tutti avranno mandato il messaggio di terminazione
-                //egli manderà 1 messaggio di terminazione al padre
-                //scrivo a mio padre la risposta che ho appena letto
-                write(fd_papi, &answer, sizeof(risp));
-                //err_signal = kill(pid_papi, SIGCONT); 
-                if(err_signal != 0)
-                    perror("errore in invio segnale");
-                //mando un segnale al figlio per comunicare di continuare la comunicazione                
-                err_signal = kill(nodo->data, SIGCONT);
-
-                if(err_signal != 0)
-                    perror("errore in invio segnale");
-                //messaggio di terminazione o
-                //ulteriore risposta con terminazione = 0 
                 if(answer.eliminato == 1){//questo vale quando risalgo, se il dispositivo è da eliminare lo tolgo dalla lista dei processi
                     //printList(list);
                     removeNode(list, answer.pid);
                     printf("Dispositivo eliminato: %s in %d\n", answer.info, id);
                     answer.eliminato = 0;//setto a 0 sennò lo toglie anche il padre che non lo ha nella lista 
                 }
+                //finchè tutti i figli non avranno mandato il messaggio di terminazione
+                //continuerà a mandare risposte in su nell'albero verso la centralina, quando tutti avranno mandato il messaggio di terminazione
+                //egli manderà 1 messaggio di terminazione al padre
+                //scrivo a mio padre la risposta che ho appena letto
+                write(fd_papi, &answer, sizeof(risp));
+                
+                //mando un segnale al figlio per comunicare di continuare la comunicazione                
+                err_signal = kill(pid_figlio, SIGCONT);
+
+                if(err_signal != 0)
+                    perror("errore in invio segnale");
+                //messaggio di terminazione o
+                //ulteriore risposta con terminazione = 0 
+                
             }
         }
         nodo = nodo->next;
