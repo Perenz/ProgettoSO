@@ -6,9 +6,10 @@
 int hand_control(char **, int*); //Dovra ritornare il pid del dispositivo specificato come argomento
 int hand_help(char **, int*);
 int hand_exit(char **, int*);
-int hand_exit1(char **, int*, int);
-int hand_release(char **, int*, int);
-int hand_switch(char**, int*, int);
+int hand_exit1(char **, int*, int, char);
+int hand_release(char **, int*, int, char);
+int hand_switch(char**, int*, int, char);
+int hand_set(char**, int*, int, char);
 
 void inizializzaFifo(int);
 
@@ -32,13 +33,15 @@ int (*noControl_builtin_func[]) (char **, int*) = {
 char *control_builtin_cmd[]={
     "exit",
     "release",
-    "switch"
+    "switch",
+    "set"//Per settare: delay, perc e temp del frigorifero
 };
 
-int (*control_builtin_func[]) (char **, int*, int) = {
+int (*control_builtin_func[]) (char **, int*, int, char) = {
     &hand_exit1,
     &hand_release,
-    &hand_switch
+    &hand_switch,
+    &hand_set
 };
 
 void inizializzaFifo(int pidCont){
@@ -134,14 +137,14 @@ int hand_exit(char **args, int *cenPid){
         return 0;
 }
 
-int hand_release(char **args, int *cont, int idCont){
+int hand_release(char **args, int *cont, int idCont, char tipoCont){
     *cont=0;
     //TODO da fare la chiusura e la rimozione della fifo
     //Va fatta lato dispositivo
     return 1;
 }
 
-int hand_switch(char **args, int *cont, int idCont){
+int hand_switch(char **args, int *cont, int idCont, char tipoCont){
     if(args[2]==NULL || args[3]!=NULL){
             printf("Errore nei parametri\n");
             printf("Usage: switch <label> <nuovostato>\n");
@@ -197,6 +200,43 @@ int hand_switch(char **args, int *cont, int idCont){
 
 }
 
-int hand_exit1(char **args, int* contPid, int contId){
+int hand_exit1(char **args, int* contPid, int contId, char tipoCont){
     return hand_exit(args, contPid);
 }
+
+int hand_set(char **args, int* contPid, int contId, char tipoCont){
+    if(tipoCont!='f' || args[2]==NULL || args[3]!=NULL){
+        printf("Comando set valido solo con frigorifero come tipo di dispositivo controllato\n");
+        printf("Indicare una delle 3 proprietà: delay, perc, temp\n");
+        printf("Usage: set <proprietà> <valore>\n");
+        printf("Indicare i valori nelle seguenti modalità:\n-Secondi per delay\n-Percentuale 0-100 per perc\n-Gradi Celsius per temp\n");
+
+        return -1;
+    }else{
+        //Prima faccio i controlli sui valori
+        if(strcmp(args[1], "delay")==0){
+            if(atoi(args[2])<0){
+                printf("Valore negativo per tempo di delay non ammesso\n");
+                return -1;
+            }
+        }else if(strcmp(args[1], "temp")==0){
+
+        }else if(strcmp(args[1], "perc")==0){
+            int p=atoi(args[2]);
+            if(p<0 || p>100){
+                printf("Valore per percentuale non ammesso, inserire percentuale compresa tra 0 e 100\n");   
+                return -1;
+            }    
+        }else{
+            printf("Proprietà non riconosciuta\n");
+            printf("Indicare una delle 3 proprietà: delay, perc, temp\n");
+            printf("Usage: set <proprietà> <valore>\n");
+            printf("Indicare i valori nelle seguenti modalità:\n-Secondi per delay\n-Percentuale 0-100 per perc\n-Gradi Celsius per temp\n");
+
+            return -1;
+        }
+
+        //Ora mando il comando
+    }
+}
+

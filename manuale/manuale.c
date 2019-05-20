@@ -16,6 +16,8 @@ char** cen_splitLine(char *line);
 //Di default uguali a 0, cioè non ho ancora effettuato il "collegamento" con alcun dispositivo
 int controlloPid=0;
 int controlloId=0;
+char controlloTipo;
+
 
 //Variabile per memorizzare il pid della centralina
 int cenPid;
@@ -194,7 +196,7 @@ int cen_processCmd(char **command){
         else{
             //Controllo sui comandi disponibili quando controllo un dispositivo
             if(strcmp(command[0],control_builtin_cmd[i])==0)
-                return control_builtin_func[i](command, &controlloPid, controlloId);
+                return control_builtin_func[i](command, &controlloPid, controlloId, controlloTipo);
         }
     }
 
