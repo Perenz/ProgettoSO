@@ -480,6 +480,9 @@ void getManualPid(NodoPtr procList, NodoPtr dispList){
         //printf("Ho ricevuto il pid %s\n", args[1]);    
 
         //Tramite info(modificato) ricavo il pid corrispondente all'id passato
+
+        //CAMBIA SOLO QUI
+        //CON il nuovo info devo prendere pidCercato
         pidCercato = manualCen_info(args[1], procList, dispList); 
         //printf("Questo è il pid cercato %d\n", pidCercato); 
     }
