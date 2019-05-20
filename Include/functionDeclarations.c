@@ -408,10 +408,22 @@ int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
 
 //Per gestire l'accensione/spegnimento generale della centralina
 int cen_power(char **args, NodoPtr procList, NodoPtr dispList){
+    NodoPtr nodo;
     if(powerOn==1){ //è acessa allora la spengo
         //TODO
         //Devo mandare in pausa tutti i dispositivi
         //Su entrambe le liste
+    
+        nodo=procList;
+        while(nodo!=NULL){
+            kill(SIGINT, nodo->data);
+            nodo=nodo->next;
+        }
+        nodo=dispList;
+        while(nodo!=NULL){
+            kill(SIGINT, nodo->data);
+            nodo=nodo->next;
+        }
         powerOn=0;
         printf("Centralina spenta\n");
     }
@@ -419,6 +431,16 @@ int cen_power(char **args, NodoPtr procList, NodoPtr dispList){
         //TODO
         //Slocco dalla puasa tutti i dispositivi 
         //Su entrambe le liste
+        nodo=procList;
+        while(nodo!=NULL){
+            kill(SIGCONT, nodo->data);
+            nodo=nodo->next;
+        }
+        nodo=dispList;
+        while(nodo!=NULL){
+            kill(SIGCONT, nodo->data);
+            nodo=nodo->next;
+        }
         powerOn=1;
         printf("Centralina accesa\n");
     }

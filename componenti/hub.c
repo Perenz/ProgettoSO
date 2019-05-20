@@ -69,7 +69,19 @@ int cont_numCommands(){
 void sign_cont_handler_hub(int sig){
     signal(SIGCONT, sign_cont_handler_hub);
     return;
+
 }
+
+void sigint_handler(int sig){
+    //Devo mandare il SIGINT a tutti i suoi figli
+    NodoPtr nodo = dispList;
+    while(nodo!=NULL){
+        kill(SIGINT, nodo->data);
+        nodo=nodo->next;
+    }
+    //Come per bulb non serve andare in pausa
+}
+
 void h_sigstop_handler ( int sig ) {
   printf("Never happens (%d)\n",sig);
 }
@@ -206,6 +218,7 @@ int main(int argc, char **args){
     //MANCA IL SET_INFO, sbaglia l'id
     set_info(args[3]);
 
+    signal(SIGINT, sigint_handler);
     signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1

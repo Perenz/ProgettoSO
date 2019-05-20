@@ -98,6 +98,12 @@ void sighandle_usr2(int sig){
 void sign_cont_handler(int sig){
     return;
 }
+
+void signint_handler(int sig){
+    //Segnale int inviato da comando power
+    //Vado in pausa
+    //Per il bulb è inutile andare in pause perchè tanto c'è while(1) pause;
+}
 //COMANDO   l
 /*restituisce in pipe
     se comando è l: <informazioni>
