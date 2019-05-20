@@ -24,6 +24,8 @@ int fd_read;
 //File descriptor in cui il figlio scrive e il padre legge
 int fd_write;
 
+char nome[20];
+
 int dev_list(cmd);
 int dev_switch(cmd);
 int dev_info(cmd);
@@ -217,6 +219,7 @@ int main(int argc, char **args){
     fd_write = atoi(args[2]);
     //MANCA IL SET_INFO, sbaglia l'id
     set_info(args[3]);
+    strcpy(nome, args[4]);
 
     signal(SIGINT, sigint_handler);
     signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
@@ -226,6 +229,7 @@ int main(int argc, char **args){
     printf("\nHub creato: id: %d\n", id);
     printf("Id: %d\n", id);
     printf("Pid: %d\nPid padre: %d\n", pid, idPar);
+    printf("Nome: %s\n", nome);
     int i=0;
 
     //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
@@ -235,13 +239,13 @@ int main(int argc, char **args){
    char* info = malloc(ANSWER);
    if(id < 7){
        sprintf(info, "%d", id+1);
-       add_device_generale("./componenti/HUB", dispList, info);
+       add_device_generale("./binaries/HUB", dispList, info, "ProvaName");
    }
    if(id < 4){
        sprintf(info, "%d", id+1);
-       add_device_generale("./componenti/HUB", dispList, info);
+       add_device_generale("./binaries/HUB", dispList, info, "ProvaName");
        sprintf(info, "%default ", id+1);
-       add_device_generale("./componenti/BULB", dispList, info);
+       add_device_generale("./binaries/BULB", dispList, info, "ProvaName");
    }
     //Invio segnale al padre
     int ris = kill(idPar, SIGCONT);

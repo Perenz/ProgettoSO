@@ -49,6 +49,7 @@ char tipo = 'b';
 pid_t idPar;
 pid_t pid;
 int id;
+char nome[20];
 
 
 
@@ -267,6 +268,8 @@ int main(int argc, char *args[]){
     fd_read = atoi(args[1]);
     fd_write = atoi(args[2]);  
     set_info(args[3]);
+    strcpy(nome, args[4]);
+
 
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
@@ -275,6 +278,7 @@ int main(int argc, char *args[]){
 
     printf("\nLampadina creata\n");
     printf("Id: %d\n", id);
+    printf("Nome: %s\n", nome);
     printf("Pid: %d\nPid padre: %d\n\n", pid, idPar);
 
     //Invio segnale al padre

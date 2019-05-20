@@ -223,6 +223,7 @@ int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
     TODO Sintassi comunicata dalla centralina :    add <tipo> (centralina comunica a processo specifico)
 */
 int cen_add(char **args, NodoPtr procList, NodoPtr dispList){
+    char nome[20];
     if(powerOn==0){
         printf("La centralina risulta spento tramite interrutore generale\n");
         printf("Accendere la centralina tramite 'power' prima di impartire nuovi comandi\n");
@@ -237,10 +238,22 @@ int cen_add(char **args, NodoPtr procList, NodoPtr dispList){
     }
     //3 device disponibili: bulb, window, fridge
     else{
+        id_gen+=1;
+        if(args[2]==NULL){
+            //Devo concatenare nome del device piu id 
+            //Es: bulb3
+            
+            sprintf(nome, "%s%d", args[1], id_gen);
+        }
+        else{
+            //strcpy(nome,args[2]);
+            //strcpy(nome, "Prova");
+            strcpy(nome, args[2]); 
+        }
         int i;
         for(i=0; i<device_number(); i++){
             if(strcmp(args[1], builtin_device[i])==0)
-                    return add_device(bultin_dev_path[i], procList, dispList);
+                    return add_device(bultin_dev_path[i], procList, dispList, nome);
         }
     }
 
