@@ -238,13 +238,25 @@ int main(int argc, char **args){
     //PROVA
 
    char* info = malloc(ANSWER);
+
    if(id < 10){
        sprintf(info, "%d", id+1);
        add_device_generale("./binaries/HUB", dispList, info, "ProvaName");
+       memset(info,0,strlen(info));
+       sprintf(info, "default %d", id+1);
+       add_device_generale("./binaries/BULB", dispList, info, "ProvaName");
+       memset(info,0,strlen(info));
+
+
+       //add_device_generale("./binaries/WINDOW", dispList, info, "ProvaName");
+       //add_device_generale("./binaries/FRIDGE", dispList, info, "ProvaName");
+       
+       /*
        sprintf(info, "%default ", id+1);
        add_device_generale("./componenti/BULB", dispList, info, "perenzoni gay");
-    sprintf(info, "%default ", id+1);
+       sprintf(info, "%default ", id+1);
        add_device_generale("./componenti/BULB", dispList, info, "perenzoni gay");
+       */
    }
     //Invio segnale al padre
     int ris = kill(idPar, SIGCONT);

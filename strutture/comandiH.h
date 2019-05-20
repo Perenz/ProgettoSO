@@ -7,6 +7,15 @@
 
 
 typedef struct{
+    char stato[10];
+    char interruttore[3][10];
+    double time;
+    double delay;
+    int percentuale;
+    int temperatura;
+}info_dispositivo;
+
+typedef struct{
     char tipo_comando;
     int id;//se == 0 --> list
     int forzato;//utile per delete --all e per far sì che i figli rispondano con terminazione 
