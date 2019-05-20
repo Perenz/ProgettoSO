@@ -78,11 +78,12 @@ int cen_start(){
             printf("\033[0m");
             command = getLine();
 
-        //Splitta la linea in singoli parametri/argomenti
-        params = splitLine(command);
-        //TODO potrei passare il comando non splittato così da poterlo mandare direttamente
-        //Esegue il comando
-        status = cen_processCmd(params, procList, dispList);
+            //Splitta la linea in singoli parametri/argomenti
+            params = splitLine(command);
+            //TODO potrei passare il comando non splittato così da poterlo mandare direttamente
+            //Esegue il comando
+            status = cen_processCmd(params, procList, dispList);
+        
     }while(status);
 
     kill(supportReadPid, SIGQUIT);

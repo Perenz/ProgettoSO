@@ -21,9 +21,17 @@ int cen_delete(char **args, NodoPtr procList, NodoPtr dispList);
 int cen_switch(char **args, NodoPtr procList, NodoPtr dispList);
 int cen_info(char **args, NodoPtr procList, NodoPtr dispList);
 int cen_link(char **args, NodoPtr procList, NodoPtr dispList);
+int cen_power(char **args, NodoPtr procList, NodoPtr dispList);
 void getManualPid();
 
 int cen_numCommands();
+int checkPower();
+
+
+//Variabile intera che memorizza lo stato di accensione della centralina
+//1 accesa
+//0 spenta
+int powerOn=1;
 
 //l'id della centralina è uguale a 2 --> potremo generalizzare e fare che in start.c creo il processo cmd che comunica con la centralina tramite pipe il
 //comando che deve essere eseguito --> centralina ha id = 2 o 1, è più fico id == 1
@@ -39,7 +47,8 @@ char *builtin_cmd[]={
         "delete",
         "switch",
         "info",
-        "link"
+        "link",
+        "power"
         //CREA NUOVO COMANDO INFOMANUALE 
         //TODO
 };
@@ -55,20 +64,35 @@ int (*builtin_func[]) (char **, NodoPtr, NodoPtr) = {
         &cen_delete,
         &cen_switch,
         &cen_info,
-        &cen_link
+        &cen_link,
+        &cen_power
 };
 int cen_numCommands(){
     return (sizeof(builtin_cmd)/ sizeof(char*));
 }
+
+
 int cen_prova(char **args, NodoPtr procList, NodoPtr dispList){
     printf("Hai inserito il comando %s\n", args[0]);
     return 1;
 }
 int cen_clear(char **args, NodoPtr procList, NodoPtr dispList){
+    if(powerOn==0){
+        printf("La centralina risulta spento tramite interrutore generale\n");
+        printf("Accendere la centralina tramite 'power' prima di impartire nuovi comandi\n");
+
+        return 1;
+    }
     system("clear");
     return 1;
 }
 int cen_exit(char **args, NodoPtr procList, NodoPtr dispList){
+    if(powerOn==0){
+        printf("La centralina risulta spento tramite interrutore generale\n");
+        printf("Accendere la centralina tramite 'power' prima di impartire nuovi comandi\n");
+
+        return 1;
+    }
     signal(SIGQUIT, SIG_IGN);
     while(procList!=NULL){
             kill(procList->data, SIGQUIT);
@@ -110,6 +134,12 @@ int cen_help(char **args, NodoPtr procList, NodoPtr dispList){
     Sintassi comunicata dalla centralina ai figli: l
 */
 int cen_list(char **args, NodoPtr procList, NodoPtr dispList){ 
+    if(powerOn==0){
+        printf("La centralina risulta spento tramite interrutore generale\n");
+        printf("Accendere la centralina tramite 'power' prima di impartire nuovi comandi\n");
+
+        return 1;
+    }
     signal(SIGCONT, sign_cont_handler);
     cmd comando;
     comando.tipo_comando = 'l';
@@ -143,6 +173,12 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
 */
 //delete funziona su dispList per ora
 int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
+    if(powerOn==0){
+        printf("La centralina risulta spento tramite interrutore generale\n");
+        printf("Accendere la centralina tramite 'power' prima di impartire nuovi comandi\n");
+
+        return 1;
+    }
     //TODO da modificare, pensavo che l'eliminazione avvenisse anche per tipo.
     if(args[1]==NULL /*|| atoi(args[1]) < 2*/){
         printf("Argomenti non validi\n");
@@ -187,6 +223,12 @@ int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
     TODO Sintassi comunicata dalla centralina :    add <tipo> (centralina comunica a processo specifico)
 */
 int cen_add(char **args, NodoPtr procList, NodoPtr dispList){
+    if(powerOn==0){
+        printf("La centralina risulta spento tramite interrutore generale\n");
+        printf("Accendere la centralina tramite 'power' prima di impartire nuovi comandi\n");
+
+        return 1;
+    }
     if(args[1]==NULL){
             printf("Argomenti non validi\n");
             printf("Utilizzo: add <device>\n");
@@ -218,6 +260,12 @@ int cen_add(char **args, NodoPtr procList, NodoPtr dispList){
 //TODO
     //Cambiare sintassi <label> <stato> //da generalizzare AAAAAAèAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
+    if(powerOn==0){
+        printf("La centralina risulta spento tramite interrutore generale\n");
+        printf("Accendere la centralina tramite 'power' prima di impartire nuovi comandi\n");
+
+        return 1;
+    }
     //TODO cambiare controllo, potrei farlo nel dispositivo
     if(args[1]==NULL || args[2]==NULL || args[3]==NULL){         //primo argomento diverso da id (errori, bisogna verificar sia un numero)
         printf("Argomenti non validi\n");
@@ -255,6 +303,12 @@ int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
     TODO Sintassi comunicata dalla centralina :    i <id> (centralina comunica a processo specifico)
 */  //da generalizzare 
 int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
+    if(powerOn==0){
+        printf("La centralina risulta spento tramite interrutore generale\n");
+        printf("Accendere la centralina tramite 'power' prima di impartire nuovi comandi\n");
+
+        return 1;
+    }
     signal(SIGCONT, sign_cont_handler);
     cmd comando;
     comando.tipo_comando = 'i';
@@ -272,6 +326,12 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
     TODO Sintassi comunicata dalla centralina : 
 *///AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
+    if(powerOn==0){
+        printf("La centralina risulta spento tramite interrutore generale\n");
+        printf("Accendere la centralina tramite 'power' prima di impartire nuovi comandi\n");
+
+        return 1;
+    }
     if(args[1]==NULL || args[2]==NULL || args[3]==NULL )//gestione errori alla Carlina
         return -1;
     //2 casi da gestire: 
@@ -294,6 +354,12 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
 
 
 int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
+    if(powerOn==0){
+        printf("La centralina risulta spento tramite interrutore generale\n");
+        printf("Accendere la centralina tramite 'power' prima di impartire nuovi comandi\n");
+
+        return 1;
+    }
     int pidCercato;
     //TODO POSSIBILE UNIRE CON LIST DATO CHE è MOLTO SIMILE
     NodoPtr nodo = dispList;
@@ -338,6 +404,24 @@ int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
     //Se scorrendo tutti i processi l'ID non è stato trovato ritorno -1
     return -1; //esci che sennò va avanti    
 
+}
+
+//Per gestire l'accensione/spegnimento generale della centralina
+int cen_power(char **args, NodoPtr procList, NodoPtr dispList){
+    if(powerOn==1){ //è acessa allora la spengo
+        //TODO
+        //Devo mandare in pausa tutti i dispositivi
+        //Su entrambe le liste
+        powerOn=0;
+        printf("Centralina spenta\n");
+    }
+    else if(powerOn==0){ //è spenta allora la accendo
+        //TODO
+        //Slocco dalla puasa tutti i dispositivi 
+        //Su entrambe le liste
+        powerOn=1;
+        printf("Centralina accesa\n");
+    }
 }
 
 //Funzione per ottenre l'ID del dispositivo che è richiesto dal manuale 
