@@ -221,10 +221,12 @@ int main(int argc, char **args){
     //PROVA
 
    char* info = malloc(ANSWER);
-   if(id < 7){
+   if(id < 10){
        sprintf(info, "%d", id+1);
        add_device_generale("./componenti/HUB", dispList, info);
        sprintf(info, "%default ", id+1);
+       add_device_generale("./componenti/BULB", dispList, info);
+    sprintf(info, "%default ", id+1);
        add_device_generale("./componenti/BULB", dispList, info);
    }
     //Invio segnale al padre
