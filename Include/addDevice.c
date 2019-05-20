@@ -6,8 +6,8 @@
 
 int id_gen = 2;
 
-int add_device(char*, NodoPtr, NodoPtr);
-int add_device_generale(char* execPath, NodoPtr list, char* info);
+int add_device(char*, NodoPtr, NodoPtr, char* nome);
+int add_device_generale(char* execPath, NodoPtr list, char* info, char* nome);
 void sign_handler(int);
 //device list
 char *builtin_device[]={
@@ -19,11 +19,11 @@ char *builtin_device[]={
 };
 
 char *bultin_dev_path[]={
-        "./componenti/BULB",
-        "./componenti/WINDOW",
-        "./componenti/FRIDGE",
-        "./componenti/TIMER",
-        "./componenti/HUB"
+        "./binaries/BULB",
+        "./binaries/WINDOW",
+        "./binaries/FRIDGE",
+        "./binaries/TIMER",
+        "./binaries/HUB"
 };
 
 
@@ -40,7 +40,7 @@ void sign_handler(int sig){
 
 //add device generale che viene chiamato dai dispositivi di controllo per "aggiungere"
 //un dispositivo che già esisteva (ergo con informazioni non di default)
-int add_device_generale(char* execPath, NodoPtr list, char* info){
+int add_device_generale(char* execPath, NodoPtr list, char* info, char* nome){
     //info verrà gestito da ogni 
     pid_t pid, wpid;
     int fd_reader[2];
@@ -56,7 +56,7 @@ int add_device_generale(char* execPath, NodoPtr list, char* info){
         close(fd_writer[1]);
         sprintf(fd_writer_Tmp,"%d", (fd_writer[0]));
         sprintf(fd_reader_Tmp,"%d", (fd_reader[1]));
-        char *args[]={execPath,fd_writer_Tmp, fd_reader_Tmp , info, NULL}; 
+        char *args[]={execPath,fd_writer_Tmp, fd_reader_Tmp , info, nome, NULL}; 
         execvp(args[0],args); //passo gli argomenti incluso il puntatore al lato di scrittura della pipe
     } else if (pid < 0) {
         perror("errore fork");
@@ -74,13 +74,13 @@ int add_device_generale(char* execPath, NodoPtr list, char* info){
     return 1;
 }
 
-int add_device(char* execPath, NodoPtr procList, NodoPtr dispList){
+int add_device(char* execPath, NodoPtr procList, NodoPtr dispList, char* nome){
     //add device di default chiamato dalla centralina quando viene aggiunto un dispositivo
-    id_gen+=1;
+    //id_gen+=1;
     char info[16];
     sprintf(info, "default %d", id_gen);
     
-    add_device_generale(execPath, dispList, info);
+    add_device_generale(execPath, dispList, info, nome);
     return 1;
 }
 

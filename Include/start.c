@@ -25,7 +25,7 @@ int lanciaGetCenPid(){
         exit(0);
     }else if(pid == 0){
         //Child code
-        char *args[]={"./supporto/CENPIDREAD",NULL}; 
+        char *args[]={"./binaries/CENPIDREAD",NULL}; 
         execvp(args[0],args);
     }
     else if(pid >0){
@@ -78,11 +78,12 @@ int cen_start(){
             printf("\033[0m");
             command = getLine();
 
-        //Splitta la linea in singoli parametri/argomenti
-        params = splitLine(command);
-        //TODO potrei passare il comando non splittato così da poterlo mandare direttamente
-        //Esegue il comando
-        status = cen_processCmd(params, procList, dispList);
+            //Splitta la linea in singoli parametri/argomenti
+            params = splitLine(command);
+            //TODO potrei passare il comando non splittato così da poterlo mandare direttamente
+            //Esegue il comando
+            status = cen_processCmd(params, procList, dispList);
+        
     }while(status);
 
     kill(supportReadPid, SIGQUIT);
