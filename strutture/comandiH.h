@@ -50,12 +50,6 @@ typedef struct{
     info info_disp;
 }risp;
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-typedef struct {
-  risp *array;
-  size_t used;
-  size_t size;
-}array_risposte;
 
 void print_risp(risp);
 void print_cmd(cmd);

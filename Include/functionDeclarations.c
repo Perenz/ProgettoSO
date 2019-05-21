@@ -27,6 +27,16 @@ void getManualPid();
 int cen_numCommands();
 int checkPower();
 
+void printRisp(risp* array_risposte){
+    int i = 0;
+    //Per ora lo famo così
+    while(array_risposte[i].id != -1){
+        //stampa nulla, marcello
+        printf("%d\n", i);
+    }
+}
+
+
 
 //Variabile intera che memorizza lo stato di accensione della centralina
 //1 accesa
@@ -141,22 +151,30 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
         return 1;
     }
     signal(SIGCONT, sign_cont_handler);
+
+    //RICEZIONE RISPOSTE
+    risp* array_risposte_proc_list = malloc(1000 * sizeof(risp));
+    risp* array_risposte_disp_list = malloc(1000 * sizeof(risp));
+
     cmd comando;
     comando.tipo_comando = 'l';
     comando.profondita = 0;
     int err = 0;
     printf("\n\tStampo la lista dei dispositivi COLLEGATI:\n");
     printf("\nCENTRALINA VAGINA\n");
-    err = broadcast_centralina(procList, comando, NULL);  
-    //gestione err
+    err = broadcast_centralina(procList, comando, array_risposte_proc_list);  
+    //printRisp(array_risposte_proc_list);
+
+
     printf("\n\tStampo la lista dei dispositivi DISPONIBILI:\n");
     //gestione eerr
-    err = broadcast_centralina(dispList, comando, NULL);
+    err = broadcast_centralina(dispList, comando, array_risposte_disp_list);
     
-    /*non riesco a deallocarli correttamente
-        freeArray(answer_disp);
-        freeArray(answer_proc);
-    */
+    printRisp(array_risposte_disp_list);
+
+
+    free(array_risposte_proc_list);
+    free(array_risposte_disp_list);
     return 1;
 }
 /*
@@ -178,6 +196,9 @@ int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
         printf("Utilizzo: delete <id>\n");
         return 1;
     }else{
+        //RICEZIONE RISPOSTE
+        risp* array_risposte_proc_list = malloc(1000 * sizeof(risp));
+        risp* array_risposte_disp_list = malloc(1000 * sizeof(risp));
         int err;
         signal(SIGCONT, sign_cont_handler);
         cmd comando;
@@ -188,18 +209,13 @@ int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
             comando.forzato = 0;
             comando.id = atoi(args[1]);
         }
-        array_risposte* answer_disp = malloc(sizeof(array_risposte));
-        array_risposte* answer_proc = malloc(sizeof(array_risposte));
 
-        err = broadcast_centralina(dispList, comando, answer_disp);
+        err = broadcast_centralina(dispList, comando, array_risposte_disp_list);
         //gestione err
-        err = broadcast_centralina(procList, comando, answer_proc);
+        err = broadcast_centralina(procList, comando, array_risposte_proc_list);
         
-        //print answer_disp e answer_proc
-        /*
-        freeArray(answer_disp);
-        freeArray(answer_proc);   
-        */   
+        free(array_risposte_proc_list);
+        free(array_risposte_disp_list);
     }
     /*GESTIONE ID non esistente
     printf("Device indicato non riconosciuto\n");
@@ -313,16 +329,19 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
 
         return 1;
     }
+    risp* array_risposte_proc_list = malloc(1 * sizeof(risp));
+    risp* array_risposte_disp_list = malloc(1 * sizeof(risp));
+
     signal(SIGCONT, sign_cont_handler);
     cmd comando;
     int err;
     comando.tipo_comando = 'i';
     comando.id = atoi(args[1]);
-    err = broadcast_centralina(procList, comando, NULL);
-    err = broadcast_centralina(dispList, comando, NULL);
-    //risp* answer = broadcast_centralina(procList, comando);
-    //answer = broadcast_centralina(dispList, comando);
+    err = broadcast_centralina(procList, comando, array_risposte_proc_list);
+    err = broadcast_centralina(dispList, comando, array_risposte_disp_list);
     
+    free(array_risposte_proc_list);
+    free(array_risposte_disp_list);
     //gestione non c'è nessun dispositivo con questo id
     return 1;
 }
@@ -351,10 +370,22 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
             //chiedo le info di id2 per vedere se è un dispositivo di interazione collegabile (stesso tipo) ad id1
             //delete id1
             //link id1 to id2
-    cmd command_id1;
-    cmd command_id2;
-    risp* answer_id1;
-    risp* answer_id2;
+    risp* array_risposte_proc_list = malloc(1000 * sizeof(risp));
+    risp* array_risposte_disp_list = malloc(1000 * sizeof(risp));
+
+    signal(SIGCONT, sign_cont_handler);
+    cmd comando;
+    int err;
+    comando.tipo_comando = 'i';
+    comando.info_forzate = 1;
+    comando.id = atoi(args[1]);
+    err = broadcast_centralina(procList, comando, array_risposte_proc_list);
+    err = broadcast_centralina(dispList, comando, array_risposte_disp_list);
+
+    
+    
+    free(array_risposte_proc_list);
+    free(array_risposte_disp_list);
     return 1;
 }
 

@@ -16,14 +16,8 @@
 #define BUFSIZE 128
 #define ANSWER 64
 
+int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte);
 
-
-
-//char* getLine();
-int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, risp risposta_to_padre);
-//char** splitLine(char* line);
-
-int broadcast_centralina(NodoPtr list, cmd comando, array_risposte* answer);
 char* getLine(){
     char *cmd=NULL;
     //Dimensione buffer per riallocazione
@@ -72,7 +66,7 @@ void sign_cont_handler(int sig){
     //printf("Arrivato segnale\n");
     return;
 }
-int broadcast_centralina(NodoPtr list, cmd comando, array_risposte* answertoltoperora){
+int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
     //Setto il gestore di SIGCONT, l'ho giò settato ma per sicurezza lo risetto
     signal(SIGCONT, sign_cont_handler);
     int err_signal;//errore kill
@@ -83,7 +77,7 @@ int broadcast_centralina(NodoPtr list, cmd comando, array_risposte* answertoltop
     //Imposto a zero la terminazione della comunicazione che fa continuare il ciclio di comunicazione con i figli
     answer_tmp.termina_comunicazione = 0;
 
-    risp array_risposte[1000];//array statico di risposte PROVA
+    //array statico di risposte PROVA
     int i = 0;//indice array statico delle risposte PROVA
 
 
@@ -119,13 +113,6 @@ int broadcast_centralina(NodoPtr list, cmd comando, array_risposte* answertoltop
                 if(answer_tmp.considera == 1){
                     //Print da spostare
                     array_risposte[i] = answer_tmp;
-                    int j;
-                    for(j=0;j<array_risposte[i].profondita; j++){
-                        printf("  ");  
-                    }printf("|__"); 
-                    printf("%d %s %d %s %.2f \n", array_risposte[i].info_disp.pid, array_risposte[i].info_disp.tipo, array_risposte[i].info_disp.id,
-                     array_risposte[i].info_disp.stato, array_risposte[i].info_disp.time);
-                    
                     i++;
                 }
                 if(answer_tmp.eliminato == 1){
@@ -155,6 +142,12 @@ int broadcast_centralina(NodoPtr list, cmd comando, array_risposte* answertoltop
         }
         nodo = nodo->next;
     }
+
+    //Setto la terminazione nell'array, metodo di merda usato per ora così da farlo funzionare
+    printf("Settato\n");
+    array_risposte[i].id = -1;
+
+
     return 1;
 }
 

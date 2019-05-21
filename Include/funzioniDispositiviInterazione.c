@@ -145,15 +145,8 @@ int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write){
         answer.id = id;
         answer.considera = 1;
         answer.eliminato = 1;
-        /*
-        answer.foglia = 1;
-        answer.termina_comunicazione = 1;
-        */
         char* info = malloc(ANSWER);
         get_info_string(&(answer.info_disp));
-            printf("\033[1;31m"); //scrivo in rosso 
-            printf("\x1b[ \n\t«Dio mio, Dio mio, perché mi hai abbandonato?»\n");
-            printf("\033[0m\n"); //resetto per scriver in bianco
         rispondi(answer, comando, fd_write, pid);
         exit(0);
     }else{

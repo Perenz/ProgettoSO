@@ -195,10 +195,7 @@ int dev_delete(cmd comando){
         get_info_string(&(risposta_controllore.info_disp));
         
         rispondi(risposta_controllore, comando);
-        printf("\033[1;31m"); //scrivo in rosso 
-            printf("\t\tMUOIO\n");
-        printf("\033[0m\n"); //resetto per scriver in bianco
-
+    
         exit(0);
     }else{
         risposta_controllore.considera = 0;//non considerarmi, non sono stato eliminato
@@ -348,7 +345,6 @@ int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, ri
                 if(answer.eliminato == 1){//questo vale quando risalgo, se il dispositivo è da eliminare lo tolgo dalla lista dei processi
                     //printList(list);
                     removeNode(list, answer.pid);
-                    printf("Dispositivo eliminato: %d %s in %d\n", answer.info_disp.pid,answer.info_disp.tipo, id);
                     answer.eliminato = 0;//setto a 0 sennò lo toglie anche il padre che non lo ha nella lista 
                 }
                 //finchè tutti i figli non avranno mandato il messaggio di terminazione
