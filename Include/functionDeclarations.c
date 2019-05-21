@@ -338,9 +338,13 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
     int err;
     comando.tipo_comando = 'i';
     comando.id = atoi(args[1]);
+
     err = broadcast_centralina(procList, comando, array_risposte_proc_list);
+    printRisp(array_risposte_proc_list,err,0);
     err = broadcast_centralina(dispList, comando, array_risposte_disp_list);
-    
+    printRisp(array_risposte_disp_list,err,0);
+
+
     free(array_risposte_proc_list);
     free(array_risposte_disp_list);
     //gestione non c'è nessun dispositivo con questo id
