@@ -149,14 +149,14 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
     return i;
 }
 void stampaDisp(info infoDisp){
-    if(strcmp(infoDisp.tipo, "Bulb") == 0){
+    if(strcmp(infoDisp.tipo, "bulb") == 0){
         printf("%d Bulb %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
-    }else if(strcmp(infoDisp.tipo, "Hub") == 0){
+    }else if(strcmp(infoDisp.tipo, "hub") == 0){
         printf("%d Hub %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);//aggiungere override 1 / 0
-    }else if(strcmp(infoDisp.tipo, "Fridge") == 0){
+    }else if(strcmp(infoDisp.tipo, "fridge") == 0){
         printf("%d Fridge %d %s time: %.2f  delay: %.2f  percentualeRiempimento: %d  temperatura: %d \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time,
         infoDisp.delay, infoDisp.percentuale, infoDisp.temperatura);
-    }else if(strcmp(infoDisp.tipo, "Window") == 0){
+    }else if(strcmp(infoDisp.tipo, "window") == 0){
         printf("%d Window %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
     }
 }

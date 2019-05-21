@@ -97,7 +97,7 @@ void removeNode(NodoPtr list, int data){
 }
 
 
-
+/*
 
 void spostaNode(NodoPtr listSrc, NodoPtr listDest, Nodo obj){
     removeNode(listSrc, obj.data);
@@ -119,3 +119,4 @@ int getNode(NodoPtr list, int pid, Nodo* nodo_return){
     return -1;
 
 }
+*/
