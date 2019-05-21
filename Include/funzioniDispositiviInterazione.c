@@ -72,7 +72,6 @@ void sighandle2(int sig, int fd_manuale){
         //PERCHÈ NON USI SIG1??????????????????'
         cmd comando;
         read(fd_manuale, &comando, sizeof(cmd));//uso 10 per intanto, vedi sopra poi
-
         //printf("\n\tLettura da pipe sig1 %s  \n", str);
         int errnum = device_handle_command(comando);
     }

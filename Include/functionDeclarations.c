@@ -340,10 +340,19 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
     comando.tipo_comando = 'i';
     comando.id = atoi(args[1]);
 
+<<<<<<< HEAD
     n = broadcast_centralina(procList, comando, array_risposte_proc_list);
     printRisp(array_risposte_proc_list, n, 0);
     n = broadcast_centralina(dispList, comando, array_risposte_disp_list);
     printRisp(array_risposte_disp_list, n, 0);
+=======
+    err = broadcast_centralina(procList, comando, array_risposte_proc_list);
+    printRisp(array_risposte_proc_list,err,0);
+    err = broadcast_centralina(dispList, comando, array_risposte_disp_list);
+    printRisp(array_risposte_disp_list,err,0);
+
+
+>>>>>>> 39f07f805427543691795576b9c09640a240d5fb
     free(array_risposte_proc_list);
     free(array_risposte_disp_list);
     //gestione non c'è nessun dispositivo con questo id
@@ -398,7 +407,7 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
 
 
 int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
-    if(powerOn==0){
+    /*if(powerOn==0){
         printf("La centralina risulta spento tramite interrutore generale\n");
         printf("Accendere la centralina tramite 'power' prima di impartire nuovi comandi\n");
 
@@ -446,8 +455,23 @@ int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
     }        
     free(tmp);
     //Se scorrendo tutti i processi l'ID non è stato trovato ritorno -1
-    return -1; //esci che sennò va avanti    
+    */
+    risp* array_risposte_proc_list = malloc(1 * sizeof(risp));
+    risp* array_risposte_disp_list = malloc(1 * sizeof(risp));
 
+    signal(SIGCONT, sign_cont_handler);
+    cmd comando;
+    int err;
+    comando.tipo_comando = 'm';
+    comando.id = atoi(arg);
+    err = broadcast_centralina(procList, comando, array_risposte_proc_list);
+    err = broadcast_centralina(dispList, comando, array_risposte_disp_list);
+    
+    free(array_risposte_proc_list);
+    free(array_risposte_disp_list);
+    //gestione non c'è nessun dispositivo con questo id 
+
+    //Se non trova ritorna -1
 }
 
 //Per gestire l'accensione/spegnimento generale della centralina
