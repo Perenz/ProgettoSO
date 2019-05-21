@@ -15,8 +15,13 @@
 #define CEN_BUFSIZE 128
 #define BUFSIZE 128
 #define ANSWER 64
-
+void sign_cont_handler(int sig){
+    signal(SIGCONT, sign_cont_handler);
+    //printf("Arrivato segnale\n");
+    return;
+}
 int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte);
+void printRisp(risp* array_risposte, int n, int indentazione);
 
 char* getLine(){
     char *cmd=NULL;
@@ -61,11 +66,7 @@ char** splitLine(char* line){
     commands[pos]=NULL;
     return commands;
 }
-void sign_cont_handler(int sig){
-    signal(SIGCONT, sign_cont_handler);
-    //printf("Arrivato segnale\n");
-    return;
-}
+
 int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
     //Setto il gestore di SIGCONT, l'ho giò settato ma per sicurezza lo risetto
     signal(SIGCONT, sign_cont_handler);
@@ -113,6 +114,7 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
                 if(answer_tmp.considera == 1){
                     //Print da spostare
                     array_risposte[i] = answer_tmp;
+                    i++;
                     
                 }
                 if(answer_tmp.eliminato == 1){
@@ -143,25 +145,32 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
         nodo = nodo->next;
     }
 
-    //Setto la terminazione nell'array, metodo di merda usato per ora così da farlo funzionare
-    printf("Settato\n");
-    array_risposte[i].id = -1;
-
-
-    return 1;
+    //Rispondo con il numero di dispositivi inseriti, metodo di merda
+    return i;
 }
- 
-
-
 void stampaDisp(info infoDisp){
     if(strcmp(infoDisp.tipo, "Bulb") == 0){
         printf("%d Bulb %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
     }else if(strcmp(infoDisp.tipo, "Hub") == 0){
-        printf("%d Hub %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
+        printf("%d Hub %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);//aggiungere override 1 / 0
     }else if(strcmp(infoDisp.tipo, "Fridge") == 0){
         printf("%d Fridge %d %s time: %.2f  delay: %.2f  percentualeRiempimento: %d  temperatura: %d \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time,
         infoDisp.delay, infoDisp.percentuale, infoDisp.temperatura);
     }else if(strcmp(infoDisp.tipo, "Window") == 0){
         printf("%d Window %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
+    }
+}
+void printRisp(risp* array_risposte, int n, int indentazione){
+    //Se indentazione = 1 indento la stampa
+
+    int i = 0;
+    for(; i < n; i++){
+        if(indentazione == 1){
+            int j = 0;
+            for(; j<array_risposte[i].profondita; j++){
+                printf("\t");
+            }
+        }
+        stampaDisp(array_risposte[i].info_disp);
     }
 }

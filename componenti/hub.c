@@ -25,7 +25,7 @@ int fd_read;
 int fd_write;
 info informazioni;
 char nome[20];
-
+int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, risp risposta_to_padre);
 int dev_list(cmd);
 int dev_switch(cmd);
 int dev_info(cmd);
@@ -146,9 +146,19 @@ int dev_list(cmd comando){
 
     return 1;
 }
-//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 int dev_switch(cmd comando){
-//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    risp risposta_controllore;
+    if(comando.id == id || comando.forzato){
+        comando.forzato = 1;
+        risposta_controllore.id = id;
+        risposta_controllore.considera = 1;
+        risposta_controllore.pid = pid;
+        risposta_controllore.profondita = comando.profondita+1;
+        
+    }else{
+        risposta_controllore.considera = 0;
+    }
+    rispondi(risposta_controllore, comando);
     return 1;
 }
 int dev_info(cmd comando){
@@ -166,7 +176,6 @@ int dev_info(cmd comando){
         //get_info_string(info);
         
         risposta_controllore.profondita = comando.profondita+1;
-        risposta_controllore.termina_comunicazione = 0;
         //SE VOGLIAMO FARE CHE IL DISPOSITIVO MANDA UN MESSAGGIO E NON CERCA SE I SUOI FIGLI HANNO LO STESSO ID: 
         risposta_controllore.termina_comunicazione = 0;
         write(fd_write, &risposta_controllore, sizeof(risp));
@@ -183,7 +192,6 @@ int dev_info(cmd comando){
     return 1;
 }
 int dev_delete(cmd comando){
-//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     risp risposta_controllore;
     if(comando.forzato == 1 || comando.id == id){//comando --all 
         risposta_controllore.id = id;
@@ -205,8 +213,23 @@ int dev_delete(cmd comando){
     }
     return 1;
 }
-//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 int dev_link(cmd comando){
+    risp risposta_controllore;
+    if(comando.id == id){//comando --all
+        int i, err;
+        risposta_controllore.considera = 0;
+        for(i=0; i<device_number(); i++){
+            if(strcmp(comando.info_disp.tipo, builtin_device[i])==0)
+                    err = add_device_generale(builtin_dev_path[i], dispList, comando.info_disp, NULL);
+        }
+        risposta_controllore.termina_comunicazione = 0;
+        write(fd_write, &risposta_controllore, sizeof(risp));
+        risposta_controllore.termina_comunicazione = 1;
+        write(fd_write, &risposta_controllore, sizeof(risposta_controllore));
+    }else{
+        risposta_controllore.considera = 0;
+        rispondi(risposta_controllore, comando);
+    }
     return 1;
 }
 void set_info(char* info){
@@ -241,14 +264,14 @@ int main(int argc, char **args){
     fd_write = atoi(args[2]);
     //MANCA IL SET_INFO, sbaglia l'id
     int err = read(fd_read,&informazioni,sizeof(info));
-    if(err = -1)
-        printf("eerore nella lettura delle info BULB");
+    if(err == -1)
+        printf("Errore nella lettura delle info BULB");
     id = informazioni.id;
     if(informazioni.def == 1){
         status = 0; 
         informazioni.pid = pid;
     }else{
-        strcpy(status, informazioni.stato);
+        
         informazioni.pid = pid;
         strcpy(nome, informazioni.nome);
     }

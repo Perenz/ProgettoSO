@@ -19,7 +19,7 @@ char *builtin_device[]={
         "hub"
 };
 
-char *bultin_dev_path[]={
+char *builtin_dev_path[]={
         "./binaries/BULB",
         "./binaries/WINDOW",
         "./binaries/FRIDGE",
