@@ -398,71 +398,29 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
 
 
 int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
-    /*if(powerOn==0){
-        printf("La centralina risulta spento tramite interrutore generale\n");
-        printf("Accendere la centralina tramite 'power' prima di impartire nuovi comandi\n");
-
-        return 1;
-    }
-    int pidCercato;
-    //TODO POSSIBILE UNIRE CON LIST DATO CHE è MOLTO SIMILE
-    NodoPtr nodo = dispList;
-    //Escludo la centralina dal while
-    nodo = nodo->next;
-    signal(SIGCONT, sign_cont_handler);
-    char* tmp = malloc(2 + 10 + 3);//2 per il comando + lunghezza id (args[1]) + 3 per spazi e terminazione stringa
-    //tipo di comando
-    strcat(tmp,"im ");
-    //id dispositivo da spegnere
-    strcat(tmp, arg);
-    //delimitatore 
-    strcat(tmp, "\n");
-    //printf("scrittura lato padre: %s\n", tmp);
-    while(nodo != NULL){
-        
-        //scrivo il comando sulla pipe
-        write(nodo->fd_writer, tmp, strlen(tmp));
-        //mando un segnale al figlio così si risveglia e legge il contenuto della pipe
-        kill(nodo->data, SIGUSR1);
-        //printf("Mi metto in read dal figlio %d sul canale %d\n", Nodo->data, Nodo->fd[0]);
-        //pause();
-            
-        //TODO gestione errori
-        //leggo il pid del figlio così da poterlo togliere dalla lista di processi
-        char* answer = malloc(30);
-        int err = read(nodo->fd_reader,answer, 30);
-        //pause();
-        //TODO se il figlio ritorna 0 esso non è figlio e perciò non lo elimino dalla lista
-        
-        //printf("Lettura da pipe lato padre %d\n", ris);
-        //Se la risposta tornata è diversa da "0" significa che è stato trovato il dispositivo con quell'id
-        if(strcmp(answer, "0")!=0){
-            pidCercato = atoi(answer);
-            //Ritorno il pid
-            //printf("PidCercato è %d", pidCercato);
-            return pidCercato;
-        }                  
-        nodo = nodo->next;
-    }        
-    free(tmp);
-    //Se scorrendo tutti i processi l'ID non è stato trovato ritorno -1
-    */
     risp* array_risposte_proc_list = malloc(1 * sizeof(risp));
     risp* array_risposte_disp_list = malloc(1 * sizeof(risp));
 
     signal(SIGCONT, sign_cont_handler);
     cmd comando;
-    int err;
-    comando.tipo_comando = 'm';
+    int pidCercato=-1;
+    comando.tipo_comando = 'i';
     comando.id = atoi(arg);
-    err = broadcast_centralina(procList, comando, array_risposte_proc_list);
-    err = broadcast_centralina(dispList, comando, array_risposte_disp_list);
-    
+    if(broadcast_centralina(procList, comando, array_risposte_proc_list)>0){
+        pidCercato=array_risposte_proc_list[0].info_disp.pid;
+    }
+    else if(broadcast_centralina(dispList, comando, array_risposte_disp_list)>0){
+        pidCercato=array_risposte_disp_list[0].info_disp.pid;
+    }
+
+    printf("pid cercato %d\n", pidCercato);
+
     free(array_risposte_proc_list);
     free(array_risposte_disp_list);
     //gestione non c'è nessun dispositivo con questo id 
 
     //Se non trova ritorna -1
+    return -1;
 }
 
 //Per gestire l'accensione/spegnimento generale della centralina
