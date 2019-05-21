@@ -1,6 +1,9 @@
 #include <signal.h>
 #include <time.h>
 #include "../strutture/comandiH.h"
+#include <fcntl.h>
+#include <unistd.h>
+
 //#include "../strutture/comandinonvacazz.c"
 //#include "gestioneComandi.c"
 

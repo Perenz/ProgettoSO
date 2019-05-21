@@ -27,14 +27,6 @@ void getManualPid();
 int cen_numCommands();
 int checkPower();
 
-void printRisp(risp* array_risposte){
-    int i = 0;
-    //Per ora lo famo così
-    while(array_risposte[i].id != -1){
-        //stampa nulla, marcello
-        printf("%d\n", i);
-    }
-}
 
 
 
@@ -133,11 +125,6 @@ int cen_help(char **args, NodoPtr procList, NodoPtr dispList){
     }
     return 1;
 }
-
-
-
-
-
 /*
     Funzione: elenca tutti i dispositivi con <nome>, quelli attivi con <nome> <id> 
     Sintassi lato utente: list
@@ -159,19 +146,17 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
     cmd comando;
     comando.tipo_comando = 'l';
     comando.profondita = 0;
-    int err = 0;
+    int n = 0;
     printf("\n\tStampo la lista dei dispositivi COLLEGATI:\n");
     printf("\nCENTRALINA VAGINA\n");
-    err = broadcast_centralina(procList, comando, array_risposte_proc_list);  
-    //printRisp(array_risposte_proc_list);
+    n = broadcast_centralina(procList, comando, array_risposte_proc_list);  
+    printRisp(array_risposte_proc_list, n, 1);
 
-
+    
     printf("\n\tStampo la lista dei dispositivi DISPONIBILI:\n");
     //gestione eerr
-    err = broadcast_centralina(dispList, comando, array_risposte_disp_list);
-    
-    printRisp(array_risposte_disp_list);
-
+    n = broadcast_centralina(dispList, comando, array_risposte_disp_list);
+    printRisp(array_risposte_disp_list, n, 1);
 
     free(array_risposte_proc_list);
     free(array_risposte_disp_list);
@@ -260,7 +245,7 @@ int cen_add(char **args, NodoPtr procList, NodoPtr dispList){
         int i;
         for(i=0; i<device_number(); i++){
             if(strcmp(args[1], builtin_device[i])==0)
-                    return add_device(bultin_dev_path[i], procList, dispList, nome);
+                    return add_device(builtin_dev_path[i], procList, dispList, nome);
         }
     }
 
@@ -314,8 +299,17 @@ int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
         comando.id = atoi(args[1]);
         strcpy(comando.info_disp.interruttore[0].nome,args[2]);
         strcpy(comando.info_disp.interruttore[0].stato,args[3]);
-        char* answer = broadcast_centralina(dispList, comando, NULL);
-        
+        risp* array_risposte_disp_list = malloc(1000 * sizeof(risp));
+        int n = broadcast_centralina(dispList, comando, array_risposte_disp_list);
+        printRisp(array_risposte_disp_list, n, 1);
+
+        risp* array_risposte_proc_list = malloc(1000 * sizeof(risp));
+        n = broadcast_centralina(dispList, comando, array_risposte_proc_list);
+        printRisp(array_risposte_disp_list, n, 1);
+
+
+        free(array_risposte_proc_list);
+        free(array_risposte_disp_list);
         return 1; //esci che sennò va avanti    
     }
     printf("Device indicato non riconosciuto\n");
@@ -377,22 +371,24 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
             //chiedo le info di id2 per vedere se è un dispositivo di interazione collegabile (stesso tipo) ad id1
             //delete id1
             //link id1 to id2
-    risp* array_risposte_proc_list = malloc(1000 * sizeof(risp));
-    risp* array_risposte_disp_list = malloc(1000 * sizeof(risp));
+        
+        risp* array_risposte_proc_list = malloc(1000 * sizeof(risp));
+        risp* array_risposte_disp_list = malloc(1000 * sizeof(risp));
 
-    signal(SIGCONT, sign_cont_handler);
-    cmd comando;
-    int err;
-    comando.tipo_comando = 'i';
-    comando.info_forzate = 1;
-    comando.id = atoi(args[1]);
-    err = broadcast_centralina(procList, comando, array_risposte_proc_list);
-    err = broadcast_centralina(dispList, comando, array_risposte_disp_list);
 
-    
-    
-    free(array_risposte_proc_list);
-    free(array_risposte_disp_list);
+        signal(SIGCONT, sign_cont_handler);
+        cmd comando;
+        int err;
+        comando.tipo_comando = 'i';
+        comando.info_forzate = 1;
+        comando.id = atoi(args[1]);
+        err = broadcast_centralina(procList, comando, array_risposte_proc_list);
+        err = broadcast_centralina(dispList, comando, array_risposte_disp_list);
+
+        
+        
+        free(array_risposte_proc_list);
+        free(array_risposte_disp_list);
     return 1;
 }
 

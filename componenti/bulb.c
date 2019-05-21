@@ -140,7 +140,7 @@ int dev_switch(cmd comando){
     {
             answer.considera = 0;
     }
-    rispondi(answer, comando,fd_write,idPar);
+    rispondi(answer, comando, fd_write,idPar);
     return 1;
 }
 
@@ -263,6 +263,7 @@ int main(int argc, char *args[]){
     int err = read(fd_read,&informazioni,sizeof(info));
     if(err == -1)
         printf("eerore nella lettura delle info BULB\n");
+        
     id = informazioni.id;
     if(informazioni.def == 1){
         printf("info defaulttt\n");

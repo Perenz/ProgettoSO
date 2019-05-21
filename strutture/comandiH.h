@@ -30,6 +30,8 @@ typedef struct{
     int forzato;//utile per delete --all e per far sì che i figli rispondano con terminazione 
     int info_forzate;
     int profondita;
+
+    int id2; //caso 
     info info_disp;
     //aggiungere vari campi per comandi più complessi come link
 }cmd;
