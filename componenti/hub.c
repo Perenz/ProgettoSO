@@ -177,13 +177,14 @@ int dev_info(cmd comando){
         
         risposta_controllore.profondita = comando.profondita+1;
         //SE VOGLIAMO FARE CHE IL DISPOSITIVO MANDA UN MESSAGGIO E NON CERCA SE I SUOI FIGLI HANNO LO STESSO ID: 
+        /* NON VA SE NON è STATO FATTO UN LIST PRIMA ED IN ALCUNI CASI SI BLOCCA
         risposta_controllore.termina_comunicazione = 0;
         write(fd_write, &risposta_controllore, sizeof(risp));
         risposta_controllore.termina_comunicazione = 1;
         write(fd_write, &risposta_controllore, sizeof(risposta_controllore));
-        
+        */
         //Se VOGLIAMO FARE CHE IL DISPOSITIVO CHIEDE AI SUOI FIGLI SE C'è QUALCUNO CON QUELL'ID ANCHE SE LUI HA GIà QUELL'ID
-        //rispondi(risposta_controllore, comando);
+        rispondi(risposta_controllore, comando);
     }else{
         risposta_controllore.considera = 0;//non considerarmi, non sono stato eliminato
        
@@ -195,6 +196,8 @@ int dev_delete(cmd comando){
     risp risposta_controllore;
     if(comando.forzato == 1 || comando.id == id){//comando --all 
         risposta_controllore.id = id;
+        risposta_controllore.profondita = comando.profondita+1;
+        comando.profondita++;
         risposta_controllore.considera = 1;
         risposta_controllore.eliminato = 1;
         risposta_controllore.pid = pid;
@@ -266,6 +269,7 @@ int main(int argc, char **args){
     int err = read(fd_read,&informazioni,sizeof(info));
     if(err == -1)
         printf("Errore nella lettura delle info BULB");
+
     id = informazioni.id;
     if(informazioni.def == 1){
         status = 0; 
@@ -293,14 +297,17 @@ int main(int argc, char **args){
 
    //char* info = malloc(ANSWER);
 
-   if(id < 9){
+   if(id < 6){
        info infoD;
        infoD.def = 1;
        infoD.id = informazioni.id+1;
        //sprintf(info, "%d", id+1);
        add_device_generale("./binaries/HUB", dispList, infoD, "ProvaName");
+       infoD.id = informazioni.id+10;
+       add_device_generale("./binaries/HUB", dispList, infoD, "ProvaName");
        //memset(info,0,strlen(info));
        //sprintf(info, "default %d", id+1);
+       infoD.id = informazioni.id+100;
        add_device_generale("./binaries/BULB", dispList, infoD, "ProvaName");
        //memset(info,0,strlen(info));
 
@@ -374,7 +381,8 @@ int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, ri
                 //continuerà a mandare risposte in su nell'albero verso la centralina, quando tutti avranno mandato il messaggio di terminazione
                 //egli manderà 1 messaggio di terminazione al padre
                 //scrivo a mio padre la risposta che ho appena letto
-                write(fd_papi, &answer, sizeof(risp));
+                if(answer.considera==1)
+                    write(fd_papi, &answer, sizeof(risp));
                 
                 //mando un segnale al figlio per comunicare di continuare la comunicazione                
                 err_signal = kill(pid_figlio, SIGCONT);

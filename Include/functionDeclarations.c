@@ -184,7 +184,7 @@ int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
         //RICEZIONE RISPOSTE
         risp* array_risposte_proc_list = malloc(1000 * sizeof(risp));
         risp* array_risposte_disp_list = malloc(1000 * sizeof(risp));
-        int err;
+        int n;
         signal(SIGCONT, sign_cont_handler);
         cmd comando;
         comando.tipo_comando = 'd';
@@ -195,10 +195,11 @@ int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
             comando.id = atoi(args[1]);
         }
 
-        err = broadcast_centralina(dispList, comando, array_risposte_disp_list);
+        n = broadcast_centralina(dispList, comando, array_risposte_disp_list);
+        printRisp(array_risposte_disp_list, n, 1);
         //gestione err
-        err = broadcast_centralina(procList, comando, array_risposte_proc_list);
-        
+        n = broadcast_centralina(procList, comando, array_risposte_proc_list);
+        printRisp(array_risposte_disp_list, n, 1);
         free(array_risposte_proc_list);
         free(array_risposte_disp_list);
     }
@@ -335,16 +336,23 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
 
     signal(SIGCONT, sign_cont_handler);
     cmd comando;
-    int err;
+    int n;
     comando.tipo_comando = 'i';
     comando.id = atoi(args[1]);
 
+<<<<<<< HEAD
+    n = broadcast_centralina(procList, comando, array_risposte_proc_list);
+    printRisp(array_risposte_proc_list, n, 0);
+    n = broadcast_centralina(dispList, comando, array_risposte_disp_list);
+    printRisp(array_risposte_disp_list, n, 0);
+=======
     err = broadcast_centralina(procList, comando, array_risposte_proc_list);
     printRisp(array_risposte_proc_list,err,0);
     err = broadcast_centralina(dispList, comando, array_risposte_disp_list);
     printRisp(array_risposte_disp_list,err,0);
 
 
+>>>>>>> 39f07f805427543691795576b9c09640a240d5fb
     free(array_risposte_proc_list);
     free(array_risposte_disp_list);
     //gestione non c'è nessun dispositivo con questo id
