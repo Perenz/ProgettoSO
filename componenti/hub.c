@@ -84,9 +84,6 @@ void sigint_handler(int sig){
     //Come per bulb non serve andare in pausa
 }
 
-void h_sigstop_handler ( int sig ) {
-  printf("Never happens (%d)\n",sig);
-}
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
 void sighandle_usr1(int sig){
     signal(SIGCONT, sign_cont_handler);
@@ -155,7 +152,34 @@ int dev_switch(cmd comando){
     return 1;
 }
 int dev_info(cmd comando){
-//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    risp risposta_controllore;
+    if(comando.id == id || comando.forzato){//comando --all , forzato forza l'invio delle info anche se l'id non è uguale
+            //il parametro info_forzate è usato nel link: forza i dispositivi nell'invio delle proprie informazioni 
+            //se figli di un hub con tali informazioni 
+        if(comando.info_forzate == 1){
+            comando.forzato = 1;
+        }
+        risposta_controllore.id = id;
+        risposta_controllore.considera = 1;
+        risposta_controllore.pid = pid;
+        //char* info = malloc(ANSWER);
+        //get_info_string(info);
+        
+        risposta_controllore.profondita = comando.profondita+1;
+        risposta_controllore.termina_comunicazione = 0;
+        //SE VOGLIAMO FARE CHE IL DISPOSITIVO MANDA UN MESSAGGIO E NON CERCA SE I SUOI FIGLI HANNO LO STESSO ID: 
+        risposta_controllore.termina_comunicazione = 0;
+        write(fd_write, &risposta_controllore, sizeof(risp));
+        risposta_controllore.termina_comunicazione = 1;
+        write(fd_write, &risposta_controllore, sizeof(risposta_controllore));
+        
+        //Se VOGLIAMO FARE CHE IL DISPOSITIVO CHIEDE AI SUOI FIGLI SE C'è QUALCUNO CON QUELL'ID ANCHE SE LUI HA GIà QUELL'ID
+        //rispondi(risposta_controllore, comando);
+    }else{
+        risposta_controllore.considera = 0;//non considerarmi, non sono stato eliminato
+       
+        rispondi(risposta_controllore, comando);
+    }
     return 1;
 }
 int dev_delete(cmd comando){

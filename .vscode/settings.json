@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "listh.h": "c",
-        "types.h": "c",
-        "unistd.h": "c"
-    }
-}
