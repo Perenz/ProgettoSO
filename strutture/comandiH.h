@@ -28,6 +28,7 @@ typedef struct{
     char tipo_comando;
     int id;//se == 0 --> list
     int forzato;//utile per delete --all e per far sì che i figli rispondano con terminazione 
+    int info_forzate;
     int profondita;
     info info_disp;
     //aggiungere vari campi per comandi più complessi come link
@@ -49,6 +50,7 @@ typedef struct{
     info info_disp;
 }risp;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 typedef struct {
   risp *array;
   size_t used;
@@ -57,12 +59,6 @@ typedef struct {
 
 void print_risp(risp);
 void print_cmd(cmd);
-
-
-void initArray(array_risposte *a, size_t initialSize);
-void insertArray(array_risposte *a, risp element);
-void freeArray(array_risposte *a);
-
 
 /*
 void printComando(cmd c);

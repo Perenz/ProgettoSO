@@ -94,18 +94,18 @@ int rispondi(risp answer, cmd comando, int fd_write, int pidPapi){
 //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 //GUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LIST
 int dev_info_gen(cmd comando, int id, int idPar, int fd_write){
-    if(id == comando.id){
-        risp answer;
-        //NON SO SE ANDRÀ COSÌ
-        get_info_string(&(answer.info_disp));
-        int esito = write(fd_write, &answer, sizeof(risp));
-        //free(ans);
-        kill(idPar,SIGCONT);
+     risp answer;
+    if(id == comando.id || comando.forzato == 1){//comando forzato per avere le info di dispositivi situati nel sott'albero di un processo che ha id 
+        
+        answer.considera = 1;
+        answer.id = id;
+        //get_info_string(answer.info);
+        
+        
     }else{
-        int esito = write(fd_write, "0\0", 2);
-        //printf("Non restituisce info dato che id non coincide\n");
+        answer.considera = 0;
     }
-    kill(idPar,SIGCONT);
+    rispondi(answer, comando,fd_write, idPar);
     
     //famo ritornare l'errore poi
     return 1;

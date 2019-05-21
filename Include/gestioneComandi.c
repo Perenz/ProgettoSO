@@ -17,6 +17,7 @@
 #define ANSWER 64
 
 
+<<<<<<< HEAD
 //////////NON MI COMPILA SE LI METTO IN COMANDI.C OIBO
 void stampaDisp(info infoDisp);
 void initArray(array_risposte *a, size_t initialSize) {
@@ -39,6 +40,8 @@ void freeArray(array_risposte *a) {
     a->used = a->size = 0;
 }
 
+=======
+>>>>>>> 6cd491fab1c1814c63a2a08fb924be0cb1463c72
 
 
 //char* getLine();
@@ -139,6 +142,7 @@ int broadcast_centralina(NodoPtr list, cmd comando, array_risposte* answertoltop
                 break;
             }else{
                 if(answer_tmp.considera == 1){
+                    //Print da spostare
                     array_risposte[i] = answer_tmp;
                     int j;
                     for(j=0;j<array_risposte[i].profondita; j++){
@@ -175,7 +179,6 @@ int broadcast_centralina(NodoPtr list, cmd comando, array_risposte* answertoltop
         }
         nodo = nodo->next;
     }
-    printf("Numero dispositivi: %d\n", i);
     return 1;
 }
  
