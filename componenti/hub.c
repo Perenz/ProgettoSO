@@ -23,7 +23,7 @@ int status; //1 acceso, 0 spento
 int fd_read;
 //File descriptor in cui il figlio scrive e il padre legge
 int fd_write;
-
+info informazioni;
 char nome[20];
 
 int dev_list(cmd);
@@ -32,7 +32,7 @@ int dev_info(cmd);
 int dev_delete(cmd);
 int dev_link(cmd);
 
-void get_info_string(char*);//TODO aggiungere timer
+void get_info_string(info*);//TODO aggiungere timer
 void set_info(char*);
 
 //int dev_link(char** args);
@@ -140,9 +140,9 @@ int dev_list(cmd comando){
     comando.profondita++;
     risposta_controllore.id = id;
     risposta_controllore.considera = 1;
-    char* info = malloc(ANSWER);
-    get_info_string(info);
-    strcpy(risposta_controllore.info, info);
+    info infoD;
+    get_info_string(&(risposta_controllore.info_disp));
+    
 
     rispondi(risposta_controllore, comando);
 
@@ -168,9 +168,7 @@ int dev_delete(cmd comando){
         risposta_controllore.pid = pid;
         comando.forzato = 1;//indico ai miei figli di eliminarsi
         
-        char* info = malloc(ANSWER);
-        get_info_string(info);
-        strcpy(risposta_controllore.info, info);
+        get_info_string(&(risposta_controllore.info_disp));
         
         rispondi(risposta_controllore, comando);
         printf("\033[1;31m"); //scrivo in rosso 
@@ -181,9 +179,7 @@ int dev_delete(cmd comando){
     }else{
         risposta_controllore.considera = 0;//non considerarmi, non sono stato eliminato
         risposta_controllore.eliminato = 0;
-        char* info = malloc(ANSWER);
-        get_info_string(info);
-        strcpy(risposta_controllore.info, info);
+        get_info_string(&(risposta_controllore.info_disp));
         rispondi(risposta_controllore, comando);
     }
     return 1;
@@ -203,9 +199,13 @@ void set_info(char* info){
     }
 }
 
-void get_info_string(char* ans){//TODO aggiungere timer
+void get_info_string(info* ans){//TODO aggiungere timer
     //TODO 
-    sprintf(ans, "hub %d %d", pid, id);
+    strcpy(ans->tipo, "Hub");
+    ans->id = id;
+    ans->pid = pid;
+    strcpy(ans->nome, nome);
+    strcpy(ans->stato, status==0?"off":"on");
 }
 
 
@@ -219,8 +219,18 @@ int main(int argc, char **args){
     fd_read = atoi(args[1]);
     fd_write = atoi(args[2]);
     //MANCA IL SET_INFO, sbaglia l'id
-    set_info(args[3]);
-    strcpy(nome, args[4]);
+    int err = read(fd_read,&informazioni,sizeof(info));
+    if(err = -1)
+        printf("eerore nella lettura delle info BULB");
+    id = informazioni.id;
+    if(informazioni.def == 1){
+        status = 0; 
+        informazioni.pid = pid;
+    }else{
+        strcpy(status, informazioni.stato);
+        informazioni.pid = pid;
+        strcpy(nome, informazioni.nome);
+    }
 
     signal(SIGINT, sigint_handler);
     signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
@@ -237,15 +247,18 @@ int main(int argc, char **args){
 
     //PROVA
 
-   char* info = malloc(ANSWER);
+   //char* info = malloc(ANSWER);
 
-   if(id < 10){
-       sprintf(info, "%d", id+1);
-       add_device_generale("./binaries/HUB", dispList, info, "ProvaName");
-       memset(info,0,strlen(info));
-       sprintf(info, "default %d", id+1);
-       add_device_generale("./binaries/BULB", dispList, info, "ProvaName");
-       memset(info,0,strlen(info));
+   if(id < 9){
+       info infoD;
+       infoD.def = 1;
+       infoD.id = informazioni.id+1;
+       //sprintf(info, "%d", id+1);
+       add_device_generale("./binaries/HUB", dispList, infoD, "ProvaName");
+       //memset(info,0,strlen(info));
+       //sprintf(info, "default %d", id+1);
+       add_device_generale("./binaries/BULB", dispList, infoD, "ProvaName");
+       //memset(info,0,strlen(info));
 
 
        //add_device_generale("./binaries/WINDOW", dispList, info, "ProvaName");
@@ -257,7 +270,8 @@ int main(int argc, char **args){
        sprintf(info, "%default ", id+1);
        add_device_generale("./componenti/BULB", dispList, info, "perenzoni gay");
        */
-   }
+    }
+    
     //Invio segnale al padre
     int ris = kill(idPar, SIGCONT);
 
@@ -310,7 +324,7 @@ int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, ri
                 if(answer.eliminato == 1){//questo vale quando risalgo, se il dispositivo è da eliminare lo tolgo dalla lista dei processi
                     //printList(list);
                     removeNode(list, answer.pid);
-                    printf("Dispositivo eliminato: %s in %d\n", answer.info, id);
+                    printf("Dispositivo eliminato: %d %s in %d\n", answer.info_disp.pid,answer.info_disp.tipo, id);
                     answer.eliminato = 0;//setto a 0 sennò lo toglie anche il padre che non lo ha nella lista 
                 }
                 //finchè tutti i figli non avranno mandato il messaggio di terminazione

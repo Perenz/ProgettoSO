@@ -97,7 +97,7 @@ int dev_info_gen(cmd comando, int id, int idPar, int fd_write){
     if(id == comando.id){
         risp answer;
         //NON SO SE ANDRÀ COSÌ
-        get_info_string(answer.info);
+        get_info_string(&(answer.info_disp));
         int esito = write(fd_write, &answer, sizeof(risp));
         //free(ans);
         kill(idPar,SIGCONT);
@@ -116,15 +116,13 @@ int dev_info_gen(cmd comando, int id, int idPar, int fd_write){
     se comando è l: <informazioni>
 */
 int dev_list_gen(cmd comando, int idPar, int fd_write){
-    char* info = malloc(ANSWER);
-    get_info_string(info);
     risp answer;
+    get_info_string(&(answer.info_disp));
     answer.considera = 1;
     /*
     answer.foglia = 1;
     answer.termina_comunicazione = 1;
     */
-    strcpy(answer.info, info);
     rispondi(answer, comando, fd_write, idPar);
 
     return 1;
@@ -152,8 +150,7 @@ int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write){
         answer.termina_comunicazione = 1;
         */
         char* info = malloc(ANSWER);
-        get_info_string(info);
-        strcpy(answer.info, info);
+        get_info_string(&(answer.info_disp));
             printf("\033[1;31m"); //scrivo in rosso 
             printf("\x1b[ \n\t«Dio mio, Dio mio, perché mi hai abbandonato?»\n");
             printf("\033[0m\n"); //resetto per scriver in bianco

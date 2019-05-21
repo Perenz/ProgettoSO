@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <assert.h>
 #include <sched.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -15,7 +16,7 @@
 
 //ho spostato i metodi getLine e splitLine in una nuova libreria 
 //TODO tale verrà linkata nel gestore generale dei processi di interazione
-void get_info_string(char*);
+void get_info_string(info*);
 int device_handle_command(cmd);
 
 
@@ -50,6 +51,8 @@ pid_t idPar;
 pid_t pid;
 int id;
 char nome[20];
+info informazioni;
+
 
 
 
@@ -187,17 +190,23 @@ void set_time(){
     }
 }
 
-void get_info_string(char* ans){//TODO aggiungere timer
+void get_info_string(info* ans){//TODO aggiungere timer
     set_time();
-    memset(ans, 0, ANSWER);
+    //memset(ans, 0, ANSWER);
     //<info> := <tipo> <pid???> <id> <status> <time>
-    char* status_string = malloc(4);
-    status_string = status==1? "on" : "off";
-    sprintf(ans, "bulb %d %d %s %.2f", pid, id, status_string, tempoSecondi);//TODO aggiungere timer
+    //char* status_string = malloc(4);
+    //status_string = status==1? "on" : "off";
+    //sprintf(ans, "bulb %d %d %s %.2f", pid, id, status_string, tempoSecondi);//TODO aggiungere timer
     //free(status_string);
     //sprintf(ans, "Bulb %d %d", pid, id);
     //strcat(ans ,(status==1? " accesa\0":" spenta\0"));
     //printf(": %s", ans);
+    strcpy(ans->tipo, "Bulb");
+    ans->id = id;
+    ans->pid = pid;
+    strcpy(ans->stato, status==1? "on" : "off");
+    ans->time = tempoSecondi;
+    strcpy(ans->nome, nome);
 }
 
 //DETERMINATO DAL COMANDO CHE VIENE MANDATO IN GET_INFO_STRING
@@ -267,8 +276,21 @@ int main(int argc, char *args[]){
     //leggo args per prendere gli argomenti passati(puntatore al lato di scrittura della pipe)
     fd_read = atoi(args[1]);
     fd_write = atoi(args[2]);  
-    set_info(args[3]);
-    strcpy(nome, args[4]);
+    int err = read(fd_read,&informazioni,sizeof(info));
+    if(err == -1)
+        printf("eerore nella lettura delle info BULB\n");
+    id = informazioni.id;
+    if(informazioni.def == 1){
+        printf("info defaulttt");
+        status = 0; 
+        tempoSecondi = 0;
+    }else{
+        strcpy(status, informazioni.stato);
+        tempoSecondi = informazioni.time;
+        strcpy(nome, informazioni.nome);
+    }
+    
+    
 
 
     signal(SIGQUIT, signhandle_quit);

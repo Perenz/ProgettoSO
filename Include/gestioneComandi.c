@@ -144,7 +144,8 @@ int broadcast_centralina(NodoPtr list, cmd comando, array_risposte* answertoltop
                     for(j=0;j<array_risposte[i].profondita; j++){
                         printf("  ");  
                     }printf("|__"); 
-                    printf("%s\n", array_risposte[i].info);
+                    printf("%d %s %d %s %.2f \n", array_risposte[i].info_disp.pid, array_risposte[i].info_disp.tipo, array_risposte[i].info_disp.id,
+                     array_risposte[i].info_disp.stato, array_risposte[i].info_disp.time);
                     
                     i++;
                 }

@@ -5,21 +5,31 @@
 #include <string.h>
 #include <time.h>
 
+typedef struct{
+    char nome[10];
+    char stato[10];
+}interruttore;
 
 typedef struct{
+    int id;
+    int pid;
+    char tipo[10];
+    char nome[15];
     char stato[10];
-    char interruttore[3][10];
+    interruttore interruttore[3];
     double time;
     double delay;
     int percentuale;
     int temperatura;
-}info_dispositivo;
+    int def; //default, nuovo dispositivo
+}info;
 
 typedef struct{
     char tipo_comando;
     int id;//se == 0 --> list
     int forzato;//utile per delete --all e per far sì che i figli rispondano con terminazione 
     int profondita;
+    info info_disp;
     //aggiungere vari campi per comandi più complessi come link
 }cmd;
 
@@ -36,7 +46,7 @@ typedef struct{
     int termina_comunicazione;
     int eliminato;
     int dispositivo_interazione;
-    char info[64];
+    info info_disp;
 }risp;
 
 typedef struct {

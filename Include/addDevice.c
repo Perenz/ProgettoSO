@@ -3,11 +3,12 @@
 #include <unistd.h>
 #include <signal.h>
 #include "../strutture/listH.h"
+#include "../strutture/comandiH.h"
 
 int id_gen = 2;
 
 int add_device(char*, NodoPtr, NodoPtr, char* nome);
-int add_device_generale(char* execPath, NodoPtr list, char* info, char* nome);
+int add_device_generale(char* execPath, NodoPtr list, info info, char* nome);
 void sign_handler(int);
 //device list
 char *builtin_device[]={
@@ -40,7 +41,7 @@ void sign_handler(int sig){
 
 //add device generale che viene chiamato dai dispositivi di controllo per "aggiungere"
 //un dispositivo che già esisteva (ergo con informazioni non di default)
-int add_device_generale(char* execPath, NodoPtr list, char* info, char* nome){
+int add_device_generale(char* execPath, NodoPtr list, info info, char* nome){
     //info verrà gestito da ogni 
     pid_t pid, wpid;
     int fd_reader[2];
@@ -56,7 +57,8 @@ int add_device_generale(char* execPath, NodoPtr list, char* info, char* nome){
         close(fd_writer[1]);
         sprintf(fd_writer_Tmp,"%d", (fd_writer[0]));
         sprintf(fd_reader_Tmp,"%d", (fd_reader[1]));
-        char *args[]={execPath,fd_writer_Tmp, fd_reader_Tmp , info, nome, NULL}; 
+        //levo il campo info (args[3])
+        char *args[]={execPath,fd_writer_Tmp, fd_reader_Tmp, nome, NULL}; 
         execvp(args[0],args); //passo gli argomenti incluso il puntatore al lato di scrittura della pipe
     } else if (pid < 0) {
         perror("errore fork");
@@ -65,6 +67,9 @@ int add_device_generale(char* execPath, NodoPtr list, char* info, char* nome){
         signal(SIGCONT, sign_handler);//?
         close(fd_reader[1]);
         close(fd_writer[0]);
+        int err = write(fd_writer[1],&info,sizeof(info));
+        if(err = -1) 
+            printf("porcoddue");
         list = insertLast(list, pid, fd_reader[0],fd_writer[1]);
         //Vado in pausa per permettere al figlio di generarsi
         pause();
@@ -77,10 +82,13 @@ int add_device_generale(char* execPath, NodoPtr list, char* info, char* nome){
 int add_device(char* execPath, NodoPtr procList, NodoPtr dispList, char* nome){
     //add device di default chiamato dalla centralina quando viene aggiunto un dispositivo
     //id_gen+=1;
-    char info[16];
-    sprintf(info, "default %d", id_gen);
+    //char info[16];
+    info infoD;
+    infoD.def = 1;
+    infoD.id = id_gen;
+    //sprintf(info, "default %d", id_gen);
     
-    add_device_generale(execPath, dispList, info, nome);
+    add_device_generale(execPath, dispList, infoD, nome);
     return 1;
 }
 
