@@ -15,7 +15,7 @@
 //PER ORA LE DEFINISCO QUI, POI VERRA FATTA UNA LIBRARY
 void sighandle1(int sig, int fd_read, int);
 void sighandle2(int sig, int fd_manuale);
-int dev_info_gen(cmd comando, int id, int idPar, int fd_write);
+int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid);
 int dev_list_gen(cmd comando, int idPar, int fd_write);
 int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write);
 int rispondi(risp answer, cmd comando, int fd_write, int pidPapi);
@@ -95,14 +95,14 @@ int rispondi(risp answer, cmd comando, int fd_write, int pidPapi){
 */
 //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 //GUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LIST
-int dev_info_gen(cmd comando, int id, int idPar, int fd_write){
+int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid){
     risp answer;
     if(id == comando.id || comando.forzato == 1){//comando forzato per avere le info di dispositivi situati nel sott'albero di un processo che ha id 
-
+        answer.pid = pid;
         answer.considera = 1;
         answer.id = id;
         get_info_string(&(answer.info_disp));
-        
+
         
     }else{
         answer.considera = 0;

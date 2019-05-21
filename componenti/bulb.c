@@ -151,7 +151,7 @@ int dev_switch(cmd comando){
     <info> := <tipo> <pid???> <id> <status> <time>
 */
 int dev_info(cmd comando){
-    int err = dev_info_gen(comando, id, idPar, fd_write);
+    int err = dev_info_gen(comando, id, idPar, fd_write, pid);
     return err;
 }
 //COMANDO d <pid>
@@ -187,7 +187,7 @@ void get_info_string(info* ans){//TODO aggiungere timer
     //sprintf(ans, "Bulb %d %d", pid, id);
     //strcat(ans ,(status==1? " accesa\0":" spenta\0"));
     //printf(": %s", ans);
-    strcpy(ans->tipo, "Bulb");
+    strcpy(ans->tipo, "bulb");
     ans->id = id;
     ans->pid = pid;
     strcpy(ans->stato, (status==1? "on" : "off"));

@@ -55,7 +55,7 @@ char *builtin_command[5]={
     "s",//switch
     "i",//getInfo
     "d", //delete
-    "a" //addDevice    da cambiare scegliendo lettera corrispondente
+    "a" //addDevice / link   da cambiare scegliendo lettera corrispondente
 };
 int (*builtin_func_hub[]) (cmd comando) = {
         &dev_list,
@@ -173,7 +173,7 @@ int dev_info(cmd comando){
         risposta_controllore.considera = 1;
         risposta_controllore.pid = pid;
         //char* info = malloc(ANSWER);
-        //get_info_string(info);
+        get_info_string(&(risposta_controllore.info_disp));
         
         risposta_controllore.profondita = comando.profondita+1;
         //SE VOGLIAMO FARE CHE IL DISPOSITIVO MANDA UN MESSAGGIO E NON CERCA SE I SUOI FIGLI HANNO LO STESSO ID: 
@@ -187,7 +187,6 @@ int dev_info(cmd comando){
         rispondi(risposta_controllore, comando);
     }else{
         risposta_controllore.considera = 0;//non considerarmi, non sono stato eliminato
-       
         rispondi(risposta_controllore, comando);
     }
     return 1;
@@ -218,7 +217,7 @@ int dev_delete(cmd comando){
 }
 int dev_link(cmd comando){
     risp risposta_controllore;
-    if(comando.id == id){//comando --all
+    if(comando.id == id){
         int i, err;
         risposta_controllore.considera = 0;
         for(i=0; i<device_number(); i++){
@@ -248,7 +247,7 @@ void set_info(char* info){
 
 void get_info_string(info* ans){//TODO aggiungere timer
     //TODO 
-    strcpy(ans->tipo, "Hub");
+    strcpy(ans->tipo, "hub");
     ans->id = id;
     ans->pid = pid;
     strcpy(ans->nome, nome);
@@ -297,17 +296,18 @@ int main(int argc, char **args){
 
    //char* info = malloc(ANSWER);
 
-   if(id < 6){
+   if(id < 7){
        info infoD;
        infoD.def = 1;
-       infoD.id = informazioni.id+1;
+       infoD.id = informazioni.id+10;
        //sprintf(info, "%d", id+1);
        add_device_generale("./binaries/HUB", dispList, infoD, "ProvaName");
-       infoD.id = informazioni.id+10;
+       infoD.id = informazioni.id+1;
        add_device_generale("./binaries/HUB", dispList, infoD, "ProvaName");
        //memset(info,0,strlen(info));
        //sprintf(info, "default %d", id+1);
-       infoD.id = informazioni.id+100;
+       
+       infoD.id = informazioni.id;
        add_device_generale("./binaries/BULB", dispList, infoD, "ProvaName");
        //memset(info,0,strlen(info));
 

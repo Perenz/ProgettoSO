@@ -42,6 +42,8 @@ void sign_handler(int sig){
 //add device generale che viene chiamato dai dispositivi di controllo per "aggiungere"
 //un dispositivo che già esisteva (ergo con informazioni non di default)
 int add_device_generale(char* execPath, NodoPtr list, info info, char* nome){
+
+    printf("qui\n");
     //info verrà gestito da ogni 
     pid_t pid, wpid;
     int fd_reader[2];
