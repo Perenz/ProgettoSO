@@ -124,6 +124,8 @@ int dev_list(cmd comando){
 */
 //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 int dev_switch(cmd comando){
+    
+
     /*
     int id_change = atoi(args[1]);
     //printf("FRATELLIIIOOOOOO");
@@ -281,11 +283,12 @@ int main(int argc, char *args[]){
         printf("eerore nella lettura delle info BULB\n");
     id = informazioni.id;
     if(informazioni.def == 1){
-        printf("info defaulttt");
+        printf("info defaulttt\n");
         status = 0; 
         tempoSecondi = 0;
     }else{
-        strcpy(status, informazioni.stato);
+        printf("info NON defaulttt\n");
+        status = (strcmp(informazioni.stato,"on")==0?1:0);
         tempoSecondi = informazioni.time;
         strcpy(nome, informazioni.nome);
     }

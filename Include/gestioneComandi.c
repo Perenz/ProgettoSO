@@ -18,7 +18,7 @@
 
 
 //////////NON MI COMPILA SE LI METTO IN COMANDI.C OIBO
-
+void stampaDisp(info infoDisp);
 void initArray(array_risposte *a, size_t initialSize) {
     a->array = (risp*)malloc(initialSize * sizeof(risp));
     a->used = 0;
@@ -144,8 +144,7 @@ int broadcast_centralina(NodoPtr list, cmd comando, array_risposte* answertoltop
                     for(j=0;j<array_risposte[i].profondita; j++){
                         printf("  ");  
                     }printf("|__"); 
-                    printf("%d %s %d %s %.2f \n", array_risposte[i].info_disp.pid, array_risposte[i].info_disp.tipo, array_risposte[i].info_disp.id,
-                     array_risposte[i].info_disp.stato, array_risposte[i].info_disp.time);
+                    stampaDisp(array_risposte[i].info_disp);
                     
                     i++;
                 }
@@ -179,5 +178,18 @@ int broadcast_centralina(NodoPtr list, cmd comando, array_risposte* answertoltop
     printf("Numero dispositivi: %d\n", i);
     return 1;
 }
+ 
 
 
+void stampaDisp(info infoDisp){
+    if(strcmp(infoDisp.tipo, "Bulb") == 0){
+        printf("%d Bulb %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
+    }else if(strcmp(infoDisp.tipo, "Hub") == 0){
+        printf("%d Hub %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
+    }else if(strcmp(infoDisp.tipo, "Fridge") == 0){
+        printf("%d Fridge %d %s time: %.2f  delay: %.2f  percentualeRiempimento: %d  temperatura: %d \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time,
+        infoDisp.delay, infoDisp.percentuale, infoDisp.temperatura);
+    }else if(strcmp(infoDisp.tipo, "Window") == 0){
+        printf("%d Window %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
+    }
+}

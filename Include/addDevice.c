@@ -84,7 +84,10 @@ int add_device(char* execPath, NodoPtr procList, NodoPtr dispList, char* nome){
     //id_gen+=1;
     //char info[16];
     info infoD;
-    infoD.def = 1;
+    infoD.def = 1; //info default = 1
+    strcpy(infoD.nome,nome);
+    infoD.time = 10.0;
+    strcpy(infoD.stato,"on");
     infoD.id = id_gen;
     //sprintf(info, "default %d", id_gen);
     
