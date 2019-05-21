@@ -200,6 +200,14 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont){
         printf("Label ammesse pr tipo fridge: apertura/chiusura\n");
 
 
+        cmd comando;
+        comando.tipo_comando = 's';
+        comando.id = idCont;
+        strcpy(comando.info_disp.interruttore[0].nome,args[1]);
+        strcpy(comando.info_disp.interruttore[0].stato,args[2]);
+        //char* answer = broadcast_centralina(dispList, comando, NULL);
+        
+
         /*char* msg = malloc(6 + strlen(args[1]) + 4 + 1);//6 per l'id + len label + 4 spazi + 1 per il comando
         
         char* label = malloc(2);//2 caratteri: label + terminazione
