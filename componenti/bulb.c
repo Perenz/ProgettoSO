@@ -265,6 +265,7 @@ int main(int argc, char *args[]){
         printf("eerore nella lettura delle info BULB\n");
         
     id = informazioni.id;
+
     if(informazioni.def == 1){
         printf("info defaulttt\n");
         status = 0; 

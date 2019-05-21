@@ -145,7 +145,7 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
         nodo = nodo->next;
     }
 
-    //Rispondo con il numero di dispositivi inseriti, metodo di merda
+    //Rispondo con il numero di dispositivi inseriti, metodo di merda, però utile per verificare se ci sono disp
     return i;
 }
 void stampaDisp(info infoDisp){

@@ -97,9 +97,9 @@ int rispondi(risp answer, cmd comando, int fd_write, int pidPapi){
 //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 //GUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LIST
 int dev_info_gen(cmd comando, int id, int idPar, int fd_write){
-     risp answer;
+    risp answer;
     if(id == comando.id || comando.forzato == 1){//comando forzato per avere le info di dispositivi situati nel sott'albero di un processo che ha id 
-        
+
         answer.considera = 1;
         answer.id = id;
         //get_info_string(answer.info);
@@ -121,6 +121,7 @@ int dev_info_gen(cmd comando, int id, int idPar, int fd_write){
 int dev_list_gen(cmd comando, int idPar, int fd_write){
     risp answer;
     get_info_string(&(answer.info_disp));
+    
     answer.considera = 1;
     /*
     answer.foglia = 1;
@@ -155,7 +156,7 @@ int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write){
     }else{
         answer.pid = pid;
         answer.id = id;
-        answer.considera = 1;
+        answer.considera = 0;
         answer.eliminato = 0;
         rispondi(answer, comando, fd_write, pid);
     }
