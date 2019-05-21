@@ -113,7 +113,7 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
                 if(answer_tmp.considera == 1){
                     //Print da spostare
                     array_risposte[i] = answer_tmp;
-                    i++;
+                    
                 }
                 if(answer_tmp.eliminato == 1){
                     removeNode(list, answer_tmp.pid);
@@ -150,5 +150,18 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
 
     return 1;
 }
+ 
 
 
+void stampaDisp(info infoDisp){
+    if(strcmp(infoDisp.tipo, "Bulb") == 0){
+        printf("%d Bulb %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
+    }else if(strcmp(infoDisp.tipo, "Hub") == 0){
+        printf("%d Hub %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
+    }else if(strcmp(infoDisp.tipo, "Fridge") == 0){
+        printf("%d Fridge %d %s time: %.2f  delay: %.2f  percentualeRiempimento: %d  temperatura: %d \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time,
+        infoDisp.delay, infoDisp.percentuale, infoDisp.temperatura);
+    }else if(strcmp(infoDisp.tipo, "Window") == 0){
+        printf("%d Window %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
+    }
+}

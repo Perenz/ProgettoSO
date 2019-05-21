@@ -6,7 +6,7 @@
 #include <time.h>
 
 typedef struct{
-    char nome[10];
+    char nome[15];
     char stato[10];
 }interruttore;
 

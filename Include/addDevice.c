@@ -69,7 +69,7 @@ int add_device_generale(char* execPath, NodoPtr list, info info, char* nome){
         close(fd_writer[0]);
         int err = write(fd_writer[1],&info,sizeof(info));
         if(err == -1) 
-            printf("porcoddue");
+            printf("porcoddue\n");
         list = insertLast(list, pid, fd_reader[0],fd_writer[1]);
         //Vado in pausa per permettere al figlio di generarsi
         pause();
@@ -84,7 +84,10 @@ int add_device(char* execPath, NodoPtr procList, NodoPtr dispList, char* nome){
     //id_gen+=1;
     //char info[16];
     info infoD;
-    infoD.def = 1;
+    infoD.def = 1; //info default = 1
+    strcpy(infoD.nome,nome);
+    infoD.time = 10.0;
+    strcpy(infoD.stato,"on");
     infoD.id = id_gen;
     //sprintf(info, "default %d", id_gen);
     

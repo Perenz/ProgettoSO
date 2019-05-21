@@ -124,39 +124,23 @@ int dev_list(cmd comando){
 */
 //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 int dev_switch(cmd comando){
-    /*
-    int id_change = atoi(args[1]);
-    //printf("FRATELLIIIOOOOOO");
-    printf("%d", id_change);
-    if(id_change == id && 
-        strcmp(args[2], "accensione")==0 &&
-        (strcmp(args[3], "on")==0 ||  strcmp(args[3], "off")==0)){
-        
-        set_time();
-        char* answer = malloc(ANSWER);
-        if(strcmp(args[3], "on")==0){
-            status = 1;
-        }else{//uguale a off dato dal controllo precedente
-            status = 0;
+    risp answer;
+    if(comando.id == id || comando.forzato == 1){
+        if(strcmp(comando.info_disp.interruttore[0].nome , "accensione")==0){
+            get_info_string(&(answer.info_disp));
+            if(status == 0 && strcmp(comando.info_disp.interruttore[0].stato , "on")==0){
+                status = 1;    
+            }else if(status == 1 && strcmp(comando.info_disp.interruttore[0].stato , "off")==0){
+                status = 0;
+            }
+            get_info_string(&(answer.info_disp));
+            answer.considera = 1;
         }
-        //aggiorna il time prima di cambiare lo status
-        get_info_string(answer);
-            printf("%s", answer); //debug 
-            printf("\033[1;32m"); //scrivo in verde 
-            printf("\tNon sono felice e non sono triste. È questo il dilemma della mia vita: non so come definire il mio stato d’animo, mi manca sempre qualcosa.");
-            printf("\033[0m\n"); //resetto per scriver in bianco
-
-
-
-        int esito = write(fd_write, answer, ANSWER);
-        free(answer);
-        
-    }else{
-        int esito = write(fd_write, "0\0", 2);//TODO
+    }else
+    {
+            answer.considera = 0;
     }
-    kill(idPar,SIGCONT);
-    //famo ritornare l'errore poi
-    */
+    rispondi(answer, comando,fd_write,idPar);
     return 1;
 }
 
@@ -204,7 +188,7 @@ void get_info_string(info* ans){//TODO aggiungere timer
     strcpy(ans->tipo, "Bulb");
     ans->id = id;
     ans->pid = pid;
-    strcpy(ans->stato, status==1? "on" : "off");
+    strcpy(ans->stato, (status==1? "on" : "off"));
     ans->time = tempoSecondi;
     strcpy(ans->nome, nome);
 }
@@ -281,11 +265,12 @@ int main(int argc, char *args[]){
         printf("eerore nella lettura delle info BULB\n");
     id = informazioni.id;
     if(informazioni.def == 1){
-        printf("info defaulttt");
+        printf("info defaulttt\n");
         status = 0; 
         tempoSecondi = 0;
     }else{
-        strcpy(status, informazioni.stato);
+        printf("info NON defaulttt\n");
+        status = (strcmp(informazioni.stato,"on")==0?1:0);
         tempoSecondi = informazioni.time;
         strcpy(nome, informazioni.nome);
     }
