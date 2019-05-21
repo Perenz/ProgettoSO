@@ -61,12 +61,14 @@ char *builtin_command[]={
     "s",//switch
     "i",//getInfo
     "d", //delete
+    "m"//Manual
 };
 int (*builtin_func[]) (cmd comando) = {
     &dev_list,
     &dev_switch,
     &dev_info,
     &dev_delete,
+    &dev_manualControl
 };
 int dev_numCommands(){
     return (sizeof(builtin_command)/ sizeof(char*));

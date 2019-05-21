@@ -101,7 +101,7 @@ int dev_info_gen(cmd comando, int id, int idPar, int fd_write){
         
         answer.considera = 1;
         answer.id = id;
-        //get_info_string(answer.info);
+        get_info_string(&(answer.info_disp));
         
         
     }else{

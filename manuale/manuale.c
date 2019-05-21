@@ -98,6 +98,7 @@ int main(){
 
     //printf("Ecco il pid %d", getCenPid());
     cenPid=getCenPid();
+    printf("Pid centralian %d\n", cenPid);
 
     //Ora mi comporto diversamente a secondo del valore di controllo
     //in entrambi i casi prendo i comandi esattamente come faccio in start.c, cambia l'insieme di comandi disponibili
