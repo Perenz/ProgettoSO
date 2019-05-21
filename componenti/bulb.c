@@ -219,7 +219,7 @@ void set_info(char* info){
 
 
 int dev_manualControl(cmd comando){
-    int id_info = comando.id;
+    /*int id_info = comando.id;
     char* msg = malloc(10);
 
     if(id == id_info){//guardo se il tipo e l'id coincidono
@@ -253,7 +253,9 @@ int dev_manualControl(cmd comando){
     }
     kill(idPar,SIGCONT);
 
-    return 1;
+    return 1;*/
+    int err = dev_manual_info_gen(comando, id, idPar, fd_write, &fd_manuale, pid);
+    return err;
 }
 
 int main(int argc, char *args[]){
