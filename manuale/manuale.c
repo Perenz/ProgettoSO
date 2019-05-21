@@ -14,8 +14,8 @@ char* cen_getLine();
 char** cen_splitLine(char *line);
 //Variabili che indicano il pid e l'id del dispositivo su cui si sta agendo manualmente
 //Di default uguali a 0, cioè non ho ancora effettuato il "collegamento" con alcun dispositivo
-int controlloPid=0;
-int controlloId=0;
+int controlloPid;
+int controlloId;
 char controlloTipo;
 
 
@@ -103,11 +103,12 @@ int main(){
     //in entrambi i casi prendo i comandi esattamente come faccio in start.c, cambia l'insieme di comandi disponibili
     //Quindi cambia solo il processCmd con una serie di funzioni bultin diverse per i due casi
     do{
+        printf("\033[0;34m"); //Set the text to the color blue
         if(controlloPid==0)
             printf("Inserisci il comando:>");
         else
             printf("(Controllo su dispositivo pid %d e id %d) Inserisci il comando :>", controlloPid, controlloId);
-        
+        printf("\033[0m");
 
         //Prendo il comando dall'utente
         command = cen_getLine();
@@ -184,7 +185,12 @@ int cen_processCmd(char **command){
                     //Il -1 indica "errore" e quindi resetto il Pid del dipositivo controllato e ritorno 1 per proseguire
                     controlloPid=0;
                     return 1;
-                }else{
+                }else if (controlloPid==0)
+                {
+                    //Devo uscire
+                    return 0;
+                }
+                {
                     //Pid trovato e diverso da -1
                     //Setto correttamente anche la variabile contenente l'id del dispositivo controllato
                     controlloId=atoi(command[1]);

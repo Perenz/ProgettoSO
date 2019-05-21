@@ -2,6 +2,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include "../strutture/comandiH.h"
+
 
 int hand_control(char **, int*); //Dovra ritornare il pid del dispositivo specificato come argomento
 int hand_help(char **, int*);
@@ -151,10 +153,54 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont){
 
             return -1;
     }
-    else{
-        int pid = *cont;
+    else if(tipoCont=='b' && strcmp(args[1], "accensione")==0){
+        //Controlli per dispositivo BULB (o hub di bulb)
+        if(strcmp(args[2], "on")!=0 && strcmp(args[2], "off")!=0){
+            printf("Errore nei parametri\n");
+            printf("Usage: switch <label> <nuovostato>\n");
+            printf("Label ammesse pr tipo bulb: accensione\n");
+            printf("Stati ammessi per label accensione: on/off\n");
+            return -1;
+        }
 
-        char* msg = malloc(6 + strlen(args[1]) + 4 + 1);//6 per l'id + len label + 4 spazi + 1 per il comando
+        //Qui comando
+        return -1;
+    }
+    else if(tipoCont=='w' && (strcmp(args[1], "apertura")==0 || strcmp(args[1], "chiusura")==0)){
+        //Controlli per dispositivo WINDOW (o hub di window)
+        if(strcmp(args[2], "on")!=0 && strcmp(args[2], "off")!=0){
+            printf("Errore nei parametri\n");
+            printf("Usage: switch <label> <nuovostato>\n");
+            printf("Label ammesse pr tipo window: apertura/chiusura\n");
+            printf("Stati ammessi per label apertura/chiusura: on/off\n");
+            return -1;
+        }
+
+        //Qui comando
+        return -1;
+    }
+    else if(tipoCont=='f' && (strcmp(args[1], "apertura")==0 || strcmp(args[1], "chiusura")==0)){
+        //Controlli per dispositivo WINDOW (o hub di window)
+        if(strcmp(args[2], "on")!=0 && strcmp(args[2], "off")!=0){
+            printf("Errore nei parametri\n");
+            printf("Usage: switch <label> <nuovostato>\n");
+            printf("Label ammesse pr tipo fridge: apertura/chiusura\n");
+            printf("Stati ammessi per label apertura/chiusura: on/off\n");
+            return -1;
+        }
+
+        //Qui comando
+        return -1;
+    }
+    else{
+        printf("Combinazione tra label e tipo dispositivo controllato non riconosciuta\n");
+        printf("Usage: switch <label> <nuovostato>\n");
+        printf("Label ammesse pr tipo bulb: accensione\n");
+        printf("Label ammesse pr tipo window: apertura/chiusura\n");
+        printf("Label ammesse pr tipo fridge: apertura/chiusura\n");
+
+
+        /*char* msg = malloc(6 + strlen(args[1]) + 4 + 1);//6 per l'id + len label + 4 spazi + 1 per il comando
         
         char* label = malloc(2);//2 caratteri: label + terminazione
         //prendo solo l'iniziale del tipo per identificare il tipo di dispositivo
