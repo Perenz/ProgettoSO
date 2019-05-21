@@ -145,13 +145,6 @@ int cen_list(char **args, NodoPtr procList, NodoPtr dispList){
     comando.tipo_comando = 'l';
     comando.profondita = 0;
     int err = 0;
-    //array_risposte* answer_disp = malloc(sizeof(array_risposte));
-    //initArray(answer_disp, 10);
-    //array_risposte* answer_proc = malloc(sizeof(array_risposte));
-
-    //initArray(answer_disp, 10);
-
-    //manca la stampa della centralina
     printf("\n\tStampo la lista dei dispositivi COLLEGATI:\n");
     printf("\nCENTRALINA VAGINA\n");
     err = broadcast_centralina(procList, comando, NULL);  
@@ -196,10 +189,8 @@ int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
             comando.id = atoi(args[1]);
         }
         array_risposte* answer_disp = malloc(sizeof(array_risposte));
-        initArray(answer_disp, 10);
         array_risposte* answer_proc = malloc(sizeof(array_risposte));
 
-        initArray(answer_disp, 10);
         err = broadcast_centralina(dispList, comando, answer_disp);
         //gestione err
         err = broadcast_centralina(procList, comando, answer_proc);
@@ -324,8 +315,11 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
     }
     signal(SIGCONT, sign_cont_handler);
     cmd comando;
+    int err;
     comando.tipo_comando = 'i';
     comando.id = atoi(args[1]);
+    err = broadcast_centralina(procList, comando, NULL);
+    err = broadcast_centralina(dispList, comando, NULL);
     //risp* answer = broadcast_centralina(procList, comando);
     //answer = broadcast_centralina(dispList, comando);
     

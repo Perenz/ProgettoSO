@@ -60,12 +60,6 @@ typedef struct {
 void print_risp(risp);
 void print_cmd(cmd);
 
-
-void initArray(array_risposte *a, size_t initialSize);
-void insertArray(array_risposte *a, risp element);
-void freeArray(array_risposte *a);
-
-
 /*
 void printComando(cmd c);
 void printRisposta(risposta r);

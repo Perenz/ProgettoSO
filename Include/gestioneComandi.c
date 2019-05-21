@@ -17,28 +17,6 @@
 #define ANSWER 64
 
 
-//////////NON MI COMPILA SE LI METTO IN COMANDI.C OIBO
-
-void initArray(array_risposte *a, size_t initialSize) {
-    a->array = (risp*)malloc(initialSize * sizeof(risp));
-    a->used = 0;
-    a->size = initialSize;
-}
-
-void insertArray(array_risposte *a, risp element) {
-    if (a->used == a->size) {
-        a->size *= 2;
-        a->array = (risp *)realloc(a->array, a->size * sizeof(risp));
-    }
-    a->array[a->used++] = element;
-}
-
-void freeArray(array_risposte *a) {
-    free(a->array);
-    a->array = NULL;
-    a->used = a->size = 0;
-}
-
 
 
 //char* getLine();
@@ -139,6 +117,7 @@ int broadcast_centralina(NodoPtr list, cmd comando, array_risposte* answertoltop
                 break;
             }else{
                 if(answer_tmp.considera == 1){
+                    //Print da spostare
                     array_risposte[i] = answer_tmp;
                     int j;
                     for(j=0;j<array_risposte[i].profondita; j++){
@@ -176,7 +155,6 @@ int broadcast_centralina(NodoPtr list, cmd comando, array_risposte* answertoltop
         }
         nodo = nodo->next;
     }
-    printf("Numero dispositivi: %d\n", i);
     return 1;
 }
 
