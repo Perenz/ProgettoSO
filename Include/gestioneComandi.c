@@ -17,31 +17,6 @@
 #define ANSWER 64
 
 
-<<<<<<< HEAD
-//////////NON MI COMPILA SE LI METTO IN COMANDI.C OIBO
-void stampaDisp(info infoDisp);
-void initArray(array_risposte *a, size_t initialSize) {
-    a->array = (risp*)malloc(initialSize * sizeof(risp));
-    a->used = 0;
-    a->size = initialSize;
-}
-
-void insertArray(array_risposte *a, risp element) {
-    if (a->used == a->size) {
-        a->size *= 2;
-        a->array = (risp *)realloc(a->array, a->size * sizeof(risp));
-    }
-    a->array[a->used++] = element;
-}
-
-void freeArray(array_risposte *a) {
-    free(a->array);
-    a->array = NULL;
-    a->used = a->size = 0;
-}
-
-=======
->>>>>>> 6cd491fab1c1814c63a2a08fb924be0cb1463c72
 
 
 //char* getLine();

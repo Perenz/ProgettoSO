@@ -298,7 +298,7 @@ int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
         comando.id = atoi(args[1]);
         strcpy(comando.info_disp.interruttore[0].nome,args[2]);
         strcpy(comando.info_disp.interruttore[0].stato,args[3]);
-        char* answer = broadcast_centralina(procList, comando, NULL);
+        char* answer = broadcast_centralina(dispList, comando, NULL);
         
         return 1; //esci che sennò va avanti    
     }
