@@ -115,7 +115,6 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
                 break;
             }else{
                 if(answer_tmp.considera == 1){
-                    //Print da spostare
                     array_risposte[i] = answer_tmp;
                     i++;
                     

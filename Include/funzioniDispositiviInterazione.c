@@ -104,8 +104,6 @@ int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid){
         answer.considera = 1;
         answer.id = id;
         get_info_string(&(answer.info_disp));
-
-        
     }else{
         answer.considera = 0;
     }

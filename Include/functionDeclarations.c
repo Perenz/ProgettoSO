@@ -109,6 +109,7 @@ int cen_exit(char **args, NodoPtr procList, NodoPtr dispList){
             dispList=dispList->next;
     }
     //Dealloco le liste
+
     freeList(procList);
     freeList(dispList);
 
@@ -211,7 +212,7 @@ int cen_delete(char **args, NodoPtr procList, NodoPtr dispList){
         n = broadcast_centralina(procList, comando, array_risposte_proc_list);
         printRisp(array_risposte_disp_list, n, 1);
         free(array_risposte_proc_list);
-        free_array(array_risposte_disp_list);
+        free(array_risposte_disp_list);
     }
     /*GESTIONE ID non esistente
     printf("Device indicato non riconosciuto\n");
@@ -380,7 +381,7 @@ int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
 
 
         free(array_risposte_proc_list);
-        free_array(array_risposte_disp_list);
+        free(array_risposte_disp_list);
         return 1; //esci che sennò va avanti    
     }
     printf("Device indicato non riconosciuto\n");
@@ -401,6 +402,7 @@ int cen_info(char **args, NodoPtr procList, NodoPtr dispList){
 
         return 1;
     }
+
     risp* array_risposte_disp_list;
     malloc_array(&array_risposte_disp_list, 1);
     risp* array_risposte_proc_list;
@@ -571,7 +573,7 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
 
         
         free(array_risposte_proc_list);
-        free_array(array_risposte_disp_list);
+        free(array_risposte_disp_list);
     return 1;
     
 }
