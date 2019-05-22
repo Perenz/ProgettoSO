@@ -580,7 +580,7 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
 
 
 
-int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
+risp manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
     risp* array_risposte_proc_list;
     risp* array_risposte_disp_list;
     malloc_array(&array_risposte_proc_list, 1);
@@ -588,14 +588,15 @@ int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
 
     signal(SIGCONT, sign_cont_handler);
     cmd comando;
-    int pidCercato=-1;
+    risp dispCercato;
+    dispCercato.info_disp.pid=-1;
     comando.tipo_comando = 'm';
     comando.id = atoi(arg);
     if(broadcast_centralina(procList, comando, array_risposte_proc_list)>0){
-        pidCercato=array_risposte_proc_list[0].info_disp.pid;
+        dispCercato=array_risposte_proc_list[0];
     }
     else if(broadcast_centralina(dispList, comando, array_risposte_disp_list)>0){
-        pidCercato=array_risposte_disp_list[0].info_disp.pid;
+        dispCercato=array_risposte_disp_list[0];
     }
 
 
@@ -604,7 +605,7 @@ int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
     //gestione non c'è nessun dispositivo con questo id 
 
     //Se non trova ritorna -1
-    return pidCercato;
+    return dispCercato;
 }
 
 //Per gestire l'accensione/spegnimento generale della centralina
@@ -653,7 +654,7 @@ void getManualPid(NodoPtr procList, NodoPtr dispList){
     //Se ci sono entrato significa che è arrivato sigusr2 da manuale
     char msg[20];
     char** args;
-    int pidCercato;
+    risp dispCercato;
     int fd;
     char *manCenFifo = "/tmp/manCenFifo";
     //Apro la fifo in lettura
@@ -671,14 +672,14 @@ void getManualPid(NodoPtr procList, NodoPtr dispList){
 
         //CAMBIA SOLO QUI
         //CON il nuovo info devo prendere pidCercato
-        pidCercato = manualCen_info(args[1], procList, dispList); 
+        dispCercato = manualCen_info(args[1], procList, dispList); 
         //printf("Questo è il pid cercato %d\n", pidCercato); 
     }
     //Comunico il pid cercato al manuale
     //Apro la pipe in scrittura
     fd=open(manCenFifo, O_WRONLY);
-    sprintf(msg, "%d", pidCercato);
-    int esito= write(fd, msg, strlen(msg)+1);
+    //sprintf(msg, "%d %s", dispCercato.info_disp.pid);
+    int esito= write(fd, &dispCercato, sizeof(dispCercato));
     //printf("Cen ha scritto a manuale con esito %d", esito);
 
 

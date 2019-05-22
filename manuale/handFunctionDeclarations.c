@@ -6,9 +6,9 @@
 #include "../strutture/comandiH.h"
 
 
-int hand_control(char **, int*); //Dovra ritornare il pid del dispositivo specificato come argomento
-int hand_help(char **, int*);
-int hand_exit(char **, int*);
+int hand_control(char **, int*, char*); //Dovra ritornare il pid del dispositivo specificato come argomento
+int hand_help(char **, int*, char*);
+int hand_exit(char **, int*, char*);
 int hand_exit1(char **, int*, int, char);
 int hand_release(char **, int*, int, char);
 int hand_switch(char**, int*, int, char);
@@ -27,7 +27,7 @@ char *noControl_builtin_cmd[]={
 };
 
 //Pointers list to a Function associated to each command
-int (*noControl_builtin_func[]) (char **, int*) = {
+int (*noControl_builtin_func[]) (char **, int*, char*) = {
         &hand_control,
         &hand_help,
         &hand_exit
@@ -61,7 +61,7 @@ int cen_numCommands(int type){
     }
 }
 
-int hand_control(char **args, int *cenPid){
+int hand_control(char **args, int *cenPid, char *tipoDisp){
     int fd;
     if(args[1]==NULL || args[2]!=NULL){
             printf("Errore nei parametri\n");
@@ -99,12 +99,16 @@ int hand_control(char **args, int *cenPid){
                 fprintf(stderr, "Errore nell'apertura in READ ONLY della fifo %s %s", manCenFifo, strerror(errno));
             }
 
-            
-            if(read(fd,msg,20)<0){
+            risp dispCercato;
+
+            if(read(fd,&dispCercato,sizeof(risp))<0){
                 fprintf(stderr, "Errore nella lettura dalla fifo %s %s", manCenFifo, strerror(errno));
             }
             close(fd); //Chiudo in lettura
-            int pidCerc=atoi(msg);
+            int pidCerc=dispCercato.info_disp.pid;
+            //Passo dal tipo scritto in stringa ad il tipo scritto con singolo carattere
+            char c = dispCercato.info_disp.tipo[0];
+            *tipoDisp = ((c <= 'Z' && c >= 'A') ? c + 32 : c);
 
             //Ritorno il pid corrispondente all'id indicato come argomento
             if(pidCerc==-1){
@@ -116,7 +120,7 @@ int hand_control(char **args, int *cenPid){
     }
 }
 
-int hand_help(char **args, int *cenPid){     
+int hand_help(char **args, int *cenPid, char *tipo){     
     printf("Progetto SO realizzato da: Paolo Tasin, "
            "Stefano Perenzoni, Marcello Rigotti\n");
     printf("Centralina per controllo domotico\n");
@@ -136,7 +140,7 @@ int hand_help(char **args, int *cenPid){
     return -1;
 }
 
-int hand_exit(char **args, int *cenPid){
+int hand_exit(char **args, int *cenPid, char *tipo){
         return 0;
 }
 
@@ -299,7 +303,7 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont){
 }
 
 int hand_exit1(char **args, int* contPid, int contId, char tipoCont){
-    return hand_exit(args, contPid);
+    return hand_exit(args, contPid, &tipoCont);
 }
 
 int hand_set(char **args, int* contPid, int contId, char tipoCont){
