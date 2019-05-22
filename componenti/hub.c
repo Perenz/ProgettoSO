@@ -6,12 +6,13 @@
 #include <signal.h>
 #include "../strutture/listH.h"
 #include "../strutture/list.c"
-#include "../Include/gestioneComandi.c"
+//#include "../Include/gestioneComandi.c"
 #include "../Include/addDevice.c"
 
 //voglio usare le funzioni definite in functionDeclaration urca
 #define CEN_BUFSIZE 128
 
+<<<<<<< HEAD
 int add = 0;
 info info_device_to_add;
 
@@ -26,12 +27,15 @@ int fd_read;
 int fd_write;
 info informazioni;
 char nome[20];
+=======
+>>>>>>> ffa37a7d92b975577e11c76f7a324958623712dd
 int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, risp risposta_to_padre);
 int dev_list(cmd);
 int dev_switch(cmd);
 int dev_info(cmd);
 int dev_delete(cmd);
 int dev_link(cmd);
+int dev_manualControl(cmd);
 
 void get_info_string(info*);//TODO aggiungere timer
 void set_info(char*);
@@ -41,6 +45,21 @@ int device_handle_command(cmd);
 void h_sigstop_handler ( int sig ) ;
 //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 int dev_add(char*, char*);
+#include "../include/funzioniDispositiviControllo.c"
+
+
+NodoPtr dispList; //lista dei dispositivi collegati all'hub
+pid_t idPar;
+pid_t pid;
+int id;
+int fifoCreata=0;
+int status; //1 acceso, 0 spento
+//File descriptor in cui il figlio legge e il padre scrive
+int fd_read;
+//File descriptor in cui il figlio scrive e il padre legge
+int fd_write;
+info informazioni;
+char nome[20];
 
 
 void signhandle_quit(int sig){
@@ -51,12 +70,13 @@ void signhandle_quit(int sig){
 
 
 
-char *builtin_command[5]={
+char *builtin_command[]={
     "l",//list
     "s",//switch
     "i",//getInfo
     "d", //delete
-    "a" //addDevice / link   da cambiare scegliendo lettera corrispondente
+    "a", //addDevice / link   da cambiare scegliendo lettera corrispondente
+    "m"
 };
 int (*builtin_func_hub[]) (cmd comando) = {
         &dev_list,
@@ -64,6 +84,7 @@ int (*builtin_func_hub[]) (cmd comando) = {
         &dev_info,
         &dev_delete,
         &dev_link,
+        &dev_manualControl
 };
 int cont_numCommands(){
     return (sizeof(builtin_command)/ sizeof(char*));
@@ -161,9 +182,28 @@ int dev_switch(cmd comando){
     }else{
         risposta_controllore.considera = 0;
     }
-    rispondi(risposta_controllore, comando);
+    if(comando.manuale==1){
+        //Devo rispondere al manuale
+        //fd_manuale
+        //devo aprire la fifo prima di rispondere
+        char fifoManComp[30], msg[10];
+        
+        sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
+        //Apro Fifo in scrittura
+        int fd_manuale = open(fifoManComp, O_WRONLY);
+
+        sprintf(msg, "%d", status);//Rispondo solamente con lo status attuale del dispositivo
+        int esito=write(fd_manuale, msg, 10);
+
+        //Chiudo in scrittura
+        close(fd_manuale);
+    }else{
+        rispondi(risposta_controllore, comando);
+    }
     return 1;
 }
+
+
 int dev_info(cmd comando){
     risp risposta_controllore;
     if(comando.id == id || comando.forzato==1){//comando --all , forzato forza l'invio delle info anche se l'id non è uguale
@@ -252,6 +292,12 @@ void set_info(char* info){
         //<info> := <id>
         id = atoi(info_split[0]);
     }
+}
+
+int dev_manualControl(cmd comando){
+    fifoCreata=1;
+    int err = dev_manual_info_gen(comando, id, idPar, fd_write, pid);
+    return err;
 }
 
 void get_info_string(info* ans){//TODO aggiungere timer

@@ -7,7 +7,7 @@
 
 #define CEN_DELIM " \t\r\n\a"
 #define CEN_BUFSIZE 128
-#define myFIFO "/tmp/miaFifo"
+#define myFIFO "/tmp/getPidCenFIFO"
 
 int cen_processCmd(char **command);
 char* cen_getLine();
@@ -16,7 +16,7 @@ char** cen_splitLine(char *line);
 //Di default uguali a 0, cioè non ho ancora effettuato il "collegamento" con alcun dispositivo
 int controlloPid;
 int controlloId;
-char controlloTipo='b';
+char controlloTipo;
 
 
 //Variabile per memorizzare il pid della centralina
@@ -108,7 +108,7 @@ int main(){
         if(controlloPid==0)
             printf("Inserisci il comando:>");
         else
-            printf("(Controllo su dispositivo pid %d e id %d) Inserisci il comando :>", controlloPid, controlloId);
+            printf("(Controllo su: pid %d, id %d, tipo %c) Inserisci il comando :>", controlloPid, controlloId, controlloTipo);
         printf("\033[0m");
 
         //Prendo il comando dall'utente
@@ -181,7 +181,7 @@ int cen_processCmd(char **command){
         if(controlloPid==0){
             //Controllo sui comandi disponibili quando non controllo alcun dispositivo
             if(strcmp(command[0],noControl_builtin_cmd[i])==0){
-                controlloPid=noControl_builtin_func[i](command, &cenPid);
+                controlloPid=noControl_builtin_func[i](command, &cenPid, &controlloTipo);
                 if(controlloPid==-1){
                     //Il -1 indica "errore" e quindi resetto il Pid del dipositivo controllato e ritorno 1 per proseguire
                     controlloPid=0;

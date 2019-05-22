@@ -10,6 +10,7 @@
 
 NodoPtr procList = NULL; //lista dei dispositivi collegati 
 NodoPtr dispList; //lista dei dispositivi disponibili (aggiunti ma non collegati a niente)
+int supportReadPid;
 
 int cen_processCmd(char **command, NodoPtr, NodoPtr);
 char* cen_getLine();
@@ -57,7 +58,7 @@ int cen_start(){
 
     size_t bufS = 0;
     int status = 1;
-    int supportReadPid;
+    
 
     
     //Inserisco nella lista il pid corrente indicante la centraline stessa

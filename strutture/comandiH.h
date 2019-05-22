@@ -30,7 +30,7 @@ typedef struct{
     int forzato;//utile per delete --all e per far sì che i figli rispondano con terminazione 
     int info_forzate;
     int profondita;
-
+    int manuale; //se 1 significa che il comando arriva tramite controllo manuale
     int id2; //caso link
     int id_padre;
     info info_disp;

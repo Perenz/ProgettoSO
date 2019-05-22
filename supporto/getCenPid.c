@@ -8,9 +8,10 @@
 #include <signal.h>
 #include <stdlib.h>
 
-#define myFIFO "/tmp/miaFifo"
+#define myFIFO "/tmp/getPidCenFIFO"
 
 void signhandle_quit(int sig){
+    printf("Dentro handler del READER, elimino file\n");
     remove(myFIFO);
     _exit(0);
 }

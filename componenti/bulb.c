@@ -17,16 +17,16 @@
 //ho spostato i metodi getLine e splitLine in una nuova libreria 
 //TODO tale verrà linkata nel gestore generale dei processi di interazione
 void get_info_string(info*);
-int device_handle_command(cmd, int);
+int device_handle_command(cmd);
 
 
 int dev_getinfo(cmd);
-int dev_delete(cmd, int);
+int dev_delete(cmd);
 int dev_changestate(cmd);
-int dev_manualControl(cmd, int);
-int dev_switch(cmd, int);
-int dev_list(cmd, int);
-int dev_info(cmd, int);
+int dev_manualControl(cmd);
+int dev_switch(cmd);
+int dev_list(cmd);
+int dev_info(cmd);
 
 
 void set_time();
@@ -45,7 +45,7 @@ int fd_read;
 //File descriptor in cui il figlio scrive e il padre legge
 int fd_write;
 
-int fd_manuale=0;
+int fifoCreata=0;
 char tipo = 'b';
 pid_t idPar;
 pid_t pid;
@@ -63,7 +63,7 @@ char *builtin_command[]={
     "d", //delete
     "m"//Manual
 };
-int (*builtin_func[]) (cmd comando, int man) = { //int man: 0 allora il comando arriva da centralina, 1 il comando arriva da manuale
+int (*builtin_func[]) (cmd comando) = { //int man: 0 allora il comando arriva da centralina, 1 il comando arriva da manuale
     &dev_list,
     &dev_switch,
     &dev_info,
@@ -73,14 +73,14 @@ int (*builtin_func[]) (cmd comando, int man) = { //int man: 0 allora il comando 
 int dev_numCommands(){
     return (sizeof(builtin_command)/ sizeof(char*));
 }
-int device_handle_command(cmd comando, int man){
+int device_handle_command(cmd comando){
     //da fare come in functionDeclarations in file dispositivi
     //NON FUNZICA
     int i;
     for(i=0; i<dev_numCommands(); i++){
         char tmp = *builtin_command[i];
         if(comando.tipo_comando == tmp){
-            return builtin_func[i](comando, man);
+            return builtin_func[i](comando);
         }
     }
     return 1;
@@ -88,7 +88,7 @@ int device_handle_command(cmd comando, int man){
 void signhandle_quit(int sig){
     char fifo[30];
     if(sig==SIGQUIT){
-        if(fd_manuale!=0){
+        if(fifoCreata!=0){
             sprintf(fifo, "/tmp/fifoManComp%d", pid);
             remove(fifo);
         }
@@ -100,7 +100,7 @@ void sighandle_usr1(int sig){
     sighandle1(sig, fd_read, idPar);
 }
 void sighandle_usr2(int sig){
-    sighandle2(sig, fd_manuale);
+    sighandle2(sig);
 }
 void sign_cont_handler(int sig){
     return;
@@ -115,7 +115,7 @@ void signint_handler(int sig){
 /*restituisce in pipe
     se comando è l: <informazioni>
 */
-int dev_list(cmd comando, int man){
+int dev_list(cmd comando){
     int err = dev_list_gen(comando, idPar, fd_write);
     return err;
 }
@@ -126,7 +126,7 @@ int dev_list(cmd comando, int man){
     1 se sono il dispositivo in cui ho modificato lo stato
 */
 //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-int dev_switch(cmd comando, int man){
+int dev_switch(cmd comando){
     risp answer;
     if(comando.id == id || comando.forzato == 1){
         if(strcmp(comando.info_disp.interruttore[0].nome , "accensione")==0){
@@ -143,7 +143,25 @@ int dev_switch(cmd comando, int man){
     {
             answer.considera = 0;
     }
-    rispondi(answer, comando, fd_write,idPar);
+    if(comando.manuale==1){
+        //Devo rispondere al manuale
+        //fd_manuale
+        //devo aprire la fifo prima di rispondere
+        char fifoManComp[30], msg[10];
+        
+        sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
+        //Apro Fifo in scrittura
+        int fd_manuale = open(fifoManComp, O_WRONLY);
+
+        sprintf(msg, "%d", status);//Rispondo solamente con lo status attuale del dispositivo
+        int esito=write(fd_manuale, msg, 10);
+
+        //Chiudo in scrittura
+        close(fd_manuale);
+
+    }else{
+        rispondi(answer, comando, fd_write,idPar);
+    }
     return 1;
 }
 
@@ -151,7 +169,7 @@ int dev_switch(cmd comando, int man){
 /*restituisce in pipe
     <info> := <tipo> <pid???> <id> <status> <time>
 */
-int dev_info(cmd comando, int man){
+int dev_info(cmd comando){
     int err = dev_info_gen(comando, id, idPar, fd_write, pid);
     return err;
 }
@@ -160,7 +178,7 @@ int dev_info(cmd comando, int man){
     0 se NON sono il dispositivo da eliminare
     pid se sono il dispositivo da eliminare
 */
-int dev_delete(cmd comando, int man){
+int dev_delete(cmd comando){
     int err = dev_delete_gen(comando, pid, id, idPar, fd_write);
     return err;
 }
@@ -219,43 +237,9 @@ void set_info(char* info){
 }
 
 
-int dev_manualControl(cmd comando, int man){
-    /*int id_info = comando.id;
-    char* msg = malloc(10);
-
-    if(id == id_info){//guardo se il tipo e l'id coincidono
-    //scrivo sulla pipe che sono io quello che deve essere ucciso e scrivo anche il mio pid, la centralina dovrà toglierlo dalla lista
-    //TODO trovare un altro metodo
-        //In caso di id coincidente devo aprire la fifo a cui poi si connette il controllo manuale
-        char fifoManComp[30];
-        
-        sprintf(fifoManComp, "/tmp/fifoManComp%d", pid);
-        mkfifo(fifoManComp, 0666);
-
-        //Apro in lettura
-        //Userò, dal manuale, il SIGUSR2 per questa fifo oppure il SIGUSR1 con controllo se lo switch è manuale o centralina
-        //Non posso aprire prima in lettura
-        //Posso usare il SIGUSR2 per aprire questa fifo
-        fd_manuale = open(fifoManComp, O_RDONLY | O_NONBLOCK , 0644);
-        //NON mi metto in ascolto, userò dei segnali da parte del manuale per dire al componente di leggere dalla pipe
-        //Per essere chiusa devo scriverci qualcosa da manuale quando faccio il release
-
-        sprintf(msg, "%d", pid);
-        int esito = write(fd_write, msg, strlen(msg)+1);//Comunico alla centralina di aver trovato l'id cercato
-        
-        //free(msg);
-    }
-    else{
-        //Se ID non coincide scrivo 0 sulla pipe
-        sprintf(msg, "%d", 0);
-        int esito = write(fd_write, msg, strlen(msg)+1);
-        //printf("Non restituisce info dato che pid non coincide\n");
-        
-    }
-    kill(idPar,SIGCONT);
-
-    return 1;*/
-    int err = dev_manual_info_gen(comando, id, idPar, fd_write, &fd_manuale, pid);
+int dev_manualControl(cmd comando){
+    fifoCreata=1;
+    int err = dev_manual_info_gen(comando, id, idPar, fd_write, pid);
     return err;
 }
 
