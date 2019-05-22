@@ -85,6 +85,7 @@ void sighandle2(int sig){
 
 int rispondi(risp answer, cmd comando, int fd_write, int pidPapi){
     answer.profondita = comando.profondita+1;
+    answer.id_padre = comando.id_padre;
     comando.profondita+=1;
     answer.termina_comunicazione = 0;
     write(fd_write, &answer, sizeof(answer));
@@ -108,8 +109,6 @@ int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid){
         answer.considera = 1;
         answer.id = id;
         get_info_string(&(answer.info_disp));
-
-        
     }else{
         answer.considera = 0;
     }
