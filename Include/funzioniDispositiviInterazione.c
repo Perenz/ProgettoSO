@@ -63,7 +63,7 @@ void sighandle1(int sig, int fd_read, int pid_padre){
     if(sig == SIGUSR1){
         cmd comando;
         read(fd_read, &comando, sizeof(cmd));
-        int errnum = device_handle_command(comando);
+        int errnum = device_handle_command(comando, 0);
         //    kill(pid_padre, SIGCONT);
     
     }
@@ -73,8 +73,8 @@ void sighandle2(int sig, int fd_manuale){
         //PERCHÈ NON USI SIG1??????????????????'
         cmd comando;
         read(fd_manuale, &comando, sizeof(cmd));//uso 10 per intanto, vedi sopra poi
-        //printf("\n\tLettura da pipe sig1 %s  \n", str);
-        int errnum = device_handle_command(comando);
+        printf("\n\tLettura da fifo sig2\n");
+        int errnum = device_handle_command(comando, 1);
     }
 }
 

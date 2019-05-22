@@ -17,16 +17,16 @@
 //ho spostato i metodi getLine e splitLine in una nuova libreria 
 //TODO tale verrà linkata nel gestore generale dei processi di interazione
 void get_info_string(info*);
-int device_handle_command(cmd);
+int device_handle_command(cmd, int);
 
 
 int dev_getinfo(cmd);
-int dev_delete(cmd);
+int dev_delete(cmd, int);
 int dev_changestate(cmd);
-int dev_manualControl(cmd);
-int dev_switch(cmd);
-int dev_list(cmd);
-int dev_info(cmd);
+int dev_manualControl(cmd, int);
+int dev_switch(cmd, int);
+int dev_list(cmd, int);
+int dev_info(cmd, int);
 
 
 void set_time();
@@ -63,7 +63,7 @@ char *builtin_command[]={
     "d", //delete
     "m"//Manual
 };
-int (*builtin_func[]) (cmd comando) = {
+int (*builtin_func[]) (cmd comando, int man) = { //int man: 0 allora il comando arriva da centralina, 1 il comando arriva da manuale
     &dev_list,
     &dev_switch,
     &dev_info,
@@ -73,14 +73,14 @@ int (*builtin_func[]) (cmd comando) = {
 int dev_numCommands(){
     return (sizeof(builtin_command)/ sizeof(char*));
 }
-int device_handle_command(cmd comando){
+int device_handle_command(cmd comando, int man){
     //da fare come in functionDeclarations in file dispositivi
     //NON FUNZICA
     int i;
     for(i=0; i<dev_numCommands(); i++){
         char tmp = *builtin_command[i];
         if(comando.tipo_comando == tmp){
-            return builtin_func[i](comando);
+            return builtin_func[i](comando, man);
         }
     }
     return 1;
@@ -114,7 +114,7 @@ void signint_handler(int sig){
 /*restituisce in pipe
     se comando è l: <informazioni>
 */
-int dev_list(cmd comando){
+int dev_list(cmd comando, int man){
     int err = dev_list_gen(comando, idPar, fd_write);
     return err;
 }
@@ -125,7 +125,7 @@ int dev_list(cmd comando){
     1 se sono il dispositivo in cui ho modificato lo stato
 */
 //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-int dev_switch(cmd comando){
+int dev_switch(cmd comando, int man){
     risp answer;
     if(comando.id == id || comando.forzato == 1){
         if(strcmp(comando.info_disp.interruttore[0].nome , "accensione")==0){
@@ -150,7 +150,7 @@ int dev_switch(cmd comando){
 /*restituisce in pipe
     <info> := <tipo> <pid???> <id> <status> <time>
 */
-int dev_info(cmd comando){
+int dev_info(cmd comando, int man){
     int err = dev_info_gen(comando, id, idPar, fd_write, pid);
     return err;
 }
@@ -159,7 +159,7 @@ int dev_info(cmd comando){
     0 se NON sono il dispositivo da eliminare
     pid se sono il dispositivo da eliminare
 */
-int dev_delete(cmd comando){
+int dev_delete(cmd comando, int man){
     int err = dev_delete_gen(comando, pid, id, idPar, fd_write);
     return err;
 }
@@ -218,7 +218,7 @@ void set_info(char* info){
 }
 
 
-int dev_manualControl(cmd comando){
+int dev_manualControl(cmd comando, int man){
     /*int id_info = comando.id;
     char* msg = malloc(10);
 

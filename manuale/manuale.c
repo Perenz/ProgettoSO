@@ -16,7 +16,7 @@ char** cen_splitLine(char *line);
 //Di default uguali a 0, cioè non ho ancora effettuato il "collegamento" con alcun dispositivo
 int controlloPid;
 int controlloId;
-char controlloTipo;
+char controlloTipo='b';
 
 
 //Variabile per memorizzare il pid della centralina
