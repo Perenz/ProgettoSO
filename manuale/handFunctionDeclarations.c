@@ -2,6 +2,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
 #include "../strutture/comandiH.h"
 
 
@@ -164,6 +165,42 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont){
         }
 
         //Qui comando
+        cmd comando;
+        comando.tipo_comando = 's';
+        comando.id = idCont;
+        strcpy(comando.info_disp.interruttore[0].nome,args[1]);
+        strcpy(comando.info_disp.interruttore[0].stato,args[2]);
+        risp* array_risposte_disp_list = malloc(1000 * sizeof(risp));
+        //Scrivo sulla fifo e mando sig2
+        //Apro la fifo in scrittura
+        fdManual=open(fifoManDisp, O_WRONLY);
+        if(fdManual<0){
+            fprintf(stderr, "Errore in apertura WRITE ONLY della fifo %s %s", fifoManDisp, strerror(errno));
+        }
+
+        //Scrivo sulla fifo il messaggio ed invio SIGUSR2 al dispositivo per indicare che è stato scritto un nuovo comando nella fifo
+        write(fdManual, &comando, sizeof(comando));
+        if(fdManual<0){
+            fprintf(stderr, "Errore in scrittura sulla fifo %s %s", fifoManDisp, strerror(errno));
+        }
+        kill(*cont, SIGUSR2);
+
+        //Chiudo la Fifo in scrittura
+        close(fdManual);
+        //TODO
+
+        /*
+        int n = broadcast_centralina(dispList, comando, array_risposte_disp_list);
+        printRisp(array_risposte_disp_list, n, 1);
+
+        risp* array_risposte_proc_list = malloc(1000 * sizeof(risp));
+        n = broadcast_centralina(dispList, comando, array_risposte_proc_list);
+        printRisp(array_risposte_disp_list, n, 1);
+        */
+
+
+        //free(array_risposte_proc_list);
+        //free(array_risposte_disp_list);
         return -1;
     }
     else if(tipoCont=='w' && (strcmp(args[1], "apertura")==0 || strcmp(args[1], "chiusura")==0)){
@@ -199,13 +236,9 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont){
         printf("Label ammesse pr tipo window: apertura/chiusura\n");
         printf("Label ammesse pr tipo fridge: apertura/chiusura\n");
 
-
-        cmd comando;
-        comando.tipo_comando = 's';
-        comando.id = idCont;
-        strcpy(comando.info_disp.interruttore[0].nome,args[1]);
-        strcpy(comando.info_disp.interruttore[0].stato,args[2]);
         //char* answer = broadcast_centralina(dispList, comando, NULL);
+
+        
         
 
         /*char* msg = malloc(6 + strlen(args[1]) + 4 + 1);//6 per l'id + len label + 4 spazi + 1 per il comando

@@ -19,6 +19,7 @@ int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid);
 int dev_list_gen(cmd comando, int idPar, int fd_write);
 int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write);
 int rispondi(risp answer, cmd comando, int fd_write, int pidPapi);
+int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int *fd_manuale, int pid);
 char** splitLine(char* line);
 //NON HO VOGLIA DI RISOLV L'ERRORE
 
@@ -62,7 +63,7 @@ void sighandle1(int sig, int fd_read, int pid_padre){
     if(sig == SIGUSR1){
         cmd comando;
         read(fd_read, &comando, sizeof(cmd));
-        int errnum = device_handle_command(comando);
+        int errnum = device_handle_command(comando, 0);
         //    kill(pid_padre, SIGCONT);
     
     }
@@ -72,8 +73,8 @@ void sighandle2(int sig, int fd_manuale){
         //PERCHÈ NON USI SIG1??????????????????'
         cmd comando;
         read(fd_manuale, &comando, sizeof(cmd));//uso 10 per intanto, vedi sopra poi
-        //printf("\n\tLettura da pipe sig1 %s  \n", str);
-        int errnum = device_handle_command(comando);
+        printf("\n\tLettura da fifo sig2\n");
+        int errnum = device_handle_command(comando, 1);
     }
 }
 
@@ -104,6 +105,39 @@ int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid){
         answer.id = id;
         get_info_string(&(answer.info_disp));
 
+        
+    }else{
+        answer.considera = 0;
+    }
+    rispondi(answer, comando,fd_write, idPar);
+    
+    //famo ritornare l'errore poi
+    return 1;
+}
+
+int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int* fd_manuale, int pid){
+    risp answer;
+    if(id == comando.id || comando.forzato == 1){//comando forzato per avere le info di dispositivi situati nel sott'albero di un processo che ha id 
+
+        answer.considera = 1;
+        answer.id = id;
+        get_info_string(&(answer.info_disp));
+
+        //Devo creare la fifo per il collegamento diretto
+        char fifoManComp[30];
+        
+        sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
+        mkfifo(fifoManComp, 0666);
+
+        //Apro in lettura
+        //Userò, dal manuale, il SIGUSR2 per questa fifo oppure il SIGUSR1 con controllo se lo switch è manuale o centralina
+        //Non posso aprire prima in lettura
+        //Posso usare il SIGUSR2 per aprire questa fifo
+        *fd_manuale = open(fifoManComp, O_RDONLY | O_NONBLOCK , 0644);
+        //NON mi metto in ascolto, userò dei segnali da parte del manuale per dire al componente di leggere dalla pipe
+        //Per essere chiusa devo scriverci qualcosa da manuale quando faccio il release
+
+        
         
     }else{
         answer.considera = 0;

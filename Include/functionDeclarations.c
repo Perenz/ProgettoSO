@@ -587,7 +587,7 @@ int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
     signal(SIGCONT, sign_cont_handler);
     cmd comando;
     int pidCercato=-1;
-    comando.tipo_comando = 'i';
+    comando.tipo_comando = 'm';
     comando.id = atoi(arg);
     if(broadcast_centralina(procList, comando, array_risposte_proc_list)>0){
         pidCercato=array_risposte_proc_list[0].info_disp.pid;
@@ -596,14 +596,13 @@ int manualCen_info(char *arg, NodoPtr procList, NodoPtr dispList){
         pidCercato=array_risposte_disp_list[0].info_disp.pid;
     }
 
-    printf("pid cercato %d\n", pidCercato);
 
     free(array_risposte_proc_list);
     free(array_risposte_disp_list);
     //gestione non c'è nessun dispositivo con questo id 
 
     //Se non trova ritorna -1
-    return -1;
+    return pidCercato;
 }
 
 //Per gestire l'accensione/spegnimento generale della centralina
