@@ -7,7 +7,7 @@
 
 #define CEN_DELIM " \t\r\n\a"
 #define CEN_BUFSIZE 128
-#define myFIFO "/tmp/miaFifo"
+#define myFIFO "/tmp/getPidCenFIFO"
 
 int cen_processCmd(char **command);
 char* cen_getLine();

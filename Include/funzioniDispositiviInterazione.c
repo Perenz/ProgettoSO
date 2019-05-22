@@ -19,7 +19,7 @@ int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid);
 int dev_list_gen(cmd comando, int idPar, int fd_write);
 int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write);
 int rispondi(risp answer, cmd comando, int fd_write, int pidPapi);
-int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int *fd_manuale, int pid);
+int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid);
 char** splitLine(char* line);
 //NON HO VOGLIA DI RISOLV L'ERRORE
 
@@ -63,7 +63,8 @@ void sighandle1(int sig, int fd_read, int pid_padre){
     if(sig == SIGUSR1){
         cmd comando;
         read(fd_read, &comando, sizeof(cmd));
-        int errnum = device_handle_command(comando, 0);
+        comando.manuale=0;
+        int errnum = device_handle_command(comando);
         //    kill(pid_padre, SIGCONT);
     
     }
@@ -79,7 +80,8 @@ void sighandle2(int sig){
         cmd comando;
         read(fd_manuale, &comando, sizeof(cmd));//uso 10 per intanto, vedi sopra poi
         close(fd_manuale);
-        int errnum = device_handle_command(comando, 1);
+        comando.manuale=1;
+        int errnum = device_handle_command(comando);
     }
 }
 
@@ -118,9 +120,9 @@ int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid){
     return 1;
 }
 
-int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int* fd_manuale, int pid){
+int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid){
     risp answer;
-    if(id == comando.id || comando.forzato == 1){//comando forzato per avere le info di dispositivi situati nel sott'albero di un processo che ha id 
+    if(id == comando.id){//comando forzato per avere le info di dispositivi situati nel sott'albero di un processo che ha id 
 
         answer.considera = 1;
         answer.id = id;
