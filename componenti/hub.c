@@ -12,7 +12,8 @@
 //voglio usare le funzioni definite in functionDeclaration urca
 #define CEN_BUFSIZE 128
 
-
+int add = 0;
+info info_device_to_add;
 
 NodoPtr dispList; //lista dei dispositivi collegati all'hub
 pid_t idPar;
@@ -85,9 +86,9 @@ void sigint_handler(int sig){
 }
 
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
-void sighandle_usr1(int sig){
+void sighandle_usr1_hub(int sig){
     signal(SIGCONT, sign_cont_handler);
-    signal(SIGUSR1, sighandle_usr1);
+    signal(SIGUSR1, sighandle_usr1_hub);
     if(sig == SIGUSR1){
         cmd comando;
         int err_signal;
@@ -105,11 +106,12 @@ void sighandle_usr1(int sig){
 
 //USATO PER SVEGLIARE IL PROCESSO
 void sighandle_usr2(int sig){
+    
     signal(SIGUSR2, sighandle_usr2);
     if(sig == SIGUSR2){
         return;
     }
-}
+}   
 
 int device_handle_command(cmd comando){
     //da fare come in functionDeclarations in file dispositivi
@@ -221,18 +223,24 @@ int dev_link(cmd comando){
     if(comando.id == id){
         int i, err;
         risposta_controllore.considera = 0;
-        for(i=0; i<device_number(); i++){
-            if(strcmp(comando.info_disp.tipo, builtin_device[i])==0)
-                    err = add_device_generale(builtin_dev_path[i], dispList, comando.info_disp, NULL);
-        }
+        add = 1;
+        info_device_to_add = comando.info_disp;
         risposta_controllore.termina_comunicazione = 0;
         write(fd_write, &risposta_controllore, sizeof(risp));
-        risposta_controllore.termina_comunicazione = 1;
-        write(fd_write, &risposta_controllore, sizeof(risposta_controllore));
+        
+
     }else{
         risposta_controllore.considera = 0;
         rispondi(risposta_controllore, comando);
     }
+    
+    
+        
+
+    
+   
+
+    
     return 1;
 }
 void set_info(char* info){
@@ -283,52 +291,42 @@ int main(int argc, char **args){
     signal(SIGINT, sigint_handler);
     signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
     signal(SIGQUIT, signhandle_quit);
-    signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
+    //signal(SIGUSR1, sighandle_usr1_hub); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
+    struct sigaction psa;
+    psa.sa_handler = sighandle_usr1_hub;
+    sigaction(SIGUSR1, &psa, NULL);
 
     printf("\nHub creato: id: %d\n", id);
     printf("Id: %d\n", id);
     printf("Pid: %d\nPid padre: %d\n", pid, idPar);
     printf("Nome: %s\n", nome);
-    int i=0;
 
-    //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-
-    //PROVA
-
-   //char* info = malloc(ANSWER);
-
-   if(id < 5){
-       info infoD;
-       infoD.def = 1;
-       infoD.id = informazioni.id+1;
-       //sprintf(info, "%d", id+1);
-       add_device_generale("./binaries/HUB", dispList, infoD, "ProvaName");
-       infoD.id = informazioni.id+1;
-       add_device_generale("./binaries/HUB", dispList, infoD, "ProvaName");
-       //memset(info,0,strlen(info));
-       //sprintf(info, "default %d", id+1);
-       
-       infoD.id = informazioni.id;
-       add_device_generale("./binaries/BULB", dispList, infoD, "ProvaName");
-       //memset(info,0,strlen(info));
-
-
-       //add_device_generale("./binaries/WINDOW", dispList, info, "ProvaName");
-       //add_device_generale("./binaries/FRIDGE", dispList, info, "ProvaName");
-       
-       /*
-       sprintf(info, "%default ", id+1);
-       add_device_generale("./componenti/BULB", dispList, info, "perenzoni gay");
-       sprintf(info, "%default ", id+1);
-       add_device_generale("./componenti/BULB", dispList, info, "perenzoni gay");
-       */
-    }
     
     //Invio segnale al padre
     int ris = kill(idPar, SIGCONT);
 
     //Child va in pausa
     while(1){
+        
+        if(add == 1){
+            int i=0; 
+             for(i=0; i<device_number(); i++){
+                if(strcmp(info_device_to_add.tipo, builtin_device[i])==0)
+                    add_device_generale(builtin_dev_path[i], dispList, info_device_to_add, NULL);//ho invertito proc e disp
+            }
+            risp risposta_terminazione;
+            printf("Sto per rispondere al papi\n");
+            risposta_terminazione.considera = 0;
+            risposta_terminazione.termina_comunicazione = 1;
+            write(fd_write, &risposta_terminazione, sizeof(risposta_terminazione));
+                            signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
+
+            int ris = kill(idPar, SIGCONT);
+
+            add = 0;
+        }
+            
+            
         pause();
     }
 
@@ -338,7 +336,7 @@ int main(int argc, char **args){
 //i vari parametri potrebbero essere levati se messo in hub TODO, serve anche al timer però
 int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, risp risposta_to_padre){
     signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
-    signal(SIGUSR1, sighandle_usr1);
+    signal(SIGUSR1, sighandle_usr1_hub);
     
     //nodo rappresenta il figlio, nell'hub passo il successivo dato che il primo nodo 
     //è sè stesso
@@ -354,8 +352,8 @@ int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, ri
     while(nodo != NULL){
         //Mando il comando a mio figlio che lo gestirà
         write(nodo->fd_writer, &comando, sizeof(comando));
-        err_signal = kill(nodo->data, SIGUSR1); 
         int pid_figlio = nodo->data;
+        err_signal = kill(nodo->data, SIGUSR1);
         //Mando un segnale per comunicare a mio figlio di gestire il comando
         if(err_signal != 0)
             perror("errore in invio segnale");
@@ -363,6 +361,7 @@ int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, ri
             //Leggo la risposta --> viene letta dopo che mi è arrivato un segnale SIGCONT
             //dato che è bloccante
             read(nodo->fd_reader, &answer, sizeof(risp));
+            
                 //debug printf("Leggo la risposta in %d, %s\n", id, answer.info);
             //se è un messaggio di terminazione devo uscire dal ciclo di ascolto e andare 
             //al nodo successivo

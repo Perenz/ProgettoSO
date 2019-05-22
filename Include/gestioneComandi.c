@@ -20,8 +20,6 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte);
 void printRisp(risp* array_risposte, int n, int indentazione);
 void alloc_array(risp** array_risposte, int n);
 void sign_cont_handler(int sig){
-    signal(SIGCONT, sign_cont_handler);
-    //printf("Arrivato segnale\n");
     return;
 }
 
@@ -72,6 +70,7 @@ char** splitLine(char* line){
 int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
     //Setto il gestore di SIGCONT, l'ho giò settato ma per sicurezza lo risetto
     signal(SIGCONT, sign_cont_handler);
+    signal(SIGUSR2, sign_cont_handler);
     int err_signal;//errore kill
     //Salto il primo nodo della lista dato che appartiene alla centralina
     NodoPtr nodo = list->next;
@@ -117,7 +116,7 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
                 if(answer_tmp.considera == 1){
                     array_risposte[i] = answer_tmp;
                     i++;
-                    
+                    printf("%d\n", i);
                 }
                 if(answer_tmp.eliminato == 1){
                     removeNode(list, answer_tmp.pid);

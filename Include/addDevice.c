@@ -4,7 +4,6 @@
 #include <signal.h>
 #include "../strutture/listH.h"
 #include "../strutture/comandiH.h"
-
 int id_gen = 2;
 
 int add_device(char*, NodoPtr, NodoPtr, char* nome);
@@ -42,8 +41,7 @@ void sign_handler(int sig){
 //add device generale che viene chiamato dai dispositivi di controllo per "aggiungere"
 //un dispositivo che già esisteva (ergo con informazioni non di default)
 int add_device_generale(char* execPath, NodoPtr list, info info, char* nome){
-
-    printf("qui\n");
+    
     //info verrà gestito da ogni 
     pid_t pid, wpid;
     int fd_reader[2];
@@ -52,7 +50,8 @@ int add_device_generale(char* execPath, NodoPtr list, info info, char* nome){
     pipe(fd_reader); //creo la pipe
     pipe(fd_writer);
     pid=fork();
-    if(pid == 0) {        
+    if(pid == 0) {     
+
         char fd_writer_Tmp[10];
         char fd_reader_Tmp[10];
         close(fd_reader[0]);
@@ -69,12 +68,15 @@ int add_device_generale(char* execPath, NodoPtr list, info info, char* nome){
         signal(SIGCONT, sign_handler);//?
         close(fd_reader[1]);
         close(fd_writer[0]);
+        
         int err = write(fd_writer[1],&info,sizeof(info));
         if(err == -1) 
             printf("porcoddue\n");
         list = insertLast(list, pid, fd_reader[0],fd_writer[1]);
         //Vado in pausa per permettere al figlio di generarsi
+        
         pause();
+
             
     }
     

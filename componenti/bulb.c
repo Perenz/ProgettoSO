@@ -96,6 +96,7 @@ void signhandle_quit(int sig){
     }
 }
 void sighandle_usr1(int sig){
+    
     sighandle1(sig, fd_read, idPar);
 }
 void sighandle_usr2(int sig){
@@ -281,13 +282,17 @@ int main(int argc, char *args[]){
         strcpy(nome, informazioni.nome);
     }
     
-    
 
 
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
     signal(SIGUSR2, sighandle_usr2); //Alla ricezione di SIGUSR2 leggere il comanda sulla fifo direttamente connessa al manuale
     signal(SIGCONT, sign_cont_handler);//Segnale per riprendere il controllo 
+
+    struct sigaction psa;
+    psa.sa_handler = sighandle_usr1;
+    sigaction(SIGUSR1, &psa, NULL);
+
 
     printf("\nLampadina creata\n");
     printf("Id: %d\n", id);

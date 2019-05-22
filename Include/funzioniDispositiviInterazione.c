@@ -25,7 +25,8 @@ char** splitLine(char* line);
 
 char** splitLine(char* line){
     int pos=0, bufS = CEN_BUFSIZE;
-    char **commands = malloc(bufS * sizeof(char));
+    char **commands
+     = malloc(bufS * sizeof(char));
     char *cmd;
 
     //IF error in the allocation of commands
