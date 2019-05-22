@@ -31,7 +31,8 @@ typedef struct{
     int info_forzate;
     int profondita;
 
-    int id2; //caso 
+    int id2; //caso link
+    int id_padre;
     info info_disp;
     //aggiungere vari campi per comandi più complessi come link
 }cmd;

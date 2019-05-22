@@ -9,19 +9,21 @@
 #include "../strutture/listH.h"
 #include "../strutture/comandiH.h"
 #include "../strutture/comandinonvacazz.c"
-
+#define N_MAX_DISP 1024
 
 #define CEN_DELIM " \t\r\n\a"
 #define CEN_BUFSIZE 128
 #define BUFSIZE 128
 #define ANSWER 64
+
+int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte);
+void printRisp(risp* array_risposte, int n, int indentazione);
+void alloc_array(risp** array_risposte, int n);
 void sign_cont_handler(int sig){
     signal(SIGCONT, sign_cont_handler);
     //printf("Arrivato segnale\n");
     return;
 }
-int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte);
-void printRisp(risp* array_risposte, int n, int indentazione);
 
 char* getLine(){
     char *cmd=NULL;
@@ -91,6 +93,7 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
         */
 
         //mando il comando al figlio nodo 
+        comando.id_padre = 2;
         write(nodo->fd_writer, &comando, sizeof(comando));
         //Comunico al figlio di gestire il comando appena inviato
         err_signal = kill(nodo->data, SIGUSR1); 
@@ -174,3 +177,17 @@ void printRisp(risp* array_risposte, int n, int indentazione){
         stampaDisp(array_risposte[i].info_disp);
     }
 }
+
+
+void malloc_array(risp** array_risposte, int n){
+    *array_risposte = malloc(n * sizeof(risp));
+    if(array_risposte == NULL)
+        perror("Errore allocazione memoria");
+}
+
+void calloc_array(risp** array_risposte, int n){
+    *array_risposte = calloc(0, n * sizeof(risp));
+    if(array_risposte == NULL)
+        perror("Errore allocazione memoria");
+}
+

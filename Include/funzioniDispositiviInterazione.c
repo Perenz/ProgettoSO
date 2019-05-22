@@ -79,6 +79,7 @@ void sighandle2(int sig, int fd_manuale){
 
 int rispondi(risp answer, cmd comando, int fd_write, int pidPapi){
     answer.profondita = comando.profondita+1;
+    answer.id_padre = comando.id_padre;
     comando.profondita+=1;
     answer.termina_comunicazione = 0;
     write(fd_write, &answer, sizeof(answer));

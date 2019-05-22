@@ -122,6 +122,7 @@ int device_handle_command(cmd comando){
     return 1;
 }
 int rispondi(risp risposta_controllore, cmd comando){
+    risposta_controllore.id_padre = comando.id_padre;
     risposta_controllore.termina_comunicazione = 0;
     risposta_controllore.pid = pid;
 
@@ -163,7 +164,7 @@ int dev_switch(cmd comando){
 }
 int dev_info(cmd comando){
     risp risposta_controllore;
-    if(comando.id == id || comando.forzato){//comando --all , forzato forza l'invio delle info anche se l'id non è uguale
+    if(comando.id == id || comando.forzato==1){//comando --all , forzato forza l'invio delle info anche se l'id non è uguale
             //il parametro info_forzate è usato nel link: forza i dispositivi nell'invio delle proprie informazioni 
             //se figli di un hub con tali informazioni 
         if(comando.info_forzate == 1){
@@ -296,10 +297,10 @@ int main(int argc, char **args){
 
    //char* info = malloc(ANSWER);
 
-   if(id < 7){
+   if(id < 5){
        info infoD;
        infoD.def = 1;
-       infoD.id = informazioni.id+10;
+       infoD.id = informazioni.id+1;
        //sprintf(info, "%d", id+1);
        add_device_generale("./binaries/HUB", dispList, infoD, "ProvaName");
        infoD.id = informazioni.id+1;
@@ -348,6 +349,7 @@ int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, ri
     //scrivo al padre la risposta del dispositivo di controllo contenente le sue info
     //il padre potrebbe essere un dispositivo diverso dalla centralina ma comunque sarà in ascolto
     write(fd_papi, &risposta_to_padre, sizeof(risp));
+    comando.id_padre = id;
     //finchè ho figli
     while(nodo != NULL){
         //Mando il comando a mio figlio che lo gestirà
