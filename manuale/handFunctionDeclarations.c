@@ -170,9 +170,10 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont){
         comando.id = idCont;
         strcpy(comando.info_disp.interruttore[0].nome,args[1]);
         strcpy(comando.info_disp.interruttore[0].stato,args[2]);
-        risp* array_risposte_disp_list = malloc(1000 * sizeof(risp));
         //Scrivo sulla fifo e mando sig2
         //Apro la fifo in scrittura
+        
+        kill(*cont, SIGUSR2);
         fdManual=open(fifoManDisp, O_WRONLY);
         if(fdManual<0){
             fprintf(stderr, "Errore in apertura WRITE ONLY della fifo %s %s", fifoManDisp, strerror(errno));
@@ -183,11 +184,21 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont){
         if(fdManual<0){
             fprintf(stderr, "Errore in scrittura sulla fifo %s %s", fifoManDisp, strerror(errno));
         }
-        kill(*cont, SIGUSR2);
+
+
 
         //Chiudo la Fifo in scrittura
         close(fdManual);
         //TODO
+
+        //Apro in lettura
+        fdManual = open(fifoManDisp, O_RDONLY);
+
+        char msg[10];
+        //leggo la risposta
+        int esito = read(fdManual, msg, 10);
+
+        printf("Messaggio %s ricevuto con esito %d\n", msg, esito);
 
         /*
         int n = broadcast_centralina(dispList, comando, array_risposte_disp_list);

@@ -88,6 +88,7 @@ int device_handle_command(cmd comando, int man){
 void signhandle_quit(int sig){
     char fifo[30];
     if(sig==SIGQUIT){
+        printf("Sono nel quit con fdManuale %d", fd_manuale);
         if(fd_manuale!=0){
             sprintf(fifo, "/tmp/fifoManComp%d", pid);
             remove(fifo);
@@ -99,7 +100,7 @@ void sighandle_usr1(int sig){
     sighandle1(sig, fd_read, idPar);
 }
 void sighandle_usr2(int sig){
-    sighandle2(sig, fd_manuale);
+    sighandle2(sig);
 }
 void sign_cont_handler(int sig){
     return;
@@ -142,7 +143,25 @@ int dev_switch(cmd comando, int man){
     {
             answer.considera = 0;
     }
-    rispondi(answer, comando, fd_write,idPar);
+    if(man==0){
+        rispondi(answer, comando, fd_write,idPar);
+    }else if(man==1){
+        //Devo rispondere al manuale
+        //fd_manuale
+        //devo aprire la fifo prima di rispondere
+        char fifoManComp[30], msg[10];
+        
+        sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
+        //Apro Fifo in scrittura
+        fd_manuale = open(fifoManComp, O_WRONLY);
+
+        sprintf(msg, "%d", status);//Rispondo solamente con lo status attuale del dispositivo
+        int esito=write(fd_manuale, msg, 10);
+
+        //Chiudo in scrittura
+        close(fd_manuale);
+
+    }
     return 1;
 }
 

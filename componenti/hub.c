@@ -161,6 +161,8 @@ int dev_switch(cmd comando){
     rispondi(risposta_controllore, comando);
     return 1;
 }
+
+
 int dev_info(cmd comando){
     risp risposta_controllore;
     if(comando.id == id || comando.forzato){//comando --all , forzato forza l'invio delle info anche se l'id non è uguale
