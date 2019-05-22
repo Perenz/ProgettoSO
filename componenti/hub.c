@@ -12,7 +12,6 @@
 //voglio usare le funzioni definite in functionDeclaration urca
 #define CEN_BUFSIZE 128
 
-<<<<<<< HEAD
 int add = 0;
 info info_device_to_add;
 
@@ -27,8 +26,6 @@ int fd_read;
 int fd_write;
 info informazioni;
 char nome[20];
-=======
->>>>>>> ffa37a7d92b975577e11c76f7a324958623712dd
 int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, risp risposta_to_padre);
 int dev_list(cmd);
 int dev_switch(cmd);
@@ -261,6 +258,7 @@ int dev_delete(cmd comando){
 int dev_link(cmd comando){
     risp risposta_controllore;
     if(comando.id == id){
+        printf("Eccomi qui\n");
         int i, err;
         risposta_controllore.considera = 0;
         add = 1;
@@ -273,14 +271,6 @@ int dev_link(cmd comando){
         risposta_controllore.considera = 0;
         rispondi(risposta_controllore, comando);
     }
-    
-    
-        
-
-    
-   
-
-    
     return 1;
 }
 void set_info(char* info){
@@ -407,7 +397,7 @@ int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, ri
             //Leggo la risposta --> viene letta dopo che mi è arrivato un segnale SIGCONT
             //dato che è bloccante
             read(nodo->fd_reader, &answer, sizeof(risp));
-            
+            printf("\n", answer.considera);
                 //debug printf("Leggo la risposta in %d, %s\n", id, answer.info);
             //se è un messaggio di terminazione devo uscire dal ciclo di ascolto e andare 
             //al nodo successivo
