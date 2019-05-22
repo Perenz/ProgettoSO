@@ -484,12 +484,10 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
             comando.id = id_src;
             //n_id1 rappresenta il numero di dispositivi del sott'albero di id_src
             n_id_src = broadcast_centralina(dispList, comando, array_risposte_disp_list);
-            printf("%d\n", id_src);
             if(n_id_src != 0){//il dispositivo da collegare si trova in dispList
                 printRisp(array_risposte_disp_list, n_id_src, 0);
 
                 risp dispostivo = array_risposte_disp_list[0];
-                printf("%d\n", dispostivo.pid);
                 //MARCELLO TOGLI IL NULL QUANDO HAI SISTEMATO ADD_DEVICE
                 //non serve che lo aggiungo a procList dato che è già stato aggiunto in add_device_generale
                 //lo rimuovo dal magazzino
@@ -510,12 +508,7 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
                     //Aggiungo il primo elemento alla centralina
                     for(i=0; i<device_number(); i++)
                         if(strcmp(array_risposte_proc_list[0].info_disp.tipo, builtin_device[i])==0)
-                            add_device_generale(builtin_dev_path[i], procList, array_risposte_proc_list[0].info_disp, NULL);
-
-                    printf("DispList\n");
-                    printList(dispList);
-                    printf("ProcList\n");
-                    printList(procList);    
+                            add_device_generale(builtin_dev_path[i], procList, array_risposte_proc_list[0].info_disp, NULL);  
                     //aggiungo a cascata tutti gli altri elementi, sono sicuro che l'ordine sia giusto 
                     //poiché broadcast_centralina restituisce gli elementi in maniera dfs
                     
@@ -542,10 +535,6 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
             
             n_id_src = broadcast_centralina(procList, comando, array_risposte_proc_list);  
 
-            printRisp(array_risposte_proc_list, n_id_src, 0 );
-            //free(array_risposte_proc_list);
-            //calloc_array(&array_risposte_proc_list, n_id_src);
-            
 
             if(n_id_src != 0){//il dispositivo source esiste
                 comando.id = id_dst;
@@ -557,7 +546,6 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
                     comando.id = id_src;
                     comando.forzato = 0;
 
-                    printf("Id comando: %d\n", id_src);
                     //Elimino il dispositivo source e il suo sottoalbero
                     n_id_src = broadcast_centralina(procList, comando, array_risposte_proc_list);
                     comando.tipo_comando = 'a';//link aggiungendo
@@ -575,8 +563,6 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
                         comando.info_disp = array_risposte_proc_list[i].info_disp;
                         int tmp = broadcast_centralina(procList, comando, array_tmp_esito_linking);
                     }
-                    printList(procList);
-                    printList(dispList);
                     return 1;
                 //LINKING CON DESTINAZIONE GIÁ COLLEGATA E SORGENTE NON COLLEGATA
                 }else{//verifico se il dispositivo esiste nel magazzino

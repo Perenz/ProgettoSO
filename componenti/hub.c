@@ -159,6 +159,7 @@ int dev_list(cmd comando){
     comando.profondita++;
     risposta_controllore.id = id;
     risposta_controllore.considera = 1;
+    risposta_controllore.eliminato = 0;
     info infoD;
     get_info_string(&(risposta_controllore.info_disp));
     
@@ -261,6 +262,7 @@ int dev_link(cmd comando){
     if(comando.id == id){    
         int i, err;
         risposta_controllore.considera = 0;
+        risposta_controllore.eliminato = 0;
         add = 1;
         info_device_to_add = comando.info_disp;
         risposta_controllore.termina_comunicazione = 0;
@@ -273,6 +275,7 @@ int dev_link(cmd comando){
 
     }else{
         risposta_controllore.considera = 0;
+        risposta_controllore.eliminato = 0;
         rispondi(risposta_controllore, comando);
     }
     return 1;
@@ -333,17 +336,17 @@ int main(int argc, char **args){
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1_hub); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
     
-    /*
-    struct sigaction psa;
-    psa.sa_handler = sighandle_usr1_hub;
-    sigaction(SIGUSR1, &psa, NULL);
-    */
-    printf("\nHub creato: id: %d\n", id);
-    printf("Id: %d\n", id);
-    printf("Pid: %d\nPid padre: %d\n", pid, idPar);
-    printf("Nome: %s\n", nome);
-
-    
+    if(informazioni.def == 1){
+        printf("\nHub creato\n");
+        printf("Id: %d\n", id);
+        printf("Nome: %s\n", nome);
+        printf("Pid: %d\nPid padre: %d\n\n", pid, idPar);
+    }else{
+        printf("\nHub collegato\n");
+        printf("Id: %d\n", id);
+        printf("Nome: %s\n", nome);
+        printf("Pid: %d\nPid padre: %d\n\n", pid, idPar);
+    }
     //Invio segnale al padre
     int ris = kill(idPar, SIGCONT);
 
@@ -399,7 +402,6 @@ int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, ri
             //Leggo la risposta --> viene letta dopo che mi è arrivato un segnale SIGCONT
             //dato che è bloccante
             read(nodo->fd_reader, &answer, sizeof(risp));
-            printf("   \n");
             //stampaDisp(answer.info_disp);
                 //debug printf("Leggo la risposta in %d, %s\n", id, answer.info);
             //se è un messaggio di terminazione devo uscire dal ciclo di ascolto e andare 

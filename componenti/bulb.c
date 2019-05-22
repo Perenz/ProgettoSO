@@ -257,11 +257,10 @@ int main(int argc, char *args[]){
     id = informazioni.id;
 
     if(informazioni.def == 1){
-        printf("info defaulttt\n");
+        
         status = 0; 
         tempoSecondi = 0;
     }else{
-        printf("info NON defaulttt\n");
         status = (strcmp(informazioni.stato,"on")==0?1:0);
         tempoSecondi = informazioni.time;
         strcpy(nome, informazioni.nome);
@@ -278,11 +277,17 @@ int main(int argc, char *args[]){
     psa.sa_handler = sighandle_usr1;
     sigaction(SIGUSR1, &psa, NULL);
     */
-
-    printf("\nLampadina creata\n");
-    printf("Id: %d\n", id);
-    printf("Nome: %s\n", nome);
-    printf("Pid: %d\nPid padre: %d\n\n", pid, idPar);
+    if(informazioni.def == 1){
+        printf("\nLampadina creata\n");
+        printf("Id: %d\n", id);
+        printf("Nome: %s\n", nome);
+        printf("Pid: %d\nPid padre: %d\n\n", pid, idPar);
+    }else{
+        printf("\nLampadina collegata\n");
+        printf("Id: %d\n", id);
+        printf("Nome: %s\n", nome);
+        printf("Pid: %d\nPid padre: %d\n\n", pid, idPar);
+    }
 
     //Invio segnale al padre
     int ris = kill(idPar, SIGCONT); 

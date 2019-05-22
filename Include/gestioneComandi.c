@@ -115,6 +115,7 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
                 if(answer_tmp.considera == 1){
                     array_risposte[i] = answer_tmp;
                     i++;
+
                 }
                 if(answer_tmp.eliminato == 1){
                     removeNode(list, answer_tmp.pid);

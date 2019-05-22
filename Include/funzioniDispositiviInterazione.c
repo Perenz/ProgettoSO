@@ -21,13 +21,6 @@ int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write);
 int rispondi(risp answer, cmd comando, int fd_write, int pidPapi);
 int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid);
 char** splitLine(char* line);
-//NON HO VOGLIA DI RISOLV L'ERRORE
-void print_cmd(cmd comando){
-  printf("\nTipo %c ", comando.tipo_comando);
-  if(comando.tipo_comando != 'l'){
-    printf(", ID: %d\n", comando.id);
-  }
-}
 char** splitLine(char* line){
     int pos=0, bufS = CEN_BUFSIZE;
     char **commands = malloc(bufS * sizeof(char));
@@ -68,7 +61,6 @@ void sighandle1(int sig, int fd_read, int pid_padre){
     if(sig == SIGUSR1){
         cmd comando;
         read(fd_read, &comando, sizeof(cmd));
-        print_cmd(comando);
         comando.manuale=0;
         int errnum = device_handle_command(comando);
     
