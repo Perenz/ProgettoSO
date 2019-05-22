@@ -74,7 +74,6 @@ int add_device_generale(char* execPath, NodoPtr list, info info, char* nome){
             printf("porcoddue\n");
         list = insertLast(list, pid, fd_reader[0],fd_writer[1]);
         //Vado in pausa per permettere al figlio di generarsi
-        
         pause();
 
             

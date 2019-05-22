@@ -100,6 +100,7 @@ void sigint_handler(int sig){
         kill(SIGINT, nodo->data);
         nodo=nodo->next;
     }
+    return;
     //Come per bulb non serve andare in pausa
 }
 
@@ -257,8 +258,7 @@ int dev_delete(cmd comando){
 }
 int dev_link(cmd comando){
     risp risposta_controllore;
-    if(comando.id == id){
-        printf("Eccomi qui\n");
+    if(comando.id == id){    
         int i, err;
         risposta_controllore.considera = 0;
         add = 1;
@@ -266,6 +266,10 @@ int dev_link(cmd comando){
         risposta_controllore.termina_comunicazione = 0;
         write(fd_write, &risposta_controllore, sizeof(risp));
         
+        /*
+        risposta_controllore.termina_comunicazione = 1;
+        write(fd_write, &risposta_controllore, sizeof(risp));
+        */
 
     }else{
         risposta_controllore.considera = 0;
@@ -327,11 +331,13 @@ int main(int argc, char **args){
     signal(SIGINT, sigint_handler);
     signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
     signal(SIGQUIT, signhandle_quit);
-    //signal(SIGUSR1, sighandle_usr1_hub); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
+    signal(SIGUSR1, sighandle_usr1_hub); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
+    
+    /*
     struct sigaction psa;
     psa.sa_handler = sighandle_usr1_hub;
     sigaction(SIGUSR1, &psa, NULL);
-
+    */
     printf("\nHub creato: id: %d\n", id);
     printf("Id: %d\n", id);
     printf("Pid: %d\nPid padre: %d\n", pid, idPar);
@@ -343,25 +349,21 @@ int main(int argc, char **args){
 
     //Child va in pausa
     while(1){
-        
         if(add == 1){
             int i=0; 
-             for(i=0; i<device_number(); i++){
+            for(i=0; i<device_number(); i++){
                 if(strcmp(info_device_to_add.tipo, builtin_device[i])==0)
                     add_device_generale(builtin_dev_path[i], dispList, info_device_to_add, NULL);//ho invertito proc e disp
             }
             risp risposta_terminazione;
-            printf("Sto per rispondere al papi\n");
+            signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
+            
             risposta_terminazione.considera = 0;
             risposta_terminazione.termina_comunicazione = 1;
-            write(fd_write, &risposta_terminazione, sizeof(risposta_terminazione));
-                            signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
-
-            int ris = kill(idPar, SIGCONT);
-
             add = 0;
+            write(fd_write, &risposta_terminazione, sizeof(risp));
+            //int ris = kill(idPar, SIGCONT);
         }
-            
             
         pause();
     }
@@ -397,7 +399,8 @@ int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, ri
             //Leggo la risposta --> viene letta dopo che mi è arrivato un segnale SIGCONT
             //dato che è bloccante
             read(nodo->fd_reader, &answer, sizeof(risp));
-            printf("\n", answer.considera);
+            printf("   \n");
+            //stampaDisp(answer.info_disp);
                 //debug printf("Leggo la risposta in %d, %s\n", id, answer.info);
             //se è un messaggio di terminazione devo uscire dal ciclo di ascolto e andare 
             //al nodo successivo

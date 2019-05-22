@@ -381,7 +381,7 @@ int cen_switch(char **args, NodoPtr procList, NodoPtr dispList){
 
         
 
-        n = broadcast_centralina(dispList, comando, array_risposte_proc_list);
+        n = broadcast_centralina(procList, comando, array_risposte_proc_list);
         printRisp(array_risposte_disp_list, n, 1);
 
 
@@ -566,7 +566,7 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
 
                     comando.id = id_dst; 
                     comando.id2 = id_src;
-                    comando.info_disp = array_risposte_proc_list[i].info_disp;
+                    comando.info_disp = array_risposte_proc_list[0].info_disp;
                     int tmp = broadcast_centralina(procList, comando, array_tmp_esito_linking);
                     //se ha altri figli
                     for(i=1; i<n_id_src; i++){

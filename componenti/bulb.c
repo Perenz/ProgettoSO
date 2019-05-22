@@ -61,14 +61,16 @@ char *builtin_command[]={
     "s",//switch
     "i",//getInfo
     "d", //delete
-    "m"//Manual
+    "m",//Manual
+    "a"//////////////////METTERE ERRORE SE ID COINCIDE DATO 
 };
 int (*builtin_func[]) (cmd comando) = { //int man: 0 allora il comando arriva da centralina, 1 il comando arriva da manuale
     &dev_list,
     &dev_switch,
     &dev_info,
     &dev_delete,
-    &dev_manualControl
+    &dev_manualControl,
+    &dev_info //////DEV ADD
 };
 int dev_numCommands(){
     return (sizeof(builtin_command)/ sizeof(char*));
@@ -96,7 +98,6 @@ void signhandle_quit(int sig){
     }
 }
 void sighandle_usr1(int sig){
-    
     sighandle1(sig, fd_read, idPar);
 }
 void sighandle_usr2(int sig){
@@ -272,11 +273,11 @@ int main(int argc, char *args[]){
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
     signal(SIGUSR2, sighandle_usr2); //Alla ricezione di SIGUSR2 leggere il comanda sulla fifo direttamente connessa al manuale
     signal(SIGCONT, sign_cont_handler);//Segnale per riprendere il controllo 
-
+    /*
     struct sigaction psa;
     psa.sa_handler = sighandle_usr1;
     sigaction(SIGUSR1, &psa, NULL);
-
+    */
 
     printf("\nLampadina creata\n");
     printf("Id: %d\n", id);

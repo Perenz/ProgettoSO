@@ -82,7 +82,6 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
     //array statico di risposte PROVA
     int i = 0;//indice array statico delle risposte PROVA
 
-
     //Finchè ho figli prova ad instaurare la comunicazione
     while(nodo != NULL){
         //Setto la lettura in pipe come non bloccante
@@ -116,7 +115,6 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
                 if(answer_tmp.considera == 1){
                     array_risposte[i] = answer_tmp;
                     i++;
-                    printf("%d\n", i);
                 }
                 if(answer_tmp.eliminato == 1){
                     removeNode(list, answer_tmp.pid);
