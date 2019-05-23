@@ -15,47 +15,14 @@
 //PER ORA LE DEFINISCO QUI, POI VERRA FATTA UNA LIBRARY
 void sighandle1(int sig, int fd_read, int);
 void sighandle2(int sig);
-int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid);
-int dev_list_gen(cmd comando, int idPar, int fd_write);
-int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write);
+int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, info);
+int dev_list_gen(cmd comando, int idPar, int fd_write, info);
+int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write, info);
 int dev_add_gen(cmd comando, int id, int pid, int fd_write);
 
 int rispondi(risp answer, cmd comando, int fd_write);
 int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid);
-// DA TOGLIERE
-char** splitLine(char* line);
-char** splitLine(char* line){
-    int pos=0, bufS = CEN_BUFSIZE;
-    char **commands = malloc(bufS * sizeof(char));
-    char *cmd;
 
-    //IF error in the allocation of commands
-    if(!commands){
-        fprintf(stderr, "cen: allocation (malloc) error\n");
-        //Exit with error
-        exit(1);
-    }
-
-    cmd=strtok(line, CEN_DELIM);
-    while(cmd!=NULL){
-        commands[pos++]=cmd;
-
-        //Realocation of the buffer if we have exceeded its size
-        if(pos >= bufS){
-            bufS += CEN_BUFSIZE;
-            commands = realloc(commands, bufS * sizeof(char));
-            //IF error in the allocation of commands
-            if(!commands){
-                fprintf(stderr, "cen: allocation (malloc) error\n");
-                //Exit with error
-                exit(1);
-            }
-        }
-        cmd = strtok(NULL, CEN_DELIM);
-    }
-    commands[pos]=NULL;
-    return commands;
-}
 
 
 //TODO I due handler sono compattabili in uno unico con controllo del tipo di segnale appena prima del read
@@ -106,14 +73,17 @@ int rispondi(risp answer, cmd comando, int fd_write){
 */
 //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 //GUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LIST
-int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid){
+int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, info informazioni){
     risp answer;
     if(id == comando.id || comando.forzato == 1){//comando forzato per avere le info di dispositivi situati nel sott'albero di un processo che ha id 
         answer.pid = pid;
         answer.considera = 1;
         answer.id = id;
         answer.dispositivo_interazione = 1;
-        get_info_string(&(answer.info_disp));
+        answer.info_disp.def = 0;
+        answer.info_disp = informazioni;
+        
+        //get_info_string(&(answer.info_disp));
     }else{
         answer.considera = 0;
         answer.dispositivo_interazione = 1;
@@ -128,15 +98,13 @@ int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid){
 /*restituisce in pipe
     se comando è l: <informazioni>
 */
-int dev_list_gen(cmd comando, int idPar, int fd_write){
+int dev_list_gen(cmd comando, int idPar, int fd_write, info informazioni){
     risp answer;
-    get_info_string(&(answer.info_disp));
-    
+    answer.info_disp = informazioni;
     answer.considera = 1;
-    /*
-    answer.foglia = 1;
-    answer.termina_comunicazione = 1;
-    */
+    answer.info_disp.def = 0;
+    answer.info_disp = informazioni;
+    
     rispondi(answer, comando, fd_write);
 
     return 1;
@@ -151,7 +119,7 @@ int dev_list_gen(cmd comando, int idPar, int fd_write){
 */
 //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
-int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write){
+int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write, info informazioni){
     //printf("pid: %d\n",pid);
     risp answer;
     if(id == comando.id || comando.forzato){
@@ -159,8 +127,10 @@ int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write){
         answer.id = id;
         answer.considera = 1;
         answer.eliminato = 1;
-        char* info = malloc(ANSWER);
-        get_info_string(&(answer.info_disp));
+
+        answer.info_disp.def = 0;
+        answer.info_disp = informazioni;
+
         rispondi(answer, comando, fd_write);
         exit(0);
     }else{
@@ -173,16 +143,6 @@ int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write){
     return 1;
 }
 
-int dev_add_gen(cmd comando, int id, int pid, int fd_write){
-    //gestisco il comando 'a' senza fare nulla
-    //lo gestisco con una funzione specifica piuttosto che nell'handler
-    //per averla in tutti i disposti
-    
-
-    return 1;
-}
-
-
 
 int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid){
     risp answer;
@@ -190,7 +150,7 @@ int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid){
 
         answer.considera = 1;
         answer.id = id;
-        get_info_string(&(answer.info_disp));
+        //get_info_string(&(answer.info_disp));
 
         //Devo creare la fifo per il collegamento diretto
         char fifoManComp[30];

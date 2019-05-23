@@ -6,7 +6,7 @@
 #include "../strutture/comandiH.h"
 int id_gen = 2;
 
-int add_device(char*, NodoPtr, NodoPtr, char* nome);
+int add_device(char* execPath, NodoPtr magazzino_list, char* nome);
 int add_device_generale(char* execPath, NodoPtr list, info info, char* nome);
 void sign_handler(int);
 //device list
@@ -82,17 +82,15 @@ int add_device_generale(char* execPath, NodoPtr list, info info, char* nome){
     return 1;
 }
 
-int add_device(char* execPath, NodoPtr collegati_list, NodoPtr magazzino_list, char* nome){
+int add_device(char* execPath, NodoPtr magazzino_list, char* nome){
     //add device di default chiamato dalla centralina quando viene aggiunto un dispositivo
     //id_gen+=1;
     //char info[16];
     info infoD;
     infoD.def = 1; //info default = 1
+    
     strcpy(infoD.nome,nome);
-    infoD.time = 10.0;
-    strcpy(infoD.stato,"on");
     infoD.id = id_gen;
-    //sprintf(info, "default %d", id_gen);
     
     add_device_generale(execPath, magazzino_list, infoD, nome);
     return 1;

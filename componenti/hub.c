@@ -25,6 +25,11 @@ int fd_read;
 //File descriptor in cui il figlio scrive e il padre legge
 int fd_write;
 info informazioni;
+
+
+
+
+
 char nome[20];
 int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, risp risposta_to_padre);
 int dev_list(cmd);
@@ -211,6 +216,7 @@ int dev_info(cmd comando){
         if(comando.info_forzate == 1){
             comando.forzato = 1;
         }
+        risposta_controllore.info_disp.def = 0;
         risposta_controllore.id = id;
         risposta_controllore.considera = 1;
         risposta_controllore.pid = pid;
@@ -295,12 +301,15 @@ int dev_manualControl(cmd comando){
 }
 
 void get_info_string(info* ans){//TODO aggiungere timer
+    *ans = informazioni;
+    /*
     //TODO 
     strcpy(ans->tipo, "hub");
     ans->id = id;
     ans->pid = pid;
     strcpy(ans->nome, nome);
     strcpy(ans->stato, status==0?"off":"on");
+    */
 }
 
 
@@ -314,16 +323,21 @@ int main(int argc, char **args){
     fd_read = atoi(args[1]);
     fd_write = atoi(args[2]);
     //MANCA IL SET_INFO, sbaglia l'id
-    int err = read(fd_read,&informazioni,sizeof(info));
+    int err = read(fd_read, &informazioni,sizeof(info));
     if(err == -1)
-        printf("Errore nella lettura delle info BULB");
+        printf("Errore nella lettura delle info date dal padre\n");
+
+
 
     id = informazioni.id;
     if(informazioni.def == 1){
         status = 0; 
         informazioni.pid = pid;
-    }else{
+        strcpy(informazioni.stato, "off");
+        strcpy(informazioni.tipo, "hub");
+        informazioni.time = 0.0;
         
+    }else{
         informazioni.pid = pid;
         strcpy(nome, informazioni.nome);
     }
@@ -332,18 +346,19 @@ int main(int argc, char **args){
     signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1_hub); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
-    
     if(informazioni.def == 1){
-        printf("\nHub creato\n");
+        printf("\nHub posto in magazzino \n");
         printf("Id: %d\n", id);
-        printf("Nome: %s\n", nome);
+        printf("Nome: %s\n", informazioni.nome);
         printf("Pid: %d\nPid padre: %d\n\n", pid, idPar);
     }else{
         printf("\nHub collegato\n");
         printf("Id: %d\n", id);
-        printf("Nome: %s\n", nome);
+        printf("Nome: %s\n", informazioni.nome);
         printf("Pid: %d\nPid padre: %d\n\n", pid, idPar);
     }
+    informazioni.def = 0;
+
     //Invio segnale al padre
     int ris = kill(idPar, SIGCONT);
 

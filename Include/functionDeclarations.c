@@ -259,12 +259,11 @@ int cen_unlink(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
         printRisp(array_risposte_collegati_list, n, 0);
 
         int j, i;
+
+        //C'È LA FUNZIONE STAMPA RISPOSTE
         for(i=0; i < n; i++){
             for(j=0; j<device_number(); j++){
-                stampaDisp(array_risposte_collegati_list[i].info_disp);
-                printf("%s %s\n", builtin_device[i], array_risposte_collegati_list[i].info_disp.tipo );
                 if(strcmp(array_risposte_collegati_list[i].info_disp.tipo, builtin_device[j])==0){
-                    
                     add_device_generale(builtin_dev_path[j], magazzino_list, array_risposte_collegati_list[i].info_disp, NULL);
                 }
             }
@@ -316,7 +315,7 @@ int cen_add(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
         int i;
         for(i=0; i<device_number(); i++){
             if(strcmp(args[1], builtin_device[i])==0)
-                    return add_device(builtin_dev_path[i], collegati_list, magazzino_list, nome);//ho invertito proc e disp
+                    return add_device(builtin_dev_path[i], magazzino_list, nome);//viene sempre aggiunto prima al magazzino
         }
     }
 
@@ -444,10 +443,12 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
 
         return 1;
     }
-
-
     if(args[1]==NULL || args[2]==NULL || args[3]==NULL )//gestione errori alla Carlina
         return -1;
+
+    //DA SISTEMARE DATO CHE PER ORA HO VARI RETURN E PERCIò NON FACCIO MAI I FREE
+    //IL CODICE RISULTA DISORDINATO 
+    
     //2 casi da gestire: 
         //caso 1--> l'id2 è uguale a 2
             //a1) chiedo le info di id1 per vedere se si trova in magazzino_list
@@ -480,7 +481,6 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
             //n_id1 rappresenta il numero di dispositivi del sott'albero di id_src
             n_id_src = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);
             if(n_id_src != 0){//il dispositivo da collegare si trova in magazzino_list
-                printRisp(array_risposte_magazzino_list, n_id_src, 0);
 
                 risp dispostivo = array_risposte_magazzino_list[0];
                 //MARCELLO TOGLI IL NULL QUANDO HAI SISTEMATO ADD_DEVICE
@@ -488,7 +488,6 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
                 //lo rimuovo dal magazzino_list
                 removeNode(magazzino_list,  dispostivo.pid);
                 //SE USASSI SPOSTA NODE NON SERVE RICREARLO
-                printList(magazzino_list);
                 for(i=0; i<device_number(); i++)
                     if(strcmp(array_risposte_magazzino_list[0].info_disp.tipo, builtin_device[i])==0)
                         add_device_generale(builtin_dev_path[i], collegati_list, array_risposte_magazzino_list[0].info_disp, NULL); 
@@ -537,6 +536,7 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
                 if(n_id_dst != 0){//il dispositivo destinazione esiste in collegati_list
                     if(array_risposte_collegati_list[0].dispositivo_interazione !=1){//Il dispositivo di destinazione è un dispositivo di controllo? 
                         comando.tipo_comando = 'd';
+                        comando.id = id_src;
                         comando.forzato = 1;//elimina anche i figli
                         comando.forzato = 0;
 
@@ -608,9 +608,13 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
 
         }
 
+
         
         free(array_risposte_collegati_list);
-        free(array_risposte_magazzino_list);
+        free(array_risposte_magazzino_list);    
+
+
+
     return 1;
     
 }
