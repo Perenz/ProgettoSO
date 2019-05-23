@@ -165,6 +165,8 @@ int dev_switch(cmd comando){
     }
     return 1;
 }
+
+
 //COMANDO   info <id>
 /*restituisce in pipe
     <info> := <tipo> <pid???> <id> <status> <time>
@@ -198,7 +200,7 @@ void set_time(){
 
 int dev_manualControl(cmd comando){
     fifoCreata=1;
-    int err = dev_manual_info_gen(comando, informazioni.id, informazioni.pid_padre, fd_write, informazioni.pid);
+    int err = dev_manual_info_gen(comando, informazioni.id, informazioni.pid_padre, fd_write, informazioni.pid, informazioni);
     return err;
 }
 

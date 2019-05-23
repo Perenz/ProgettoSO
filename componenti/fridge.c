@@ -27,6 +27,7 @@ int dev_manualControl(cmd);
 int dev_switch(cmd);
 int dev_list(cmd);
 int dev_info(cmd);
+int dev_set(cmd);
 
 
 void set_time();
@@ -54,7 +55,8 @@ char *builtin_command[]={
     "s",//switch
     "i",//getInfo
     "d", //delete
-    "m"//Manual
+    "m",//Manual
+    "p"//set
 
 };
 int (*builtin_func[]) (cmd comando) = { //int man: 0 allora il comando arriva da centralina, 1 il comando arriva da manuale
@@ -62,7 +64,8 @@ int (*builtin_func[]) (cmd comando) = { //int man: 0 allora il comando arriva da
     &dev_switch,
     &dev_info,
     &dev_delete,
-    &dev_manualControl
+    &dev_manualControl,
+    &dev_set
 };
 int dev_numCommands(){
     return (sizeof(builtin_command)/ sizeof(char*));
@@ -159,7 +162,7 @@ int dev_switch(cmd comando){
         int fd_manuale = open(fifoManComp, O_WRONLY);
 
         //////////////////////////////////////////////////////////
-        sprintf(msg, "%s", informazioni.stato);//Rispondo solamente con lo status attuale del dispositivo
+        (strcmp(comando.info_disp.interruttore[0].nome , "apertura")==0) ? sprintf(msg, "%s", informazioni.stato) : sprintf(msg, "%d", informazioni.temperatura);//Rispondo solamente con lo status attuale del dispositivo
         int esito=write(fd_manuale, msg, 10);
         /////////////////////////////////////////////////////////
 
@@ -171,6 +174,46 @@ int dev_switch(cmd comando){
     }
     return 1;
 }
+
+int dev_set(cmd comando){
+    risp answer;
+    char fifoManComp[30], msg[10];
+    if(comando.id==informazioni.id){
+        if(strcmp(comando.info_disp.interruttore[0].nome, "delay")==0){
+            informazioni.delay = atoi(comando.info_disp.interruttore[0].stato);
+        }
+        else if(strcmp(comando.info_disp.interruttore[0].nome, "perc")==0){
+            informazioni.percentuale = atoi(comando.info_disp.interruttore[0].stato);
+        }
+        answer.considera=1;
+    }else
+    {
+        answer.considera=1;
+    }
+    if(comando.manuale==1){
+        //Devo rispondere al manuale
+        //fd_manuale
+        //devo aprire la fifo prima di rispondere
+        
+        
+        sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
+        //Apro Fifo in scrittura
+        int fd_manuale = open(fifoManComp, O_WRONLY);
+
+        //////////////////////////////////////////////////////////
+        sprintf(msg, "%s", comando.info_disp.interruttore[0].stato);//Rispondo solamente con lo status attuale del dispositivo
+        int esito=write(fd_manuale, msg, 10);
+        /////////////////////////////////////////////////////////
+
+        //Chiudo in scrittura
+        close(fd_manuale);
+
+    }else{
+        rispondi(answer, comando, fd_write);
+    }
+    
+}
+
 //COMANDO   info <id>
 /*restituisce in pipe
     <info> := <tipo> <pid???> <id> <status> <time>
@@ -204,7 +247,7 @@ void set_time(){
 
 int dev_manualControl(cmd comando){
     fifoCreata=1;
-    int err = dev_manual_info_gen(comando, informazioni.id, informazioni.pid_padre, fd_write, informazioni.pid);
+    int err = dev_manual_info_gen(comando, informazioni.id, informazioni.pid_padre, fd_write, informazioni.pid, informazioni);
     return err;
 }
 
@@ -219,12 +262,15 @@ int main(int argc, char *args[]){
     
     time(&tempoUltimaMisurazione);
     if(informazioni.def == 1){
-        informazioni.delay = 5.0; //di default 5 secondi
+        informazioni.delay = 10.0; //di default 5 secondi
         informazioni.temperatura = 3; //di default 3 gradi
         informazioni.percentuale = 0; //di default frigo vuoto
         strcpy(informazioni.tipo, "fridge");
         strcpy(informazioni.stato, "chiuso");
         informazioni.time = 0.0;
+    }
+    if(strcmp(informazioni.stato,"aperto")==0){
+        alarm((informazioni.delay - ((int)informazioni.time % (int)informazioni.delay)));
     }
     informazioni.pid = getpid(); // chiedo il mio pid
     informazioni.pid_padre = getppid(); //chiedo il pid di mio padre
