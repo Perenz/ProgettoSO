@@ -161,7 +161,6 @@ int cen_list(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     printf("\nCENTRALINA VAGINA\n");
     n = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list);  
     printRisp(array_risposte_collegati_list, n, 1);
-    printf("Numero dispositivi: %d\n", n);
 
 
     comando.manuale=0;
@@ -171,7 +170,6 @@ int cen_list(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     //gestione eerr
     n = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);
     printRisp(array_risposte_magazzino_list, n, 1);
-    printf("Numero dispositivi: %d\n", n);
 
 
 
