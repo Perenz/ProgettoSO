@@ -197,7 +197,7 @@ void set_time(){
 
 int dev_manualControl(cmd comando){
     fifoCreata=1;
-    int err = dev_manual_info_gen(comando, informazioni.id, informazioni.pid_padre, fd_write, informazioni.pid);
+    int err = dev_manual_info_gen(comando, informazioni.id, informazioni.pid_padre, fd_write, informazioni.pid, informazioni);
     return err;
 }
 
