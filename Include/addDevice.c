@@ -88,7 +88,6 @@ int add_device(char* execPath, NodoPtr magazzino_list, char* nome){
     //char info[16];
     info infoD;
     infoD.def = 1; //info default = 1
-    
     strcpy(infoD.nome,nome);
     infoD.id = id_gen;
     

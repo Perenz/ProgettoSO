@@ -15,11 +15,10 @@
 int add = 0;
 info info_device_to_add;
 
+
 NodoPtr dispList; //lista dei dispositivi collegati all'hub
-pid_t idPar;
-pid_t pid;
-int id;
-int status; //1 acceso, 0 spento
+pid_t idPar;///////mi sa che si può rimuover
+int fifoCreata=0;
 //File descriptor in cui il figlio legge e il padre scrive
 int fd_read;
 //File descriptor in cui il figlio scrive e il padre legge
@@ -30,7 +29,6 @@ info informazioni;
 
 
 
-char nome[20];
 int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, risp risposta_to_padre);
 int dev_list(cmd);
 int dev_switch(cmd);
@@ -39,7 +37,6 @@ int dev_delete(cmd);
 int dev_link(cmd);
 int dev_manualControl(cmd);
 
-void get_info_string(info*);//TODO aggiungere timer
 void set_info(char*);
 
 //int dev_link(char** args);
@@ -49,19 +46,6 @@ void h_sigstop_handler ( int sig ) ;
 int dev_add(char*, char*);
 #include "../include/funzioniDispositiviControllo.c"
 
-
-NodoPtr dispList; //lista dei dispositivi collegati all'hub
-pid_t idPar;
-pid_t pid;
-int id;
-int fifoCreata=0;
-int status; //1 acceso, 0 spento
-//File descriptor in cui il figlio legge e il padre scrive
-int fd_read;
-//File descriptor in cui il figlio scrive e il padre legge
-int fd_write;
-info informazioni;
-char nome[20];
 
 
 void signhandle_quit(int sig){
@@ -118,7 +102,6 @@ void sighandle_usr1_hub(int sig){
         int err_signal;
         read(fd_read, &comando, sizeof(cmd));
         int errnum = device_handle_command(comando);
-        //printf("Termino %d\n", id);
         err_signal = kill(idPar, SIGCONT);
         if(err_signal != 0)
             perror("errore in invio segnale");
@@ -150,7 +133,7 @@ int device_handle_command(cmd comando){
 int rispondi(risp risposta_controllore, cmd comando){
     risposta_controllore.id_padre = comando.id_padre;
     risposta_controllore.termina_comunicazione = 0;
-    risposta_controllore.pid = pid;
+    risposta_controllore.pid = informazioni.pid;
 
     //vado io in controllo e mando le varie risposte al papi
     //attenz, buono che salto il primo
@@ -162,27 +145,33 @@ int dev_list(cmd comando){
     risp risposta_controllore;
     risposta_controllore.profondita = comando.profondita+1;
     comando.profondita++;
-    risposta_controllore.id = id;
+    risposta_controllore.id = informazioni.id;
+    risposta_controllore.pid = informazioni.pid;
     risposta_controllore.considera = 1;
     risposta_controllore.eliminato = 0;
-    info infoD;
-    get_info_string(&(risposta_controllore.info_disp));
-    
-
+    //set_info
+    risposta_controllore.info_disp = informazioni;
     rispondi(risposta_controllore, comando);
-
-
     return 1;
 }
-int dev_switch(cmd comando){
+int dev_switch(cmd comando){//////DA MODIFICARE
+
+    /*
+    //puoi richiamare la funzione che c'è sopra bro, guarda, per il resto non dovrebbe variare nulla
     risp risposta_controllore;
-    if(comando.id == id || comando.forzato){
+    if(comando.id == informazioni.id || comando.forzato){
         comando.forzato = 1;
         risposta_controllore.id = id;
         risposta_controllore.considera = 1;
         risposta_controllore.pid = pid;
         risposta_controllore.profondita = comando.profondita+1;
         
+        if(strcmp(comando.info_disp.stato, "on")){
+            strcpy(informazioni.stato, "on");
+        }else if(strcmp(comando.info_disp.stato, "off")){
+            strcpy(informazioni.stato, "off");
+        }
+        risposta_controllore.info_disp = informazioni;
     }else{
         risposta_controllore.considera = 0;
     }
@@ -204,26 +193,26 @@ int dev_switch(cmd comando){
     }else{
         rispondi(risposta_controllore, comando);
     }
+    */
     return 1;
 }
 
 
 int dev_info(cmd comando){
     risp risposta_controllore;
-    if(comando.id == id || comando.forzato==1){//comando --all , forzato forza l'invio delle info anche se l'id non è uguale
+    if(comando.id == informazioni.id || comando.forzato==1){//comando --all , forzato forza l'invio delle info anche se l'id non è uguale
             //il parametro info_forzate è usato nel link: forza i dispositivi nell'invio delle proprie informazioni 
             //se figli di un hub con tali informazioni 
         if(comando.info_forzate == 1){
             comando.forzato = 1;
         }
         risposta_controllore.info_disp.def = 0;
-        risposta_controllore.id = id;
+        risposta_controllore.id = informazioni.id;
         risposta_controllore.considera = 1;
-        risposta_controllore.pid = pid;
+        risposta_controllore.pid = informazioni.pid;
         risposta_controllore.dispositivo_interazione = 0;
-        //char* info = malloc(ANSWER);
-        get_info_string(&(risposta_controllore.info_disp));
-        
+        //set_info
+        risposta_controllore.info_disp = informazioni;
         risposta_controllore.profondita = comando.profondita+1;
         //SE VOGLIAMO FARE CHE IL DISPOSITIVO MANDA UN MESSAGGIO E NON CERCA SE I SUOI FIGLI HANNO LO STESSO ID: 
         /* NON VA SE NON è STATO FATTO UN LIST PRIMA ED IN ALCUNI CASI SI BLOCCA
@@ -242,16 +231,16 @@ int dev_info(cmd comando){
 }
 int dev_delete(cmd comando){
     risp risposta_controllore;
-    if(comando.forzato == 1 || comando.id == id){//comando --all 
-        risposta_controllore.id = id;
+    if(comando.forzato == 1 || comando.id == informazioni.id){//comando --all 
+        risposta_controllore.id = informazioni.id;
         risposta_controllore.profondita = comando.profondita+1;
         comando.profondita++;
         risposta_controllore.considera = 1;
         risposta_controllore.eliminato = 1;
-        risposta_controllore.pid = pid;
+        risposta_controllore.pid = informazioni.pid;
         comando.forzato = 1;//indico ai miei figli di eliminarsi
-        
-        get_info_string(&(risposta_controllore.info_disp));
+        //set_info 
+        risposta_controllore.info_disp = informazioni;
         
         rispondi(risposta_controllore, comando);
     
@@ -259,14 +248,14 @@ int dev_delete(cmd comando){
     }else{
         risposta_controllore.considera = 0;//non considerarmi, non sono stato eliminato
         risposta_controllore.eliminato = 0;
-        get_info_string(&(risposta_controllore.info_disp));
+        risposta_controllore.info_disp = informazioni;
         rispondi(risposta_controllore, comando);
     }
     return 1;
 }
 int dev_link(cmd comando){
     risp risposta_controllore;
-    if(comando.id == id){    
+    if(comando.id == informazioni.id){    
         int i, err;
         risposta_controllore.considera = 0;
         risposta_controllore.eliminato = 0;
@@ -283,80 +272,49 @@ int dev_link(cmd comando){
     }
     return 1;
 }
-void set_info(char* info){
-    char** info_split = splitLine(info);
-    //<infoDefault> := default <id>
-    if(strcmp(info_split[0], "default")==0){
-        id = atoi(info_split[1]);
-    }else{
-        //<info> := <id>
-        id = atoi(info_split[0]);
-    }
-}
 
 int dev_manualControl(cmd comando){
     fifoCreata=1;
-    int err = dev_manual_info_gen(comando, id, idPar, fd_write, pid);
-    return err;
+    //int err = dev_manual_info_gen(comando, id, idPar, fd_write, pid); //dov'è bro?
+    //return err;
 }
-
-void get_info_string(info* ans){//TODO aggiungere timer
-    *ans = informazioni;
-    /*
-    //TODO 
-    strcpy(ans->tipo, "hub");
-    ans->id = id;
-    ans->pid = pid;
-    strcpy(ans->nome, nome);
-    strcpy(ans->stato, status==0?"off":"on");
-    */
-}
-
 
 int main(int argc, char **args){
     dispList = listInit(getpid());
 
     //UGUALE A BULB 
-    pid = getpid(); // chiedo il mio pid
     idPar = getppid(); //chiedo il pid di mio padre
 
     fd_read = atoi(args[1]);
     fd_write = atoi(args[2]);
     //MANCA IL SET_INFO, sbaglia l'id
     int err = read(fd_read, &informazioni,sizeof(info));
+    
+    informazioni.pid = getpid(); // chiedo il mio pid
     if(err == -1)
         printf("Errore nella lettura delle info date dal padre\n");
+    
 
-
-
-    id = informazioni.id;
     if(informazioni.def == 1){
-        status = 0; 
-        informazioni.pid = pid;
+        strcpy(informazioni.stato, "off");
         strcpy(informazioni.stato, "off");
         strcpy(informazioni.tipo, "hub");
         informazioni.time = 0.0;
-        
-    }else{
-        informazioni.pid = pid;
-        strcpy(nome, informazioni.nome);
     }
 
     signal(SIGINT, sigint_handler);
     signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1_hub); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
+    
     if(informazioni.def == 1){
         printf("\nHub posto in magazzino \n");
-        printf("Id: %d\n", id);
-        printf("Nome: %s\n", informazioni.nome);
-        printf("Pid: %d\nPid padre: %d\n\n", pid, idPar);
     }else{
         printf("\nHub collegato\n");
-        printf("Id: %d\n", id);
-        printf("Nome: %s\n", informazioni.nome);
-        printf("Pid: %d\nPid padre: %d\n\n", pid, idPar);
     }
+    printf("Id: %d\n", informazioni.id);
+    printf("Nome: %s\n", informazioni.nome);
+    printf("Pid: %d\nPid padre: %d\n\n", informazioni.pid, idPar);
     informazioni.def = 0;
 
     //Invio segnale al padre
@@ -399,7 +357,7 @@ int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, ri
     //scrivo al padre la risposta del dispositivo di controllo contenente le sue info
     //il padre potrebbe essere un dispositivo diverso dalla centralina ma comunque sarà in ascolto
     write(fd_papi, &risposta_to_padre, sizeof(risp));
-    comando.id_padre = id;
+    comando.id_padre = informazioni.id;
     //finchè ho figli
     while(nodo != NULL){
         //Mando il comando a mio figlio che lo gestirà
