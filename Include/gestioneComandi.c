@@ -168,6 +168,7 @@ void printRisp(risp* array_risposte, int n, int indentazione){
         if(indentazione == 1){
             int j = 0;
             for(; j<array_risposte[i].profondita; j++){
+                printf("%d",array_risposte[i].profondita);
                 printf("\t");
             }
         }

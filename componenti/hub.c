@@ -143,8 +143,10 @@ int rispondi(risp risposta_controllore, cmd comando){
 
 int dev_list(cmd comando){
     risp risposta_controllore;
+
     risposta_controllore.profondita = comando.profondita+1;
     comando.profondita++;
+
     risposta_controllore.id = informazioni.id;
     risposta_controllore.pid = informazioni.pid;
     risposta_controllore.considera = 1;
@@ -156,24 +158,35 @@ int dev_list(cmd comando){
 }
 int dev_switch(cmd comando){//////DA MODIFICARE
 
-    /*
+    
     //puoi richiamare la funzione che c'è sopra bro, guarda, per il resto non dovrebbe variare nulla
     risp risposta_controllore;
-    if(comando.id == informazioni.id || comando.forzato){
+    if(comando.id == informazioni.id || comando.forzato == 1){
         comando.forzato = 1;
-        risposta_controllore.id = id;
+        risposta_controllore.id = informazioni.id;
         risposta_controllore.considera = 1;
-        risposta_controllore.pid = pid;
+        /*
+        risposta_controllore.pid = informazioni.pid;
         risposta_controllore.profondita = comando.profondita+1;
+
+        /////////////////////////////////////////////////////
+        risposta_controllore.info_disp.time = 0;
         
-        if(strcmp(comando.info_disp.stato, "on")){
-            strcpy(informazioni.stato, "on");
-        }else if(strcmp(comando.info_disp.stato, "off")){
-            strcpy(informazioni.stato, "off");
+        if(strcmp(comando.info_disp.interruttore[0].nome , "accensione")==0){
+            if(strcmp(informazioni.stato,"off")== 0 && strcmp(comando.info_disp.interruttore[0].stato , "on")==0){
+                strcpy(informazioni.stato, "on");  
+            }else if(strcmp(informazioni.stato,"on")== 0 && strcmp(comando.info_disp.interruttore[0].stato , "off")==0){
+                strcpy(informazioni.stato, "off");  
+            }
+            risposta_controllore.considera = 1;
         }
         risposta_controllore.info_disp = informazioni;
+        */
+        risposta_controllore.info_disp = informazioni;
+        rispondi(risposta_controllore, comando);
     }else{
         risposta_controllore.considera = 0;
+        risposta_controllore.id = informazioni.id;
     }
     if(comando.manuale==1){
         //Devo rispondere al manuale
@@ -185,7 +198,7 @@ int dev_switch(cmd comando){//////DA MODIFICARE
         //Apro Fifo in scrittura
         int fd_manuale = open(fifoManComp, O_WRONLY);
 
-        sprintf(msg, "%d", status);//Rispondo solamente con lo status attuale del dispositivo
+        //sprintf(msg, "%d", informazioni.stato);//Rispondo solamente con lo status attuale del dispositivo
         int esito=write(fd_manuale, msg, 10);
 
         //Chiudo in scrittura
@@ -193,7 +206,7 @@ int dev_switch(cmd comando){//////DA MODIFICARE
     }else{
         rispondi(risposta_controllore, comando);
     }
-    */
+    
     return 1;
 }
 
@@ -224,7 +237,7 @@ int dev_info(cmd comando){
         //Se VOGLIAMO FARE CHE IL DISPOSITIVO CHIEDE AI SUOI FIGLI SE C'è QUALCUNO CON QUELL'ID ANCHE SE LUI HA GIà QUELL'ID
         rispondi(risposta_controllore, comando);
     }else{
-        risposta_controllore.considera = 0;//non considerarmi, non sono stato eliminato
+        risposta_controllore.considera = 0;//non considerarmi
         rispondi(risposta_controllore, comando);
     }
     return 1;
@@ -277,6 +290,11 @@ int dev_manualControl(cmd comando){
     fifoCreata=1;
     //int err = dev_manual_info_gen(comando, id, idPar, fd_write, pid); //dov'è bro?
     //return err;
+}
+
+//abbiamo deciso che anche se 
+void set_info(){
+
 }
 
 int main(int argc, char **args){

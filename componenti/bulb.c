@@ -133,11 +133,15 @@ int dev_switch(cmd comando){
             }
             //get_info_string(&(answer.info_disp));
             answer.considera = 1;
-        }
-    }else
-    {
+        }else{
             answer.considera = 0;
+        }
+
+        answer.info_disp = informazioni;
+    }else{
+        answer.considera = 0;
     }
+    
     if(comando.manuale==1){
         //Devo rispondere al manuale
         //fd_manuale
