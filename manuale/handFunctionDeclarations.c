@@ -253,6 +253,12 @@ void esegui_set(char **args, int *cont, int idCont, char tipoCont){
     char msg[10];
     //leggo la risposta
     read(fdManual, msg, 10);
+
+    if(strcmp(args[1], "delay")==0){
+        printf("Il tempo di delay del frigorifero (pid %d, id %d, tipo %c) è ora pari a %s\n", *cont, idCont, tipoCont, msg);
+    }else if(strcmp(args[1], "perc")==0){
+        printf("La percentuale di riempimento del frigorifero (pid %d, id %d, tipo %c) è ora pari a %s\n", *cont, idCont, tipoCont, msg);
+    }
 }
 
 int isNum(char* str){
@@ -374,11 +380,13 @@ int hand_set(char **args, int *contPid, int contId, char tipoCont)
                 return -1;
             }
             esegui_set(args, contPid, contId, tipoCont);
+            return -1;
         }
         else if (strcmp(args[1], "termostato") == 0)
         {
             //Uguale a comando mandato tramite switch
             esegui_switch(args, contPid, contId, tipoCont);
+            return -1;
         }
         else if (strcmp(args[1], "perc") == 0)
         {
@@ -389,6 +397,7 @@ int hand_set(char **args, int *contPid, int contId, char tipoCont)
                 return -1;
             }
             esegui_set(args, contPid, contId, tipoCont);
+            return -1;
 
         }
         else
@@ -401,6 +410,5 @@ int hand_set(char **args, int *contPid, int contId, char tipoCont)
             return -1;
         }
 
-        //Ora mando il comando
     }
 }
