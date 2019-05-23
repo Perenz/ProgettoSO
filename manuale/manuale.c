@@ -93,6 +93,7 @@ int main(){
     size_t bufS = 0;
     int status =1;
 
+    signal(SIGPIPE, SIG_IGN);
     signal(SIGQUIT, sigquit_handler);
     //Passo 1: Prendere il pid della centralina grazie ad il processo di support
 

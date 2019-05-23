@@ -4,7 +4,6 @@
 #include "Include/start.c"
 
 void sigusr2_handler(int sig){
-    //printf("Sono nel signal handler della centralina\n");
     return getManualPid(collegati_list, magazzino_list);
 }
 

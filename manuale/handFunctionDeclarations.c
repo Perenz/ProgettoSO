@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <ctype.h>
 #include "../strutture/comandiH.h"
 
 int hand_control(char **, int *, char *); //Dovra ritornare il pid del dispositivo specificato come argomento
@@ -79,7 +80,7 @@ int hand_control(char **args, int *cenPid, char *tipoDisp)
             fprintf(stderr, "Errore nella creazione della fifo %s %s\n", manCenFifo, strerror(errno));
         }
         //Mando signal a centralina per aprire la fifo in READ_ONLY
-        kill(*cenPid, SIGUSR2);
+        int esito=kill(*cenPid, SIGUSR2);
         //Apro la fifo in WRITEONLY
         fd = open(manCenFifo, O_WRONLY);
         if (fd < 0)
@@ -176,7 +177,8 @@ void esegui_switch(char **args, int *cont, int idCont, char tipoCont)
     //Apro la fifo in scrittura
 
     kill(*cont, SIGUSR2);
-    fdManual = open(fifoManDisp, O_WRONLY);
+
+    fdManual =  open(fifoManDisp, O_WRONLY);
     if (fdManual < 0)
     {
         fprintf(stderr, "Errore in apertura WRITE ONLY della fifo %s %s", fifoManDisp, strerror(errno));
@@ -188,7 +190,6 @@ void esegui_switch(char **args, int *cont, int idCont, char tipoCont)
     {
         fprintf(stderr, "Errore in scrittura sulla fifo %s %s", fifoManDisp, strerror(errno));
     }
-
     //Chiudo la Fifo in scrittura
     close(fdManual);
     //TODO
@@ -198,16 +199,72 @@ void esegui_switch(char **args, int *cont, int idCont, char tipoCont)
 
     char msg[10];
     //leggo la risposta
-    int esito = read(fdManual, msg, 10);
-
-    if (atoi(msg) == 1)
-    {
-        printf("Il dispositivo (pid %d, id %d, tipo %c) risulta ora %s\n", *cont, idCont, tipoCont, (tipoCont=='b' ? "acceso" : "aperto"));
+    read(fdManual, msg, 10);
+    if(strcmp(args[1],"termostato")!=0){
+        if (strcmp(msg, "on")==0 || strcmp(msg, "aperto")==0)
+        {
+            printf("Il dispositivo (pid %d, id %d, tipo %c) risulta ora %s\n", *cont, idCont, tipoCont, (tipoCont=='b' ? "acceso" : "aperto"));
+        }
+        else
+        {
+            printf("Il dispositivo (pid %d, id %d, tipo %c) risulta ora %s\n", *cont, idCont, tipoCont, (tipoCont=='b' ? "spento" : "chiuso"));
+        }
     }
     else
     {
-        printf("Il dispositivo (pid %d, id %d, tipo %c) risulta ora %s\n", *cont, idCont, tipoCont, (tipoCont=='b' ? "spento" : "chiuso"));
+        printf("Il frigorifero (pid %d, id %d, tipo %c) ha ora una temperatura di %s° C\n", *cont, idCont, tipoCont, msg);
+
     }
+    close(fdManual);
+}
+
+void esegui_set(char **args, int *cont, int idCont, char tipoCont){
+    //Qui comando
+    cmd comando;
+    comando.tipo_comando = 'p'; //Comando p per il set
+    comando.manuale = 1;
+    comando.id = idCont;
+    strcpy(comando.info_disp.interruttore[0].nome, args[1]);
+    strcpy(comando.info_disp.interruttore[0].stato, args[2]);
+    //Scrivo sulla fifo e mando sig2
+    //Apro la fifo in scrittura
+
+    kill(*cont, SIGUSR2);
+
+    fdManual =  open(fifoManDisp, O_WRONLY);
+    if (fdManual < 0)
+    {
+        fprintf(stderr, "Errore in apertura WRITE ONLY della fifo %s %s", fifoManDisp, strerror(errno));
+    }
+
+    //Scrivo sulla fifo il messaggio ed invio SIGUSR2 al dispositivo per indicare che è stato scritto un nuovo comando nella fifo
+    write(fdManual, &comando, sizeof(comando));
+    if (fdManual < 0)
+    {
+        fprintf(stderr, "Errore in scrittura sulla fifo %s %s", fifoManDisp, strerror(errno));
+    }
+    //Chiudo la Fifo in scrittura
+    close(fdManual);
+    //TODO
+
+    //Apro in lettura
+    fdManual = open(fifoManDisp, O_RDONLY);
+
+    char msg[10];
+    //leggo la risposta
+    read(fdManual, msg, 10);
+}
+
+int isNum(char* str){
+    int length = strlen (str);
+    int i;
+    for (i=0;i<length; i++){
+        if (!isdigit(str[i]) && str[i]!='-')
+        {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 
@@ -252,7 +309,7 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont)
     }
     else if (tipoCont == 'f' && (strcmp(args[1], "apertura") == 0 || strcmp(args[1], "chiusura") == 0))
     {
-        //Controlli per dispositivo WINDOW (o hub di window)
+        //Controlli per dispositivo FRIDGE (o hub di fridge)
         if (strcmp(args[2], "on") != 0 && strcmp(args[2], "off") != 0)
         {
             printf("Errore nei parametri\n");
@@ -263,6 +320,16 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont)
         }
 
         esegui_switch(args, cont, idCont, 'f');
+        return -1;
+    }
+    else if(tipoCont == 'f' && (strcmp(args[1],"termostato") ==0 )){
+        if(isNum(args[2])==0){
+            printf("Errore nei parametri\n");
+            printf("Usage: switch termostato <nuovaTemp>\n");
+            printf("Temperatura deve essere di tipo intero\n");
+            return -1;
+        }
+        esegui_switch(args,cont,idCont, 'f');
         return -1;
     }
     else
@@ -286,7 +353,7 @@ int hand_set(char **args, int *contPid, int contId, char tipoCont)
     if (tipoCont != 'f' || args[2] == NULL || args[3] != NULL)
     {
         printf("Comando set valido solo con frigorifero come tipo di dispositivo controllato\n");
-        printf("Indicare una delle 3 proprietà: delay, perc, temp\n");
+        printf("Indicare una delle 3 proprietà: delay, perc, termostato\n");
         printf("Usage: set <proprietà> <valore>\n");
         printf("Indicare i valori nelle seguenti modalità:\n-Secondi per delay\n-Percentuale 0-100 per perc\n-Gradi Celsius per temp\n");
 
@@ -294,17 +361,24 @@ int hand_set(char **args, int *contPid, int contId, char tipoCont)
     }
     else
     {
+        if(isNum(args[2])==0){
+            printf("Valore non numerico non ammesso, inserire valore intero\n");
+            return -1;
+        }
         //Prima faccio i controlli sui valori
         if (strcmp(args[1], "delay") == 0)
         {
             if (atoi(args[2]) < 0)
             {
-                printf("Valore negativo per tempo di delay non ammesso\n");
+                printf("Valore per delay non ammesso, inserire delay maggiore di 0\n");
                 return -1;
             }
+            esegui_set(args, contPid, contId, tipoCont);
         }
-        else if (strcmp(args[1], "temp") == 0)
+        else if (strcmp(args[1], "termostato") == 0)
         {
+            //Uguale a comando mandato tramite switch
+            esegui_switch(args, contPid, contId, tipoCont);
         }
         else if (strcmp(args[1], "perc") == 0)
         {
@@ -314,6 +388,8 @@ int hand_set(char **args, int *contPid, int contId, char tipoCont)
                 printf("Valore per percentuale non ammesso, inserire percentuale compresa tra 0 e 100\n");
                 return -1;
             }
+            esegui_set(args, contPid, contId, tipoCont);
+
         }
         else
         {

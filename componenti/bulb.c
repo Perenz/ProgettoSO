@@ -161,6 +161,8 @@ int dev_switch(cmd comando){
     }
     return 1;
 }
+
+
 //COMANDO   info <id>
 /*restituisce in pipe
     <info> := <tipo> <pid???> <id> <status> <time>

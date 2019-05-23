@@ -27,6 +27,7 @@ int dev_manualControl(cmd);
 int dev_switch(cmd);
 int dev_list(cmd);
 int dev_info(cmd);
+int dev_set(cmd);
 
 
 void set_time();
@@ -54,7 +55,8 @@ char *builtin_command[]={
     "s",//switch
     "i",//getInfo
     "d", //delete
-    "m"//Manual
+    "m",//Manual
+    "p"
 
 };
 int (*builtin_func[]) (cmd comando) = { //int man: 0 allora il comando arriva da centralina, 1 il comando arriva da manuale
@@ -62,7 +64,8 @@ int (*builtin_func[]) (cmd comando) = { //int man: 0 allora il comando arriva da
     &dev_switch,
     &dev_info,
     &dev_delete,
-    &dev_manualControl
+    &dev_manualControl,
+    &dev_set
 };
 int dev_numCommands(){
     return (sizeof(builtin_command)/ sizeof(char*));
@@ -159,7 +162,7 @@ int dev_switch(cmd comando){
         int fd_manuale = open(fifoManComp, O_WRONLY);
 
         //////////////////////////////////////////////////////////
-        sprintf(msg, "%s", informazioni.stato);//Rispondo solamente con lo status attuale del dispositivo
+        (strcmp(comando.info_disp.interruttore[0].nome , "apertura")==0) ? sprintf(msg, "%s", informazioni.stato) : sprintf(msg, "%d", informazioni.temperatura);//Rispondo solamente con lo status attuale del dispositivo
         int esito=write(fd_manuale, msg, 10);
         /////////////////////////////////////////////////////////
 
@@ -171,6 +174,11 @@ int dev_switch(cmd comando){
     }
     return 1;
 }
+
+int dev_set(cmd comando){
+    risp answer;
+}
+
 //COMANDO   info <id>
 /*restituisce in pipe
     <info> := <tipo> <pid???> <id> <status> <time>
