@@ -144,8 +144,6 @@ int rispondi(risp risposta_controllore, cmd comando){
 int dev_list(cmd comando){
     risp risposta_controllore;
 
-    risposta_controllore.profondita = comando.profondita+1;
-    comando.profondita++;
 
     risposta_controllore.id = informazioni.id;
     risposta_controllore.pid = informazioni.pid;
@@ -225,8 +223,7 @@ int dev_info(cmd comando){
         risposta_controllore.pid = informazioni.pid;
         risposta_controllore.dispositivo_interazione = 0;
         //set_info
-        risposta_controllore.info_disp = informazioni;
-        risposta_controllore.profondita = comando.profondita+1;
+
         //SE VOGLIAMO FARE CHE IL DISPOSITIVO MANDA UN MESSAGGIO E NON CERCA SE I SUOI FIGLI HANNO LO STESSO ID: 
         /* NON VA SE NON è STATO FATTO UN LIST PRIMA ED IN ALCUNI CASI SI BLOCCA
         risposta_controllore.termina_comunicazione = 0;
@@ -246,8 +243,7 @@ int dev_delete(cmd comando){
     risp risposta_controllore;
     if(comando.forzato == 1 || comando.id == informazioni.id){//comando --all 
         risposta_controllore.id = informazioni.id;
-        risposta_controllore.profondita = comando.profondita+1;
-        comando.profondita++;
+       
         risposta_controllore.considera = 1;
         risposta_controllore.eliminato = 1;
         risposta_controllore.pid = informazioni.pid;
@@ -374,8 +370,11 @@ int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, ri
     int err_signal;//errore kill
     //scrivo al padre la risposta del dispositivo di controllo contenente le sue info
     //il padre potrebbe essere un dispositivo diverso dalla centralina ma comunque sarà in ascolto
+    comando.profondita+=1;
+    risposta_to_padre.profondita = comando.profondita;
     write(fd_papi, &risposta_to_padre, sizeof(risp));
     comando.id_padre = informazioni.id;
+    
     //finchè ho figli
     while(nodo != NULL){
         //Mando il comando a mio figlio che lo gestirà

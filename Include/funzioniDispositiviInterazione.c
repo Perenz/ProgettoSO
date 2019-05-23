@@ -55,8 +55,9 @@ void sighandle2(int sig){
 }
 
 int rispondi(risp answer, cmd comando, int fd_write){
-    comando.profondita +=1 ;
+    comando.profondita += 1;
     answer.profondita = comando.profondita;
+    printf("%d\n", comando.profondita);
     answer.id_padre = comando.id_padre;
     answer.termina_comunicazione = 0;
 
@@ -104,7 +105,6 @@ int dev_list_gen(cmd comando, int idPar, int fd_write, info informazioni){
     answer.info_disp = informazioni;
     answer.considera = 1;
     answer.info_disp.def = 0;
-    answer.info_disp = informazioni;
     
     rispondi(answer, comando, fd_write);
 

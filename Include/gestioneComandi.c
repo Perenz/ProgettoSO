@@ -79,7 +79,7 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
     risp answer_tmp;//Risposta che verrà inserita in un array di risposte
     //Imposto a zero la terminazione della comunicazione che fa continuare il ciclio di comunicazione con i figli
     answer_tmp.termina_comunicazione = 0;
-
+    comando.profondita = 0;
     //array statico di risposte PROVA
     int i = 0;//indice array statico delle risposte PROVA
 
@@ -168,7 +168,6 @@ void printRisp(risp* array_risposte, int n, int indentazione){
         if(indentazione == 1){
             int j = 0;
             for(; j<array_risposte[i].profondita; j++){
-                printf("%d",array_risposte[i].profondita);
                 printf("\t");
             }
         }

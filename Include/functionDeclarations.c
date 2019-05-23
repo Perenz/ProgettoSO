@@ -360,6 +360,7 @@ int cen_switch(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
         comando.tipo_comando = 's';
         comando.manuale = 0;
         comando.id = atoi(args[1]);
+        
 
         strcpy(comando.info_disp.interruttore[0].nome,args[2]);
         strcpy(comando.info_disp.interruttore[0].stato,args[3]);
