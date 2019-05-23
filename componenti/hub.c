@@ -214,6 +214,7 @@ int dev_info(cmd comando){
         risposta_controllore.id = id;
         risposta_controllore.considera = 1;
         risposta_controllore.pid = pid;
+        risposta_controllore.dispositivo_interazione = 0;
         //char* info = malloc(ANSWER);
         get_info_string(&(risposta_controllore.info_disp));
         

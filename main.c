@@ -5,13 +5,13 @@
 
 void sigusr2_handler(int sig){
     //printf("Sono nel signal handler della centralina\n");
-    return getManualPid(procList, dispList);
+    return getManualPid(collegati_list, magazzino_list);
 }
 
 void sigint_handler(int sig){
     char **args;
     remove("/tmp/getPidCenFIFO");
-    cen_exit(args, procList, dispList);
+    cen_exit(args, collegati_list, magazzino_list);
     exit(0);
 }
 

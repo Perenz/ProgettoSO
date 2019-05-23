@@ -82,7 +82,7 @@ int add_device_generale(char* execPath, NodoPtr list, info info, char* nome){
     return 1;
 }
 
-int add_device(char* execPath, NodoPtr procList, NodoPtr dispList, char* nome){
+int add_device(char* execPath, NodoPtr collegati_list, NodoPtr magazzino_list, char* nome){
     //add device di default chiamato dalla centralina quando viene aggiunto un dispositivo
     //id_gen+=1;
     //char info[16];
@@ -94,7 +94,7 @@ int add_device(char* execPath, NodoPtr procList, NodoPtr dispList, char* nome){
     infoD.id = id_gen;
     //sprintf(info, "default %d", id_gen);
     
-    add_device_generale(execPath, dispList, infoD, nome);
+    add_device_generale(execPath, magazzino_list, infoD, nome);
     return 1;
 }
 

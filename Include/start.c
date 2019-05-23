@@ -8,8 +8,8 @@
 #define CEN_DELIM " \t\r\n\a"
 #define CEN_BUFSIZE 128
 
-NodoPtr procList = NULL; //lista dei dispositivi collegati 
-NodoPtr dispList; //lista dei dispositivi disponibili (aggiunti ma non collegati a niente)
+NodoPtr collegati_list = NULL; //lista dei dispositivi collegati 
+NodoPtr magazzino_list; //lista dei dispositivi disponibili (aggiunti ma non collegati a niente)
 int supportReadPid;
 
 int cen_processCmd(char **command, NodoPtr, NodoPtr);
@@ -37,13 +37,13 @@ int lanciaGetCenPid(){
     return 1;
 }
 
-int cen_processCmd(char **command, NodoPtr procList, NodoPtr dispList){
+int cen_processCmd(char **command, NodoPtr collegati_list, NodoPtr magazzino_list){
     if(command[0] == NULL)
         return 1;
     int i;
     for(i=0; i<cen_numCommands(); i++){
         if(strcmp(command[0],builtin_cmd[i])==0)
-            return builtin_func[i](command, procList, dispList);
+            return builtin_func[i](command, collegati_list, magazzino_list);
     }
 
     //Se comando inserito non esiste
@@ -62,8 +62,8 @@ int cen_start(){
 
     
     //Inserisco nella lista il pid corrente indicante la centraline stessa
-    procList = listInit(getpid());
-    dispList = listInit(0);
+    collegati_list = listInit(getpid());
+    magazzino_list = listInit(0);
 
     //Lancio i processi di supporto
     //getCenPid che comunica tramite FIFO con manuale.c
@@ -83,7 +83,7 @@ int cen_start(){
             params = splitLine(command);
             //TODO potrei passare il comando non splittato così da poterlo mandare direttamente
             //Esegue il comando
-            status = cen_processCmd(params, procList, dispList);
+            status = cen_processCmd(params, collegati_list, magazzino_list);
         
     }while(status);
 
