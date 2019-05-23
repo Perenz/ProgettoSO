@@ -13,6 +13,7 @@ typedef struct{
 typedef struct{
     int id;
     int pid;
+    int pid_padre;
     char tipo[10];
     char nome[15];
     char stato[10];
