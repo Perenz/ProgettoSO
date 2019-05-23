@@ -365,6 +365,7 @@ int cen_switch(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
         }          
         */
         cmd comando;
+        comando.forzato=0;
         comando.tipo_comando = 's';
         comando.id = atoi(args[1]);
         strcpy(comando.info_disp.interruttore[0].nome,args[2]);
