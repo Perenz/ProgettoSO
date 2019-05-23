@@ -300,7 +300,6 @@ int cen_add(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     }
     //3 device disponibili: bulb, window, fridge
     else{
-        id_gen+=1;
         if(args[2]==NULL){
             //Devo concatenare nome del device piu id 
             //Es: bulb3
@@ -314,8 +313,10 @@ int cen_add(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
         }
         int i;
         for(i=0; i<device_number(); i++){
-            if(strcmp(args[1], builtin_device[i])==0)
+            if(strcmp(args[1], builtin_device[i])==0){
+                    id_gen+=1;
                     return add_device(builtin_dev_path[i], magazzino_list, nome);//viene sempre aggiunto prima al magazzino
+            }
         }
     }
 

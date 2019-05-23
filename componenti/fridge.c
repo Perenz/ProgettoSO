@@ -219,12 +219,15 @@ int main(int argc, char *args[]){
     
     time(&tempoUltimaMisurazione);
     if(informazioni.def == 1){
-        informazioni.delay = 5.0; //di default 5 secondi
+        informazioni.delay = 10.0; //di default 5 secondi
         informazioni.temperatura = 3; //di default 3 gradi
         informazioni.percentuale = 0; //di default frigo vuoto
         strcpy(informazioni.tipo, "fridge");
         strcpy(informazioni.stato, "chiuso");
         informazioni.time = 0.0;
+    }
+    if(strcmp(informazioni.stato,"aperto")==0){
+        alarm((informazioni.delay - ((int)informazioni.time % (int)informazioni.delay)));
     }
     informazioni.pid = getpid(); // chiedo il mio pid
     informazioni.pid_padre = getppid(); //chiedo il pid di mio padre

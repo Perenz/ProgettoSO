@@ -12,6 +12,7 @@
 #include "gestioneComandi.c"
 
 int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid){
+    /*
     risp answer;
     if(id == comando.id){//comando forzato per avere le info di dispositivi situati nel sott'albero di un processo che ha id 
 
@@ -38,7 +39,7 @@ int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid){
         answer.considera = 0;
     }
     rispondi(answer, comando,fd_write, idPar);
-    
+    */
     //famo ritornare l'errore poi
     return 1;
 }
