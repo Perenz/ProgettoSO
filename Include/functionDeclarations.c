@@ -444,12 +444,7 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
 
         return 1;
     }
-    /*
-    cmd prova;
-    prova.id = 3;
-    prova.tipo_comando = 'a';
-    broadcast_centralina(procList,prova, NULL);
-*/
+
 
     if(args[1]==NULL || args[2]==NULL || args[3]==NULL )//gestione errori alla Carlina
         return -1;
@@ -541,27 +536,31 @@ int cen_link(char** args, NodoPtr procList, NodoPtr dispList){
                 n_id_dst = broadcast_centralina(procList, comando, array_risposte_proc_list); 
                 
                 if(n_id_dst != 0){//il dispositivo destinazione esiste in procList
-                    comando.tipo_comando = 'd';
-                    comando.forzato = 1;//elimina anche i figli
-                    comando.id = id_src;
-                    comando.forzato = 0;
+                    if(array_risposte_proc_list[0].dispositivo_interazione !=1){
+                        comando.tipo_comando = 'd';
+                        comando.forzato = 1;//elimina anche i figli
+                        comando.id = id_src;
+                        comando.forzato = 0;
 
-                    //Elimino il dispositivo source e il suo sottoalbero
-                    n_id_src = broadcast_centralina(procList, comando, array_risposte_proc_list);
-                    comando.tipo_comando = 'a';//link aggiungendo
-                    //potrei aggiungere un controllo se l'array = NULL non aggiunge elementi
-                    risp* array_tmp_esito_linking = malloc(1 * sizeof(risp));
+                        //Elimino il dispositivo source e il suo sottoalbero
+                        n_id_src = broadcast_centralina(procList, comando, array_risposte_proc_list);
+                        comando.tipo_comando = 'a';//link aggiungendo
+                        //potrei aggiungere un controllo se l'array = NULL non aggiunge elementi
+                        risp* array_tmp_esito_linking = malloc(1 * sizeof(risp));
 
-                    comando.id = id_dst; 
-                    comando.id2 = id_src;
-                    comando.info_disp = array_risposte_proc_list[0].info_disp;
-                    int tmp = broadcast_centralina(procList, comando, array_tmp_esito_linking);
-                    //se ha altri figli
-                    for(i=1; i<n_id_src; i++){
-                        comando.id = array_risposte_proc_list[i].id_padre;
-                        comando.id2 = array_risposte_proc_list[i].id;
-                        comando.info_disp = array_risposte_proc_list[i].info_disp;
+                        comando.id = id_dst; 
+                        comando.id2 = id_src;
+                        comando.info_disp = array_risposte_proc_list[0].info_disp;
                         int tmp = broadcast_centralina(procList, comando, array_tmp_esito_linking);
+                        //se ha altri figli
+                        for(i=1; i<n_id_src; i++){
+                            comando.id = array_risposte_proc_list[i].id_padre;
+                            comando.id2 = array_risposte_proc_list[i].id;
+                            comando.info_disp = array_risposte_proc_list[i].info_disp;
+                            int tmp = broadcast_centralina(procList, comando, array_tmp_esito_linking);
+                        }
+                    }else{//SE È UN DISPOSITIVO DI INTERAZIONE NON POSSO FARE IL LINKING
+                        printf("Stai cercando di fare il linking ad un dispositivo di interazione, errore\n");
                     }
                     return 1;
                 //LINKING CON DESTINAZIONE GIÁ COLLEGATA E SORGENTE NON COLLEGATA

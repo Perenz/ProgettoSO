@@ -27,6 +27,7 @@ int dev_manualControl(cmd);
 int dev_switch(cmd);
 int dev_list(cmd);
 int dev_info(cmd);
+int dev_add(cmd);
 
 
 void set_time();
@@ -61,8 +62,8 @@ char *builtin_command[]={
     "s",//switch
     "i",//getInfo
     "d", //delete
-    "m",//Manual
-    "a"//////////////////METTERE ERRORE SE ID COINCIDE DATO 
+    "m"//Manual
+
 };
 int (*builtin_func[]) (cmd comando) = { //int man: 0 allora il comando arriva da centralina, 1 il comando arriva da manuale
     &dev_list,
@@ -70,7 +71,7 @@ int (*builtin_func[]) (cmd comando) = { //int man: 0 allora il comando arriva da
     &dev_info,
     &dev_delete,
     &dev_manualControl,
-    &dev_info //////DEV ADD
+    &dev_add //////DEV ADD
 };
 int dev_numCommands(){
     return (sizeof(builtin_command)/ sizeof(char*));
@@ -85,7 +86,8 @@ int device_handle_command(cmd comando){
             return builtin_func[i](comando);
         }
     }
-    return 1;
+    //comando non riconosciuto
+    return -1;
 }
 void signhandle_quit(int sig){
     char fifo[30];
@@ -98,7 +100,7 @@ void signhandle_quit(int sig){
     }
 }
 void sighandle_usr1(int sig){
-    sighandle1(sig, fd_read, idPar);
+    sighandle1(sig, fd_read, fd_write);
 }
 void sighandle_usr2(int sig){
     sighandle2(sig);
@@ -161,7 +163,7 @@ int dev_switch(cmd comando){
         close(fd_manuale);
 
     }else{
-        rispondi(answer, comando, fd_write,idPar);
+        rispondi(answer, comando, fd_write);
     }
     return 1;
 }
@@ -183,6 +185,11 @@ int dev_delete(cmd comando){
     int err = dev_delete_gen(comando, pid, id, idPar, fd_write);
     return err;
 }
+
+int dev_add(cmd comando){
+    int err = dev_add_gen(comando, id, pid, fd_write);
+}
+
 
 void set_time(){
     if(status==1){
@@ -243,6 +250,7 @@ int dev_manualControl(cmd comando){
     int err = dev_manual_info_gen(comando, id, idPar, fd_write, pid);
     return err;
 }
+
 
 int main(int argc, char *args[]){
     pid = getpid(); // chiedo il mio pid

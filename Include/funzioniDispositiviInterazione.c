@@ -18,8 +18,11 @@ void sighandle2(int sig);
 int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid);
 int dev_list_gen(cmd comando, int idPar, int fd_write);
 int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write);
-int rispondi(risp answer, cmd comando, int fd_write, int pidPapi);
+int dev_add_gen(cmd comando, int id, int pid, int fd_write);
+
+int rispondi(risp answer, cmd comando, int fd_write);
 int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid);
+// DA TOGLIERE
 char** splitLine(char* line);
 char** splitLine(char* line){
     int pos=0, bufS = CEN_BUFSIZE;
@@ -57,21 +60,23 @@ char** splitLine(char* line){
 
 //TODO I due handler sono compattabili in uno unico con controllo del tipo di segnale appena prima del read
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
-void sighandle1(int sig, int fd_read, int pid_padre){
+void sighandle1(int sig, int fd_read, int fd_write){
     if(sig == SIGUSR1){
         cmd comando;
         read(fd_read, &comando, sizeof(cmd));
         comando.manuale=0;
         int errnum = device_handle_command(comando);
-    
+        if(errnum == -1){
+            risp answer;  
+            answer.considera = 0;
+            answer.eliminato = 0;
+            rispondi(answer, comando, fd_write);
+        }
     }
 }
 void sighandle2(int sig){
     if(sig == SIGUSR2){
-        //PERCHÈ NON USI SIG1??????????????????'
-
         char fifoManComp[30];
-        
         sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
         int fd_manuale = open(fifoManComp, O_RDONLY);
         cmd comando;
@@ -82,7 +87,7 @@ void sighandle2(int sig){
     }
 }
 
-int rispondi(risp answer, cmd comando, int fd_write, int pidPapi){
+int rispondi(risp answer, cmd comando, int fd_write){
     answer.profondita = comando.profondita+1;
     answer.id_padre = comando.id_padre;
     comando.profondita+=1;
@@ -107,15 +112,77 @@ int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid){
         answer.pid = pid;
         answer.considera = 1;
         answer.id = id;
+        answer.dispositivo_interazione = 1;
         get_info_string(&(answer.info_disp));
     }else{
         answer.considera = 0;
+        answer.dispositivo_interazione = 1;
     }
-    rispondi(answer, comando,fd_write, idPar);
+    rispondi(answer, comando, fd_write);
     
     //famo ritornare l'errore poi
     return 1;
 }
+
+//COMANDO   l
+/*restituisce in pipe
+    se comando è l: <informazioni>
+*/
+int dev_list_gen(cmd comando, int idPar, int fd_write){
+    risp answer;
+    get_info_string(&(answer.info_disp));
+    
+    answer.considera = 1;
+    /*
+    answer.foglia = 1;
+    answer.termina_comunicazione = 1;
+    */
+    rispondi(answer, comando, fd_write);
+
+    return 1;
+}
+
+
+
+//COMANDO d <pid>
+/*restituisco in pipe:
+    0 se NON sono il dispositivo da eliminare
+    pid se sono il dispositivo da eliminare
+*/
+//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write){
+    //printf("pid: %d\n",pid);
+    risp answer;
+    if(id == comando.id || comando.forzato){
+        answer.pid = pid;
+        answer.id = id;
+        answer.considera = 1;
+        answer.eliminato = 1;
+        char* info = malloc(ANSWER);
+        get_info_string(&(answer.info_disp));
+        rispondi(answer, comando, fd_write);
+        exit(0);
+    }else{
+        answer.pid = pid;
+        answer.id = id;
+        answer.considera = 0;
+        answer.eliminato = 0;
+        rispondi(answer, comando, fd_write);
+    }
+    return 1;
+}
+
+int dev_add_gen(cmd comando, int id, int pid, int fd_write){
+    //gestisco il comando 'a' senza fare nulla
+    //lo gestisco con una funzione specifica piuttosto che nell'handler
+    //per averla in tutti i disposti
+    
+
+    return 1;
+}
+
+
 
 int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid){
     risp answer;
@@ -143,57 +210,8 @@ int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid){
     }else{
         answer.considera = 0;
     }
-    rispondi(answer, comando,fd_write, idPar);
+    rispondi(answer, comando,fd_write);
     
     //famo ritornare l'errore poi
-    return 1;
-}
-
-//COMANDO   l
-/*restituisce in pipe
-    se comando è l: <informazioni>
-*/
-int dev_list_gen(cmd comando, int idPar, int fd_write){
-    risp answer;
-    get_info_string(&(answer.info_disp));
-    
-    answer.considera = 1;
-    /*
-    answer.foglia = 1;
-    answer.termina_comunicazione = 1;
-    */
-    rispondi(answer, comando, fd_write, idPar);
-
-    return 1;
-}
-
-
-
-//COMANDO d <pid>
-/*restituisco in pipe:
-    0 se NON sono il dispositivo da eliminare
-    pid se sono il dispositivo da eliminare
-*/
-//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-
-int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write){
-    //printf("pid: %d\n",pid);
-    risp answer;
-    if(id == comando.id || comando.forzato){
-        answer.pid = pid;
-        answer.id = id;
-        answer.considera = 1;
-        answer.eliminato = 1;
-        char* info = malloc(ANSWER);
-        get_info_string(&(answer.info_disp));
-        rispondi(answer, comando, fd_write, pid);
-        exit(0);
-    }else{
-        answer.pid = pid;
-        answer.id = id;
-        answer.considera = 0;
-        answer.eliminato = 0;
-        rispondi(answer, comando, fd_write, pid);
-    }
     return 1;
 }

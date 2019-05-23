@@ -267,12 +267,8 @@ int dev_link(cmd comando){
         info_device_to_add = comando.info_disp;
         risposta_controllore.termina_comunicazione = 0;
         write(fd_write, &risposta_controllore, sizeof(risp));
-        
-        /*
-        risposta_controllore.termina_comunicazione = 1;
-        write(fd_write, &risposta_controllore, sizeof(risp));
-        */
 
+        //La continuazione della risposta si trova nel main
     }else{
         risposta_controllore.considera = 0;
         risposta_controllore.eliminato = 0;
@@ -365,7 +361,6 @@ int main(int argc, char **args){
             risposta_terminazione.termina_comunicazione = 1;
             add = 0;
             write(fd_write, &risposta_terminazione, sizeof(risp));
-            //int ris = kill(idPar, SIGCONT);
         }
             
         pause();
