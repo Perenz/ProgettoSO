@@ -152,20 +152,24 @@ int cen_list(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     malloc_array(&array_risposte_magazzino_list, N_MAX_DISP);
 
     cmd comando;
+    comando.manuale=0;
     comando.tipo_comando = 'l';
     comando.profondita = 0;
+    
     int n = 0;
     printf("\n\tStampo la lista dei dispositivi COLLEGATI:\n");
     printf("\nCENTRALINA VAGINA\n");
     n = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list);  
     printRisp(array_risposte_collegati_list, n, 1);
 
-    
+
+    comando.manuale=0;
+    comando.tipo_comando = 'l';
+    comando.profondita = 0;
     printf("\n\tStampo la lista dei dispositivi DISPONIBILI:\n");
     //gestione eerr
     n = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);
     printRisp(array_risposte_magazzino_list, n, 1);
-    printf("Numero dispositivi: %d\n", n);
 
 
 
@@ -312,6 +316,7 @@ int cen_add(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
             strcpy(nome, args[2]); 
         }
         int i;
+        info informazioni_disp;
         for(i=0; i<device_number(); i++){
             if(strcmp(args[1], builtin_device[i])==0){
                     id_gen+=1;
@@ -349,26 +354,14 @@ int cen_switch(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
         printf("Comando 'device' per vedere la lista di quelli disponibili\n");
         return 1;
     }else{
-        /*
-        signal(SIGCONT, sign_cont_handler);
-        char* comando = malloc(4 + strlen(args[1]) + strlen(args[2]) + strlen(args[3]));//7 per il comando, 4 per spazi di sep. e la terminazione
-        //comando
-        sprintf(comando, "s %s %s", args[1], args[2]);
-        strcat(comando,(isdigit(args[3])?(args[3]):(args[3])));
-        //printf("scrittura lato padre: %s\n", comando);
-        char* answer = broadcast(collegati_list, NULL, comando);
-        if(strcmp(answer, "0")!=0){//ha trovato il dispositivo
-            printf("%s\n", answer);//stampiamo una qualche risposta daje
-            free(comando);
-            free(answer);
-        }else{//non ho trovato nessun dispositivo con quell'id
-            printf("Nessun elemento ha questo id o errore nel comando\n");    
-        }          
-        */
+        
         cmd comando;
-        comando.forzato=0;
+        comando.forzato = 0;
         comando.tipo_comando = 's';
+        comando.manuale = 0;
         comando.id = atoi(args[1]);
+        
+
         strcpy(comando.info_disp.interruttore[0].nome,args[2]);
         strcpy(comando.info_disp.interruttore[0].stato,args[3]);
 
@@ -379,12 +372,14 @@ int cen_switch(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
 
         int n = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);
         printRisp(array_risposte_magazzino_list, n, 1);
-
+        printf("Numero dispositivi: %d\n", n);
         
 
-        n = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list);
-        printRisp(array_risposte_magazzino_list, n, 1);
+        comando.profondita = 0;
 
+        n = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list);
+        printRisp(array_risposte_collegati_list, n, 1);
+        printf("Numero dispositivi: %d\n", n);
 
         free(array_risposte_collegati_list);
         free(array_risposte_magazzino_list);

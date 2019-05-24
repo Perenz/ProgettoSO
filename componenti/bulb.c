@@ -133,11 +133,15 @@ int dev_switch(cmd comando){
             }
             //get_info_string(&(answer.info_disp));
             answer.considera = 1;
-        }
-    }else
-    {
+        }else{
             answer.considera = 0;
+        }
+
+        answer.info_disp = informazioni;
+    }else{
+        answer.considera = 0;
     }
+    
     if(comando.manuale==1){
         //Devo rispondere al manuale
         //fd_manuale
@@ -206,6 +210,7 @@ int main(int argc, char *args[]){
     fd_read = atoi(args[1]);
     fd_write = atoi(args[2]);  
     int err = read(fd_read, &informazioni,sizeof(info));
+    
     if(err == -1)
         printf("eerore nella lettura delle info BULB\n");
     
@@ -217,8 +222,6 @@ int main(int argc, char *args[]){
     }
     informazioni.pid = getpid(); // chiedo il mio pid
     informazioni.pid_padre = getppid(); //chiedo il pid di mio padre
-    
-
 
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
