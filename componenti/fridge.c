@@ -133,7 +133,7 @@ int dev_list(cmd comando){
 int dev_switch(cmd comando){
     risp answer;
     if(comando.id == informazioni.id || comando.forzato == 1){
-        if(strcmp(comando.info_disp.interruttore[0].nome , "apertura")==0 || trcmp(comando.info_disp.interruttore[0].nome , "aperturaF")==0){
+        if(strcmp(comando.info_disp.interruttore[0].nome , "apertura")==0 || strcmp(comando.info_disp.interruttore[0].nome , "aperturaF")==0){
             //get_info_string(&(answer.info_disp));
             if(strcmp(informazioni.stato,"chiuso")== 0 && strcmp(comando.info_disp.interruttore[0].stato , "on")==0){
                 strcpy(informazioni.stato, "aperto"); 
