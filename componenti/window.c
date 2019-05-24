@@ -124,14 +124,14 @@ int dev_list(cmd comando){
 int dev_switch(cmd comando){
     risp answer;
     if(comando.id == informazioni.id || comando.forzato == 1){
-        if(strcmp(comando.info_disp.interruttore[0].nome , "apertura")==0){
+        if(strcmp(comando.info_disp.finestra.apertura.nome , "apertura")==0){
             //get_info_string(&(answer.info_disp));
-            if(strcmp(informazioni.stato,"chiusa")== 0 && strcmp(comando.info_disp.interruttore[0].stato , "on")==0){
+            if(strcmp(informazioni.stato,"chiusa")== 0 && strcmp(comando.info_disp.finestra.apertura.stato , "on")==0){
                 strcpy(informazioni.stato, "aperta");  
             }
             answer.considera = 1;
-        }else if(strcmp(comando.info_disp.interruttore[0].nome , "chiusura")==0){
-            if(strcmp(informazioni.stato,"aperta")== 0 && strcmp(comando.info_disp.interruttore[0].stato , "on")==0){
+        }else if(strcmp(comando.info_disp.finestra.chiusura.nome , "chiusura")==0){
+            if(strcmp(informazioni.stato,"aperta")== 0 && strcmp(comando.info_disp.finestra.chiusura.stato , "on")==0){
                 strcpy(informazioni.stato, "chiusa");  
             }
             //get_info_string(&(answer.info_disp));

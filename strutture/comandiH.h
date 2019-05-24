@@ -11,18 +11,34 @@ typedef struct{
 }interruttore;
 
 typedef struct{
+    interruttore accensione;
+}bulb;
+typedef struct{
+    interruttore apertura;
+    interruttore chiusura;
+}window;
+typedef struct{
+    interruttore apertura;
+    interruttore termostato;
+    interruttore delayI;
+    interruttore percI;
+    double delay;
+    int percentuale;
+    int temperatura;
+}fridge;
+
+typedef struct{
     int id;
     int pid;
     int pid_padre;
     char tipo[10];
     char nome[15];
     char stato[10];
-    interruttore interruttore[3];
     double time;
-    double delay;
-    int percentuale;
-    int temperatura;
     int def; //default, nuovo dispositivo
+    bulb lampadina;
+    window finestra;
+    fridge frigo;
 }info;
 
 typedef struct{

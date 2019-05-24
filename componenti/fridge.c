@@ -133,18 +133,18 @@ int dev_list(cmd comando){
 int dev_switch(cmd comando){
     risp answer;
     if(comando.id == informazioni.id || comando.forzato == 1){
-        if(strcmp(comando.info_disp.interruttore[0].nome , "apertura")==0){
+        if(strcmp(comando.info_disp.frigo.apertura.nome , "apertura")==0){
             //get_info_string(&(answer.info_disp));
-            if(strcmp(informazioni.stato,"chiuso")== 0 && strcmp(comando.info_disp.interruttore[0].stato , "on")==0){
+            if(strcmp(informazioni.stato,"chiuso")== 0 && strcmp(comando.info_disp.frigo.apertura.stato , "on")==0){
                 strcpy(informazioni.stato, "aperto"); 
-                alarm(informazioni.delay); 
-            }else if(strcmp(informazioni.stato,"aperto")== 0 && strcmp(comando.info_disp.interruttore[0].stato , "off")==0){
+                alarm(informazioni.frigo.delay); 
+            }else if(strcmp(informazioni.stato,"aperto")== 0 && strcmp(comando.info_disp.frigo.apertura.stato , "off")==0){
                 strcpy(informazioni.stato, "chiuso");  
             }
             //get_info_string(&(answer.info_disp));
             answer.considera = 1;
-        }else if(strcmp(comando.info_disp.interruttore[0].nome , "termostato")==0){
-            informazioni.temperatura = atoi(comando.info_disp.interruttore[0].stato);
+        }else if(strcmp(comando.info_disp.frigo.termostato.nome , "termostato")==0){
+            informazioni.frigo.temperatura = atoi(comando.info_disp.frigo.termostato.stato);
             answer.considera = 1;
         }
     }else
@@ -162,7 +162,7 @@ int dev_switch(cmd comando){
         int fd_manuale = open(fifoManComp, O_WRONLY);
 
         //////////////////////////////////////////////////////////
-        (strcmp(comando.info_disp.interruttore[0].nome , "apertura")==0) ? sprintf(msg, "%s", informazioni.stato) : sprintf(msg, "%d", informazioni.temperatura);//Rispondo solamente con lo status attuale del dispositivo
+        (strcmp(comando.info_disp.frigo.apertura.nome , "apertura")==0) ? sprintf(msg, "%s", informazioni.stato) : sprintf(msg, "%d", informazioni.frigo.temperatura);//Rispondo solamente con lo status attuale del dispositivo
         int esito=write(fd_manuale, msg, 10);
         /////////////////////////////////////////////////////////
 
@@ -179,11 +179,11 @@ int dev_set(cmd comando){
     risp answer;
     char fifoManComp[30], msg[10];
     if(comando.id==informazioni.id){
-        if(strcmp(comando.info_disp.interruttore[0].nome, "delay")==0){
-            informazioni.delay = atoi(comando.info_disp.interruttore[0].stato);
+        if(strcmp(comando.info_disp.frigo.delayI.nome, "delay")==0){
+            informazioni.frigo.delay = atoi(comando.info_disp.frigo.delayI.stato);
         }
-        else if(strcmp(comando.info_disp.interruttore[0].nome, "perc")==0){
-            informazioni.percentuale = atoi(comando.info_disp.interruttore[0].stato);
+        else if(strcmp(comando.info_disp.frigo.percI.nome, "perc")==0){
+            informazioni.frigo.percentuale = atoi(comando.info_disp.frigo.percI.stato);
         }
         answer.considera=1;
     }else
@@ -201,7 +201,7 @@ int dev_set(cmd comando){
         int fd_manuale = open(fifoManComp, O_WRONLY);
 
         //////////////////////////////////////////////////////////
-        sprintf(msg, "%s", comando.info_disp.interruttore[0].stato);//Rispondo solamente con lo status attuale del dispositivo
+        //sprintf(msg, "%s", comando.info_disp.interruttore[0].stato);//Rispondo solamente con lo status attuale del dispositivo
         int esito=write(fd_manuale, msg, 10);
         /////////////////////////////////////////////////////////
 
@@ -262,15 +262,15 @@ int main(int argc, char *args[]){
     
     time(&tempoUltimaMisurazione);
     if(informazioni.def == 1){
-        informazioni.delay = 10.0; //di default 5 secondi
-        informazioni.temperatura = 3; //di default 3 gradi
-        informazioni.percentuale = 0; //di default frigo vuoto
+        informazioni.frigo.delay = 10.0; //di default 5 secondi
+        informazioni.frigo.temperatura = 3; //di default 3 gradi
+        informazioni.frigo.percentuale = 0; //di default frigo vuoto
         strcpy(informazioni.tipo, "fridge");
         strcpy(informazioni.stato, "chiuso");
         informazioni.time = 0.0;
     }
     if(strcmp(informazioni.stato,"aperto")==0){
-        alarm((informazioni.delay - ((int)informazioni.time % (int)informazioni.delay)));
+        alarm((informazioni.frigo.delay - ((int)informazioni.time % (int)informazioni.frigo.delay)));
     }
     informazioni.pid = getpid(); // chiedo il mio pid
     informazioni.pid_padre = getppid(); //chiedo il pid di mio padre

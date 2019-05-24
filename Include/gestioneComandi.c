@@ -229,7 +229,7 @@ void stampaDisp(info infoDisp){
         printf("%d Bulb %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
     }else if(strcmp(infoDisp.tipo, "fridge") == 0){
         printf("%d Fridge %d %s time: %.2f  delay: %.2f  percentualeRiempimento: %d  temperatura: %d \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time,
-        infoDisp.delay, infoDisp.percentuale, infoDisp.temperatura);
+        infoDisp.frigo.delay, infoDisp.frigo.percentuale, infoDisp.frigo.temperatura);
     }else if(strcmp(infoDisp.tipo, "window") == 0){
         printf("%d Window %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
     }else if(strcmp(infoDisp.tipo, "timer") == 0){
