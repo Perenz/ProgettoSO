@@ -171,8 +171,8 @@ void esegui_switch(char **args, int *cont, int idCont, char tipoCont)
     comando.tipo_comando = 's';
     comando.manuale = 1;
     comando.id = idCont;
-    strcpy(comando.info_disp.interruttore[0].nome, args[1]);
-    strcpy(comando.info_disp.interruttore[0].stato, args[2]);
+    strcpy(comando.cmdInterruttore.nome, args[1]);
+    strcpy(comando.cmdInterruttore.stato, args[2]);
     //Scrivo sulla fifo e mando sig2
     //Apro la fifo in scrittura
 
@@ -224,8 +224,8 @@ void esegui_set(char **args, int *cont, int idCont, char tipoCont){
     comando.tipo_comando = 'p'; //Comando p per il set
     comando.manuale = 1;
     comando.id = idCont;
-    strcpy(comando.info_disp.interruttore[0].nome, args[1]);
-    strcpy(comando.info_disp.interruttore[0].stato, args[2]);
+    strcpy(comando.cmdInterruttore.nome, args[1]);
+    strcpy(comando.cmdInterruttore.stato, args[2]);
     //Scrivo sulla fifo e mando sig2
     //Apro la fifo in scrittura
 

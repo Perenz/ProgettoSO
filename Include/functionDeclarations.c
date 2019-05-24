@@ -362,8 +362,8 @@ int cen_switch(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
         comando.id = atoi(args[1]);
         
 
-        strcpy(comando.info_disp.interruttore[0].nome,args[2]);
-        strcpy(comando.info_disp.interruttore[0].stato,args[3]);
+        strcpy(comando.cmdInterruttore.nome,args[2]);
+        strcpy(comando.cmdInterruttore.stato,args[3]);
 
         risp* array_risposte_magazzino_list;
         malloc_array(&array_risposte_magazzino_list, N_MAX_DISP);

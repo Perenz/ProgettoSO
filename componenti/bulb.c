@@ -124,11 +124,11 @@ int dev_list(cmd comando){
 int dev_switch(cmd comando){
     risp answer;
     if(comando.id == informazioni.id || comando.forzato == 1){
-        if(strcmp(comando.info_disp.lampadina.accensione.nome , "accensione")==0){
+        if(strcmp(comando.cmdInterruttore.nome , "accensione")==0){
             //get_info_string(&(answer.info_disp));
-            if(strcmp(informazioni.stato,"off")== 0 && strcmp(comando.info_disp.lampadina.accensione.stato , "on")==0){
+            if(strcmp(informazioni.stato,"off")== 0 && strcmp(comando.cmdInterruttore.stato , "on")==0){
                 strcpy(informazioni.stato, "on");  
-            }else if(strcmp(informazioni.stato,"on")== 0 && strcmp(comando.info_disp.lampadina.accensione.stato , "off")==0){
+            }else if(strcmp(informazioni.stato,"on")== 0 && strcmp(comando.cmdInterruttore.stato , "off")==0){
                 strcpy(informazioni.stato, "off");  
             }
             //get_info_string(&(answer.info_disp));
