@@ -133,36 +133,35 @@ int dev_switch(cmd comando){
             }
             //get_info_string(&(answer.info_disp));
             answer.considera = 1;
-        }else{
-            answer.considera = 0;
-        }
 
-        answer.info_disp = informazioni;
+            if(comando.manuale==1){
+                //Devo rispondere al manuale
+                //fd_manuale
+                //devo aprire la fifo prima di rispondere
+                char fifoManComp[30], msg[10];
+                
+                sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
+                //Apro Fifo in scrittura
+                int fd_manuale = open(fifoManComp, O_WRONLY);
+
+                //////////////////////////////////////////////////////////
+                sprintf(msg, "%s", informazioni.stato);//Rispondo solamente con lo status attuale del dispositivo
+                int esito=write(fd_manuale, msg, 10);
+                /////////////////////////////////////////////////////////
+
+                //Chiudo in scrittura
+                close(fd_manuale);
+
+                return 1;
+            }   
+        }
     }else{
         answer.considera = 0;
     }
-    
-    if(comando.manuale==1 && answer.considera){
-        //Devo rispondere al manuale
-        //fd_manuale
-        //devo aprire la fifo prima di rispondere
-        char fifoManComp[30], msg[10];
-        
-        sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
-        //Apro Fifo in scrittura
-        int fd_manuale = open(fifoManComp, O_WRONLY);
 
-        //////////////////////////////////////////////////////////
-        sprintf(msg, "%s", informazioni.stato);//Rispondo solamente con lo status attuale del dispositivo
-        int esito=write(fd_manuale, msg, 10);
-        /////////////////////////////////////////////////////////
+    answer.info_disp = informazioni;
+    rispondi(answer, comando, fd_write);
 
-        //Chiudo in scrittura
-        close(fd_manuale);
-
-    }else{
-        rispondi(answer, comando, fd_write);
-    }
     return 1;
 }
 

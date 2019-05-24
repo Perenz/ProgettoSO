@@ -210,30 +210,34 @@ int dev_switch(cmd comando){//////DA MODIFICARE
         risposta_controllore.info_disp = informazioni;
         */
         risposta_controllore.info_disp = informazioni;
-        rispondi(risposta_controllore, comando);
+        if(comando.manuale==1){
+            comando.manuale=0;
+            rispondi(risposta_controllore, comando);
+
+            //Devo rispondere al manuale
+            //fd_manuale
+            //devo aprire la fifo prima di rispondere
+            char fifoManComp[30], msg[10];
+            
+            sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
+            //Apro Fifo in scrittura
+            int fd_manuale = open(fifoManComp, O_WRONLY);
+
+            //sprintf(msg, "%d", informazioni.stato);//Rispondo solamente con lo status attuale del dispositivo
+            int esito=write(fd_manuale, msg, 10);
+
+            //Chiudo in scrittura
+            close(fd_manuale);
+
+            return 1;
+        }
+
     }else{
         risposta_controllore.considera = 0;
         risposta_controllore.id = informazioni.id;
     }
-    if(comando.manuale==1){
-        //Devo rispondere al manuale
-        //fd_manuale
-        //devo aprire la fifo prima di rispondere
-        char fifoManComp[30], msg[10];
-        
-        sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
-        //Apro Fifo in scrittura
-        int fd_manuale = open(fifoManComp, O_WRONLY);
-
-        //sprintf(msg, "%d", informazioni.stato);//Rispondo solamente con lo status attuale del dispositivo
-        int esito=write(fd_manuale, msg, 10);
-
-        //Chiudo in scrittura
-        close(fd_manuale);
-    }else{
-        rispondi(risposta_controllore, comando);
-    }
     
+    rispondi(risposta_controllore, comando);  
     return 1;
 }
 

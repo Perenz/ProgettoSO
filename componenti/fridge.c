@@ -186,33 +186,34 @@ int dev_set(cmd comando){
             informazioni.frigo.percentuale = atoi(comando.cmdInterruttore.stato);
         }
         answer.considera=1;
-    }else
-    {
-        answer.considera=1;
-    }
-    if(comando.manuale==1  && answer.considera){
-        //Devo rispondere al manuale
-        //fd_manuale
-        //devo aprire la fifo prima di rispondere
-        
-        
-        sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
-        //Apro Fifo in scrittura
-        int fd_manuale = open(fifoManComp, O_WRONLY);
 
-        //////////////////////////////////////////////////////////
-        //sprintf(msg, "%s", comando.info_disp.interruttore[0].stato);//Rispondo solamente con lo status attuale del dispositivo
+        if(comando.manuale==1){
+            //Devo rispondere al manuale
+            //fd_manuale
+            //devo aprire la fifo prima di rispondere
+            char fifoManComp[30], msg[10];
+            
+            sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
+            //Apro Fifo in scrittura
+            int fd_manuale = open(fifoManComp, O_WRONLY);
 
-        int esito=write(fd_manuale, comando.cmdInterruttore.stato, 10);
-        /////////////////////////////////////////////////////////
+            //////////////////////////////////////////////////////////
+            sprintf(msg, "%s", informazioni.stato);//Rispondo solamente con lo status attuale del dispositivo
+            int esito=write(fd_manuale, msg, 10);
+            /////////////////////////////////////////////////////////
 
-        //Chiudo in scrittura
-        close(fd_manuale);
+            //Chiudo in scrittura
+            close(fd_manuale);
 
+            return 1;
+        } 
     }else{
-        rispondi(answer, comando, fd_write);
+        answer.considera = 0;
     }
     
+    rispondi(answer, comando, fd_write);
+
+    return 1; 
 }
 
 //COMANDO   info <id>

@@ -51,7 +51,7 @@ int cenPid;
 
 int getCenPid(){
     int fd;
-    char msg[20] = "hand";
+    char msg[10] = "hand";
 
     //La apro per write only
     fd = open(myFIFO, O_WRONLY);
