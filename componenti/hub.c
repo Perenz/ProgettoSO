@@ -9,6 +9,7 @@
 
 #include "../Include/gestioneComandi.c"
 #include "../Include/addDevice.c"
+//#include "../include/funzioniDispositiviControllo.c"
 
 //voglio usare le funzioni definite in functionDeclaration urca
 #define CEN_BUFSIZE 128
@@ -86,6 +87,19 @@ void sigint_handler(int sig){
     //Come per bulb non serve andare in pausa
 }
 
+void sighandle2(int sig){
+    if(sig == SIGUSR2){
+        char fifoManComp[30];
+        sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
+        int fd_manuale = open(fifoManComp, O_RDONLY);
+        cmd comando;
+        read(fd_manuale, &comando, sizeof(cmd));//uso 10 per intanto, vedi sopra poi
+        close(fd_manuale);
+        comando.manuale=1;
+        int errnum = device_handle_command(comando);
+    }
+}
+
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
 void sighandle_usr1_hub(int sig){
     signal(SIGCONT, sign_cont_handler_hub);
@@ -106,12 +120,8 @@ void sighandle_usr1_hub(int sig){
 
 //USATO PER SVEGLIARE IL PROCESSO
 void sighandle_usr2(int sig){
-    
-    signal(SIGUSR2, sighandle_usr2);
-    if(sig == SIGUSR2){
-        return;
-    }
-}   
+    sighandle2(sig);
+} 
 
 int device_handle_command(cmd comando){
     //da fare come in functionDeclarations in file dispositivi
@@ -131,6 +141,34 @@ int rispondi(risp risposta_controllore, cmd comando){
     //vado io in controllo e mando le varie risposte al papi
     //attenz, buono che salto il primo
     broadcast_controllo(dispList, comando, informazioni, fd_write, risposta_controllore);
+    return 1;
+}
+
+int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, info informazioni){
+  risp answer;
+    if(id == comando.id){//comando forzato per avere le info di dispositivi situati nel sott'albero di un processo che ha id 
+
+        answer.pid = pid;
+        answer.considera = 1;
+        answer.id = id;
+        answer.dispositivo_interazione = 1;
+        answer.info_disp.def = 0;
+        answer.info_disp = informazioni;
+        //get_info_string(&(answer.info_disp));
+
+        //Devo creare la fifo per il collegamento diretto
+        char fifoManComp[30];
+        
+        sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
+        mkfifo(fifoManComp, 0666);
+    
+    }else{
+        answer.considera = 0;
+        answer.dispositivo_interazione = 1;
+    }
+    rispondi(answer, comando);
+    
+    //famo ritornare l'errore poi
     return 1;
 }
 
@@ -304,8 +342,8 @@ int dev_link(cmd comando){
 
 int dev_manualControl(cmd comando){
     fifoCreata=1;
-    //int err = dev_manual_info_gen(comando, id, informazioni.pid_padre, fd_write, pid); //dov'è bro?
-    //return err;
+    int err = dev_manual_info_gen(comando, informazioni.id, informazioni.pid_padre, fd_write, informazioni.pid, informazioni);
+    return err;
 }
 
 
@@ -338,7 +376,8 @@ int main(int argc, char **args){
     signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1_hub); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
-    
+    signal(SIGUSR2, sighandle_usr2);
+
     if(informazioni.def == 1){
         printf("\nHub posto in magazzino \n");
     }else{

@@ -273,6 +273,12 @@ int isNum(char* str){
     return 1;
 }
 
+int checkHubArgs(char **args, char tipoCont){
+    //Per hub e timer le label permesse sono diverse, controllo che quella inserita sia uguale ad una delle tante
+    return (tipoCont == 'h' || tipoCont=='t' )&& (strcmp(args[1], "apertura") == 0 || strcmp(args[1], "chiusura")==0 || strcmp(args[1], "aperturaF")==0 ||
+        strcmp(args[1], "chiusuraF")==0 || strcmp(args[1], "aperturaW")==0 || strcmp(args[1], "chiusuraW")==0 || strcmp(args[1], "termostato")==0);
+}
+
 
 int hand_switch(char **args, int *cont, int idCont, char tipoCont)
 {
@@ -285,7 +291,7 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont)
     }
     else if (tipoCont == 'b' && strcmp(args[1], "accensione") == 0)
     {
-        //Controlli per dispositivo BULB (o hub di bulb)
+        //Controlli per dispositivo BULB
         if (strcmp(args[2], "on") != 0 && strcmp(args[2], "off") != 0)
         {
             printf("Errore nei parametri\n");
@@ -298,9 +304,9 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont)
         esegui_switch(args, cont, idCont, 'b');
         return -1;
     }
-    else if (tipoCont == 'w' && (strcmp(args[1], "apertura") == 0 || strcmp(args[1], "chiusura") == 0))
+    else if (tipoCont == 'w' && (strcmp(args[1], "apertura") == 0 || strcmp(args[1], "chiusura") == 0 || strcmp(args[1], "aperturaW") == 0 || strcmp(args[1], "chiusuraW") == 0))
     {
-        //Controlli per dispositivo WINDOW (o hub di window)
+        //Controlli per dispositivo WINDOW
         if (strcmp(args[2], "on") != 0 && strcmp(args[2], "off") != 0)
         {
             printf("Errore nei parametri\n");
@@ -313,9 +319,9 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont)
         esegui_switch(args, cont, idCont, 'w');
         return -1;
     }
-    else if (tipoCont == 'f' && (strcmp(args[1], "apertura") == 0 || strcmp(args[1], "chiusura") == 0))
+    else if (tipoCont == 'f' && (strcmp(args[1], "apertura") == 0 || strcmp(args[1], "chiusura") == 0 || strcmp(args[1], "aperturaF") == 0 || strcmp(args[1], "chiusuraF") == 0))
     {
-        //Controlli per dispositivo FRIDGE (o hub di fridge)
+        //Controlli per dispositivo FRIDGE 
         if (strcmp(args[2], "on") != 0 && strcmp(args[2], "off") != 0)
         {
             printf("Errore nei parametri\n");
@@ -338,6 +344,21 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont)
         esegui_switch(args,cont,idCont, 'f');
         return -1;
     }
+    else if (checkHubArgs)
+    {
+        //Controlli per dispositivo hub
+        if ((strcmp(args[2], "on") != 0 && strcmp(args[2], "off") != 0) || (strcmp(args[1], "termostato")==0 && !isNum(args[2])))
+        {
+            printf("Errore nei parametri\n");
+            printf("Usage: switch <label> <nuovostato>\n");
+            printf("Label ammesse pr tipo bulb: accensione\n");
+            printf("Stati ammessi per label accensione: on/off\n");
+            return -1;
+        }
+
+        esegui_switch(args, cont, idCont, 'h');
+        return -1;
+    }
     else
     {
         printf("Combinazione tra label e tipo dispositivo controllato non riconosciuta\n");
@@ -356,7 +377,7 @@ int hand_exit1(char **args, int *contPid, int contId, char tipoCont)
 
 int hand_set(char **args, int *contPid, int contId, char tipoCont)
 {
-    if (tipoCont != 'f' || args[2] == NULL || args[3] != NULL)
+    if ((tipoCont != 'f' && tipoCont != 'h' && tipoCont != 't') || args[2] == NULL || args[3] != NULL)
     {
         printf("Comando set valido solo con frigorifero come tipo di dispositivo controllato\n");
         printf("Indicare una delle 3 proprietà: delay, perc, termostato\n");
