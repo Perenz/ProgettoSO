@@ -50,6 +50,7 @@ typedef struct{
     int manuale; //se 1 significa che il comando arriva tramite controllo manuale
     int id2; //caso link
     int id_padre;
+    interruttore cmdInterruttore;
     info info_disp;
     //aggiungere vari campi per comandi più complessi come link
 }cmd;
