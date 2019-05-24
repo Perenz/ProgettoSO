@@ -2,7 +2,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <errno.h>
+#include <ctype.h>
+#include "../strutture/comandiH.h"
 #include "./handFunctionDeclarations.c"
 
 #define CEN_DELIM " \t\r\n\a"
@@ -24,13 +30,13 @@ int cenPid;
 
 /*Cambio la funzione processCmd processCmd in questo modo:
     - Se controllo == 0
-        Significa che nessun dispositivo è al momento controllato quindi si dovrà effettuare il collegamento digitando il nome o id del 
+        Significa che nessun dispositivo è al momento controllato quindi si dovrà effettuare il collegamento digitando l'id del 
         dispositivo su cui vogliamo agire.
-        Tramite la centralina (ricercaNellAlbero) torniamo il pid del dispositivo con tale nome/id cosi da poter istanziare una
+        Tramite la centralina (ricercaNellAlbero) torniamo il pid del dispositivo con tale id cosi da poter istanziare una
         FIFO tra manuale.c ed il dispositivo interessato.
         A questo punto la variabile pid cambia
 
-        controllo rimane assegnata fino a quando non si effettua una exit/quit dal dispositivo "attivo"
+        controllo rimane assegnata fino a quando non si effettua una release dal dispositivo "attivo"
 
     - Se controllo != 0
         Significa che stiamo gia controllando un dispositivo e possiamo quindi impartire i vari comandi come:
