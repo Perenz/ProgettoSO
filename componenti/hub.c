@@ -7,8 +7,9 @@
 #include "../strutture/listH.h"
 #include "../strutture/list.c"
 
-#include "../Include/gestioneComandi.c"
+//#include "../Include/gestioneComandi.c"
 #include "../Include/addDevice.c"
+#include "../include/funzioniDispositiviControllo.c"
 
 //voglio usare le funzioni definite in functionDeclaration urca
 #define CEN_BUFSIZE 128
@@ -304,8 +305,8 @@ int dev_link(cmd comando){
 
 int dev_manualControl(cmd comando){
     fifoCreata=1;
-    //int err = dev_manual_info_gen(comando, id, informazioni.pid_padre, fd_write, pid); //dov'è bro?
-    //return err;
+    int err = dev_manual_info_gen(comando, informazioni.id, informazioni.pid_padre, fd_write, informazioni.pid, informazioni);
+    return err;
 }
 
 

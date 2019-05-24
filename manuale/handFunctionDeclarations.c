@@ -304,7 +304,7 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont)
         esegui_switch(args, cont, idCont, 'b');
         return -1;
     }
-    else if (tipoCont == 'w' && (strcmp(args[1], "apertura") == 0 || strcmp(args[1], "chiusura") == 0))
+    else if (tipoCont == 'w' && (strcmp(args[1], "apertura") == 0 || strcmp(args[1], "chiusura") == 0 || strcmp(args[1], "aperturaW") == 0 || strcmp(args[1], "chiusuraW") == 0))
     {
         //Controlli per dispositivo WINDOW
         if (strcmp(args[2], "on") != 0 && strcmp(args[2], "off") != 0)
@@ -319,7 +319,7 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont)
         esegui_switch(args, cont, idCont, 'w');
         return -1;
     }
-    else if (tipoCont == 'f' && (strcmp(args[1], "apertura") == 0 || strcmp(args[1], "chiusura") == 0))
+    else if (tipoCont == 'f' && (strcmp(args[1], "apertura") == 0 || strcmp(args[1], "chiusura") == 0 || strcmp(args[1], "aperturaF") == 0 || strcmp(args[1], "chiusuraF") == 0))
     {
         //Controlli per dispositivo FRIDGE 
         if (strcmp(args[2], "on") != 0 && strcmp(args[2], "off") != 0)
@@ -344,7 +344,7 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont)
         esegui_switch(args,cont,idCont, 'f');
         return -1;
     }
-    else if (checkHubArgs == 0)
+    else if (checkHubArgs)
     {
         //Controlli per dispositivo hub
         if ((strcmp(args[2], "on") != 0 && strcmp(args[2], "off") != 0) || (strcmp(args[1], "termostato")==0 && !isNum(args[2])))
