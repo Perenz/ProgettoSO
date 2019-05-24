@@ -71,7 +71,11 @@ int add_device_generale(char* execPath, NodoPtr list, info info, char* nome){
         
         int err = write(fd_writer[1],&info,sizeof(info));
         if(err == -1) 
-            printf("porcoddue\n");
+            printf("Errore scrittura pipe\n");
+        if(err == -1) 
+            printf("Errore scrittura pipe\n");
+
+
         list = insertLast(list, pid, fd_reader[0],fd_writer[1]);
         //Vado in pausa per permettere al figlio di generarsi
         pause();

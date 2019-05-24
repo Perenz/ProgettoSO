@@ -147,16 +147,98 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
     //Rispondo con il numero di dispositivi inseriti, metodo di merda, però utile per verificare se ci sono disp
     return i;
 }
+int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_papi, risp risposta_to_padre){
+    //nodo rappresenta il figlio, nell'hub passo il successivo dato che il primo nodo 
+    //è sè stesso
+    NodoPtr nodo = list->next;
+    //risposta che verrà mandata al padre (se ho figli)
+    risp answer;
+    int err_signal;//errore kill
+    //scrivo al padre la risposta del dispositivo di controllo contenente le sue info
+    //il padre potrebbe essere un dispositivo diverso dalla centralina ma comunque sarà in ascolto
+    comando.profondita+=1;
+    risposta_to_padre.profondita = comando.profondita;
+    write(fd_papi, &risposta_to_padre, sizeof(risp));
+    comando.id_padre = informazioni.id;
+    
+    //finchè ho figli
+    while(nodo != NULL){
+        //Mando il comando a mio figlio che lo gestirà
+        write(nodo->fd_writer, &comando, sizeof(comando));
+        int pid_figlio = nodo->data;
+        err_signal = kill(nodo->data, SIGUSR1);
+        //Mando un segnale per comunicare a mio figlio di gestire il comando
+        if(err_signal != 0)
+            perror("errore in invio segnale");
+        while(1){
+            //Leggo la risposta --> viene letta dopo che mi è arrivato un segnale SIGCONT
+            //dato che è bloccante
+            read(nodo->fd_reader, &answer, sizeof(risp));
+            //stampaDisp(answer.info_disp);
+                //debug printf("Leggo la risposta in %d, %s\n", id, answer.info);
+            //se è un messaggio di terminazione devo uscire dal ciclo di ascolto e andare 
+            //al nodo successivo
+            if(answer.termina_comunicazione == 1){
+                break;
+            }else{
+                
+                //Il delete non funziona se fatto non al primo nodo o con delete --all OIBO
+                //se non è un messaggio di terminazione significa che il figlio ha ancora risp da comunicare
+                //nel caso dei dispositivi di interazione (o controllo senza figli) verrà mandato
+                //1 messaggio contenente le informazioni e un successivo messaggio di terminazione
+                if(answer.eliminato == 1){//questo vale quando risalgo, se il dispositivo è da eliminare lo tolgo dalla lista dei processi
+                    //printList(list);
+                    removeNode(list, answer.pid);
+                    answer.eliminato = 0;//setto a 0 sennò lo toglie anche il padre che non lo ha nella lista 
+                }
+                //finchè tutti i figli non avranno mandato il messaggio di terminazione
+                //continuerà a mandare risposte in su nell'albero verso la centralina, quando tutti avranno mandato il messaggio di terminazione
+                //egli manderà 1 messaggio di terminazione al padre
+                //scrivo a mio padre la risposta che ho appena letto
+                if(answer.considera==1)
+                    write(fd_papi, &answer, sizeof(risp));
+                
+                //mando un segnale al figlio per comunicare di continuare la comunicazione                
+                err_signal = kill(pid_figlio, SIGCONT);
+
+                if(err_signal != 0)
+                    perror("errore in invio segnale");
+                //messaggio di terminazione o
+                //ulteriore risposta con terminazione = 0 
+                
+            }
+        }
+        nodo = nodo->next;
+    }
+    //comunico al padre di aver finito di comunicare mettendo il parametro termina_comunicazione = 1
+    risposta_to_padre.termina_comunicazione = 1;
+    write(fd_papi, &risposta_to_padre,sizeof(risp));
+    return 1;
+}
+
+
+
+
+
+
+
+
+
 void stampaDisp(info infoDisp){
     if(strcmp(infoDisp.tipo, "bulb") == 0){
         printf("%d Bulb %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
-    }else if(strcmp(infoDisp.tipo, "hub") == 0){
-        printf("%d Hub %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);//aggiungere override 1 / 0
     }else if(strcmp(infoDisp.tipo, "fridge") == 0){
         printf("%d Fridge %d %s time: %.2f  delay: %.2f  percentualeRiempimento: %d  temperatura: %d \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time,
         infoDisp.delay, infoDisp.percentuale, infoDisp.temperatura);
     }else if(strcmp(infoDisp.tipo, "window") == 0){
         printf("%d Window %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
+    }else if(strcmp(infoDisp.tipo, "timer") == 0){
+        ////////////////da cambiare
+        printf("%d Timer %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);//aggiungere override 1 / 0
+    }else if(strcmp(infoDisp.tipo, "hub") == 0){
+        ////////////////da cambiare
+        printf("%d Hub %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);//aggiungere override 1 / 0
+
     }
 }
 void printRisp(risp* array_risposte, int n, int indentazione){

@@ -6,7 +6,8 @@
 #include <signal.h>
 #include "../strutture/listH.h"
 #include "../strutture/list.c"
-//#include "../Include/gestioneComandi.c"
+
+#include "../Include/gestioneComandi.c"
 #include "../Include/addDevice.c"
 
 //voglio usare le funzioni definite in functionDeclaration urca
@@ -17,7 +18,6 @@ info info_device_to_add;
 
 
 NodoPtr dispList; //lista dei dispositivi collegati all'hub
-pid_t idPar;///////mi sa che si può rimuover
 int fifoCreata=0;
 //File descriptor in cui il figlio legge e il padre scrive
 int fd_read;
@@ -29,22 +29,19 @@ info informazioni;
 
 
 
-int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, risp risposta_to_padre);
 int dev_list(cmd);
 int dev_switch(cmd);
 int dev_info(cmd);
 int dev_delete(cmd);
 int dev_link(cmd);
 int dev_manualControl(cmd);
-
-void set_info(char*);
+int dev_depth_info(cmd comando, info informazione_dispositivo);
 
 //int dev_link(char** args);
 int device_handle_command(cmd);
 void h_sigstop_handler ( int sig ) ;
 //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 int dev_add(char*, char*);
-#include "../include/funzioniDispositiviControllo.c"
 
 
 
@@ -52,10 +49,6 @@ void signhandle_quit(int sig){
     signal(SIGQUIT, signhandle_quit);
     _exit(0);
 }
-
-
-
-
 char *builtin_command[]={
     "l",//list
     "s",//switch
@@ -95,14 +88,14 @@ void sigint_handler(int sig){
 
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
 void sighandle_usr1_hub(int sig){
-    signal(SIGCONT, sign_cont_handler);
+    signal(SIGCONT, sign_cont_handler_hub);
     signal(SIGUSR1, sighandle_usr1_hub);
     if(sig == SIGUSR1){
         cmd comando;
         int err_signal;
         read(fd_read, &comando, sizeof(cmd));
         int errnum = device_handle_command(comando);
-        err_signal = kill(idPar, SIGCONT);
+        err_signal = kill(informazioni.pid_padre, SIGCONT);
         if(err_signal != 0)
             perror("errore in invio segnale");
 
@@ -137,7 +130,7 @@ int rispondi(risp risposta_controllore, cmd comando){
 
     //vado io in controllo e mando le varie risposte al papi
     //attenz, buono che salto il primo
-    broadcast_controllo(dispList, comando, idPar, fd_write, risposta_controllore);
+    broadcast_controllo(dispList, comando, informazioni, fd_write, risposta_controllore);
     return 1;
 }
 
@@ -155,8 +148,6 @@ int dev_list(cmd comando){
     return 1;
 }
 int dev_switch(cmd comando){//////DA MODIFICARE
-
-    
     //puoi richiamare la funzione che c'è sopra bro, guarda, per il resto non dovrebbe variare nulla
     risp risposta_controllore;
     if(comando.id == informazioni.id || comando.forzato == 1){
@@ -211,7 +202,7 @@ int dev_switch(cmd comando){//////DA MODIFICARE
 
 int dev_info(cmd comando){
     risp risposta_controllore;
-    if(comando.id == informazioni.id || comando.forzato==1){//comando --all , forzato forza l'invio delle info anche se l'id non è uguale
+    if(comando.id == informazioni.id || comando.forzato == 1){//comando --all , forzato forza l'invio delle info anche se l'id non è uguale
             //il parametro info_forzate è usato nel link: forza i dispositivi nell'invio delle proprie informazioni 
             //se figli di un hub con tali informazioni 
         if(comando.info_forzate == 1){
@@ -222,6 +213,8 @@ int dev_info(cmd comando){
         risposta_controllore.considera = 1;
         risposta_controllore.pid = informazioni.pid;
         risposta_controllore.dispositivo_interazione = 0;
+        dev_depth_info(comando, informazioni);
+
         risposta_controllore.info_disp = informazioni;
         //set_info
 
@@ -240,6 +233,32 @@ int dev_info(cmd comando){
     }
     return 1;
 }
+
+int dev_depth_info(cmd comando, info informazione_dispositivo){
+    risp* array_risposte_figli;
+    malloc_array(&array_risposte_figli, N_MAX_DISP);
+    int n = broadcast_centralina(dispList, comando, array_risposte_figli);
+    
+
+    int i;
+    for(i=0; i<n; i++){
+        if( strcmp ( array_risposte_figli[i].info_disp.tipo , "bulb" )){
+            /////VERIFICO CHE INTERRUTTORE NON SIA A 0, LI METTO A 0 NEL MAIN RICORDA
+            /////variabile settata a 1 se esiste info o tempo messo a -1
+            ////confronto con me, se diverso metto override = 1
+            
+        }else if( strcmp ( array_risposte_figli[i].info_disp.tipo , "fridge" )){
+            /////VERIFICO CHE INTERRUTTORE NON SIA A 0, LI METTO A 0 NEL MAIN RICORDA
+        }else if( strcmp ( array_risposte_figli[i].info_disp.tipo , "window" )){
+            /////VERIFICO CHE INTERRUTTORE NON SIA A 0, LI METTO A 0 NEL MAIN RICORDA
+        }
+    }
+
+    return 1;
+}
+
+
+
 int dev_delete(cmd comando){
     risp risposta_controllore;
     if(comando.forzato == 1 || comando.id == informazioni.id){//comando --all 
@@ -285,20 +304,16 @@ int dev_link(cmd comando){
 
 int dev_manualControl(cmd comando){
     fifoCreata=1;
-    //int err = dev_manual_info_gen(comando, id, idPar, fd_write, pid); //dov'è bro?
+    //int err = dev_manual_info_gen(comando, id, informazioni.pid_padre, fd_write, pid); //dov'è bro?
     //return err;
 }
 
-//abbiamo deciso che anche se 
-void set_info(){
 
-}
 
 int main(int argc, char **args){
     dispList = listInit(getpid());
 
     //UGUALE A BULB 
-    idPar = getppid(); //chiedo il pid di mio padre
 
     fd_read = atoi(args[1]);
     fd_write = atoi(args[2]);
@@ -306,6 +321,8 @@ int main(int argc, char **args){
     int err = read(fd_read, &informazioni,sizeof(info));
     
     informazioni.pid = getpid(); // chiedo il mio pid
+    
+    informazioni.pid_padre = getppid(); //chiedo il pid di mio padre
     if(err == -1)
         printf("Errore nella lettura delle info date dal padre\n");
     
@@ -329,11 +346,11 @@ int main(int argc, char **args){
     }
     printf("Id: %d\n", informazioni.id);
     printf("Nome: %s\n", informazioni.nome);
-    printf("Pid: %d\nPid padre: %d\n\n", informazioni.pid, idPar);
+    printf("Pid: %d\nPid padre: %d\n\n", informazioni.pid, informazioni.pid_padre);
     informazioni.def = 0;
 
     //Invio segnale al padre
-    int ris = kill(idPar, SIGCONT);
+    int ris = kill(informazioni.pid_padre, SIGCONT);
 
     //Child va in pausa
     while(1){
@@ -357,76 +374,4 @@ int main(int argc, char **args){
 
     printf("Child ora termina\n");   
     exit(0);
-}
-//i vari parametri potrebbero essere levati se messo in hub TODO, serve anche al timer però
-int broadcast_controllo(NodoPtr list, cmd comando, int pid_papi, int fd_papi, risp risposta_to_padre){
-    signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
-    signal(SIGUSR1, sighandle_usr1_hub);
-    
-    //nodo rappresenta il figlio, nell'hub passo il successivo dato che il primo nodo 
-    //è sè stesso
-    NodoPtr nodo = list->next;
-    //risposta che verrà mandata al padre (se ho figli)
-    risp answer;
-    int err_signal;//errore kill
-    //scrivo al padre la risposta del dispositivo di controllo contenente le sue info
-    //il padre potrebbe essere un dispositivo diverso dalla centralina ma comunque sarà in ascolto
-    comando.profondita+=1;
-    risposta_to_padre.profondita = comando.profondita;
-    write(fd_papi, &risposta_to_padre, sizeof(risp));
-    comando.id_padre = informazioni.id;
-    
-    //finchè ho figli
-    while(nodo != NULL){
-        //Mando il comando a mio figlio che lo gestirà
-        write(nodo->fd_writer, &comando, sizeof(comando));
-        int pid_figlio = nodo->data;
-        err_signal = kill(nodo->data, SIGUSR1);
-        //Mando un segnale per comunicare a mio figlio di gestire il comando
-        if(err_signal != 0)
-            perror("errore in invio segnale");
-        while(1){
-            //Leggo la risposta --> viene letta dopo che mi è arrivato un segnale SIGCONT
-            //dato che è bloccante
-            read(nodo->fd_reader, &answer, sizeof(risp));
-            //stampaDisp(answer.info_disp);
-                //debug printf("Leggo la risposta in %d, %s\n", id, answer.info);
-            //se è un messaggio di terminazione devo uscire dal ciclo di ascolto e andare 
-            //al nodo successivo
-            if(answer.termina_comunicazione == 1){
-                break;
-            }else{
-                
-                //Il delete non funziona se fatto non al primo nodo o con delete --all OIBO
-                //se non è un messaggio di terminazione significa che il figlio ha ancora risp da comunicare
-                //nel caso dei dispositivi di interazione (o controllo senza figli) verrà mandato
-                //1 messaggio contenente le informazioni e un successivo messaggio di terminazione
-                if(answer.eliminato == 1){//questo vale quando risalgo, se il dispositivo è da eliminare lo tolgo dalla lista dei processi
-                    //printList(list);
-                    removeNode(list, answer.pid);
-                    answer.eliminato = 0;//setto a 0 sennò lo toglie anche il padre che non lo ha nella lista 
-                }
-                //finchè tutti i figli non avranno mandato il messaggio di terminazione
-                //continuerà a mandare risposte in su nell'albero verso la centralina, quando tutti avranno mandato il messaggio di terminazione
-                //egli manderà 1 messaggio di terminazione al padre
-                //scrivo a mio padre la risposta che ho appena letto
-                if(answer.considera==1)
-                    write(fd_papi, &answer, sizeof(risp));
-                
-                //mando un segnale al figlio per comunicare di continuare la comunicazione                
-                err_signal = kill(pid_figlio, SIGCONT);
-
-                if(err_signal != 0)
-                    perror("errore in invio segnale");
-                //messaggio di terminazione o
-                //ulteriore risposta con terminazione = 0 
-                
-            }
-        }
-        nodo = nodo->next;
-    }
-    //comunico al padre di aver finito di comunicare mettendo il parametro termina_comunicazione = 1
-    risposta_to_padre.termina_comunicazione = 1;
-    write(fd_papi, &risposta_to_padre,sizeof(risp));
-    return 1;
 }

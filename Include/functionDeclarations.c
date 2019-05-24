@@ -316,6 +316,7 @@ int cen_add(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
             strcpy(nome, args[2]); 
         }
         int i;
+        info informazioni_disp;
         for(i=0; i<device_number(); i++){
             if(strcmp(args[1], builtin_device[i])==0){
                     id_gen+=1;
@@ -370,17 +371,14 @@ int cen_switch(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
         malloc_array(&array_risposte_collegati_list, N_MAX_DISP);
 
         int n = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);
-        printRisp(array_risposte_magazzino_list, n, 0);
+        printRisp(array_risposte_magazzino_list, n, 1);
         printf("Numero dispositivi: %d\n", n);
         
 
-        comando.forzato = 0;
-        comando.tipo_comando = 's';
-        comando.manuale = 0;
-        comando.id = atoi(args[1]);
+        comando.profondita = 0;
 
         n = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list);
-        printRisp(array_risposte_magazzino_list, n, 0);
+        printRisp(array_risposte_collegati_list, n, 1);
         printf("Numero dispositivi: %d\n", n);
 
         free(array_risposte_collegati_list);
