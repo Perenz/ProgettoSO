@@ -86,6 +86,11 @@ void sigquit_handler(int sig){
     exit(0);
 }
 
+void sigint_handler(int sig){
+    printf("Programma interrotto a causa di un errore improvviso\n");
+    exit(0);
+}
+
 int main(){
     char *command;
     char **params;
@@ -93,6 +98,7 @@ int main(){
     size_t bufS = 0;
     int status =1;
 
+    signal(SIGINT, sigint_handler);
     signal(SIGPIPE, SIG_IGN);
     signal(SIGQUIT, sigquit_handler);
     //Passo 1: Prendere il pid della centralina grazie ad il processo di support

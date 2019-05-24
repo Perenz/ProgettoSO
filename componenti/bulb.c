@@ -142,7 +142,7 @@ int dev_switch(cmd comando){
         answer.considera = 0;
     }
     
-    if(comando.manuale==1){
+    if(comando.manuale==1 && answer.considera){
         //Devo rispondere al manuale
         //fd_manuale
         //devo aprire la fifo prima di rispondere

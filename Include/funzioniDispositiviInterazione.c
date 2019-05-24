@@ -2,6 +2,7 @@
 #include <time.h>
 #include "../strutture/comandiH.h"
 #include <fcntl.h>
+#include <errno.h>
 #include <unistd.h>
 
 //#include "../strutture/comandinonvacazz.c"
@@ -46,6 +47,9 @@ void sighandle2(int sig){
         char fifoManComp[30];
         sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
         int fd_manuale = open(fifoManComp, O_RDONLY);
+        if(fd_manuale<0){
+            printf("Errore nell'apertura della Fifo in READONLY %s\n", strerror(errno));
+        }
         cmd comando;
         read(fd_manuale, &comando, sizeof(cmd));//uso 10 per intanto, vedi sopra poi
         close(fd_manuale);

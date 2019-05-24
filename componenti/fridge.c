@@ -190,7 +190,7 @@ int dev_set(cmd comando){
     {
         answer.considera=1;
     }
-    if(comando.manuale==1){
+    if(comando.manuale==1  && answer.considera){
         //Devo rispondere al manuale
         //fd_manuale
         //devo aprire la fifo prima di rispondere
@@ -202,7 +202,8 @@ int dev_set(cmd comando){
 
         //////////////////////////////////////////////////////////
         //sprintf(msg, "%s", comando.info_disp.interruttore[0].stato);//Rispondo solamente con lo status attuale del dispositivo
-        int esito=write(fd_manuale, msg, 10);
+
+        int esito=write(fd_manuale, comando.cmdInterruttore.stato, 10);
         /////////////////////////////////////////////////////////
 
         //Chiudo in scrittura
