@@ -57,7 +57,6 @@ void sighandle2(int sig){
 int rispondi(risp answer, cmd comando, int fd_write){
     comando.profondita += 1;
     answer.profondita = comando.profondita;
-    printf("%d\n", comando.profondita);
     answer.id_padre = comando.id_padre;
     answer.termina_comunicazione = 0;
 

@@ -222,6 +222,7 @@ int dev_info(cmd comando){
         risposta_controllore.considera = 1;
         risposta_controllore.pid = informazioni.pid;
         risposta_controllore.dispositivo_interazione = 0;
+        risposta_controllore.info_disp = informazioni;
         //set_info
 
         //SE VOGLIAMO FARE CHE IL DISPOSITIVO MANDA UN MESSAGGIO E NON CERCA SE I SUOI FIGLI HANNO LO STESSO ID: 
