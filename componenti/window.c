@@ -124,13 +124,13 @@ int dev_list(cmd comando){
 int dev_switch(cmd comando){
     risp answer;
     if(comando.id == informazioni.id || comando.forzato == 1){
-        if(strcmp(comando.info_disp.interruttore[0].nome , "apertura")==0){
+        if(strcmp(comando.info_disp.interruttore[0].nome , "apertura")==0 || strcmp(comando.info_disp.interruttore[0].nome , "aperturaW")==0){
             //get_info_string(&(answer.info_disp));
             if(strcmp(informazioni.stato,"chiusa")== 0 && strcmp(comando.info_disp.interruttore[0].stato , "on")==0){
                 strcpy(informazioni.stato, "aperta");  
             }
             answer.considera = 1;
-        }else if(strcmp(comando.info_disp.interruttore[0].nome , "chiusura")==0){
+        }else if(strcmp(comando.info_disp.interruttore[0].nome , "chiusura")==0 || strcmp(comando.info_disp.interruttore[0].nome , "chiusuraW")==0){
             if(strcmp(informazioni.stato,"aperta")== 0 && strcmp(comando.info_disp.interruttore[0].stato , "on")==0){
                 strcpy(informazioni.stato, "chiusa");  
             }
@@ -141,7 +141,7 @@ int dev_switch(cmd comando){
     {
             answer.considera = 0;
     }
-    if(comando.manuale==1){
+    if(comando.manuale==1 && answer.considera==1){
         //Devo rispondere al manuale
         //fd_manuale
         //devo aprire la fifo prima di rispondere
