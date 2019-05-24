@@ -107,17 +107,17 @@ int main(){
     signal(SIGINT, sigint_handler);
     signal(SIGPIPE, SIG_IGN);
     signal(SIGQUIT, sigquit_handler);
-    //Passo 1: Prendere il pid della centralina grazie ad il processo di support
+    //Passo 1: Prendere il pid della centralina grazie ad il processo di supporto
 
-    //printf("Ecco il pid %d", getCenPid());
+    //Stampo il pi della centralina
     cenPid=getCenPid();
-    printf("Pid centralian %d\n", cenPid);
+    printf("Pid centralina %d\n", cenPid);
 
-    //Ora mi comporto diversamente a secondo del valore di controllo
+    //Ora mi comporto diversamente a seconda del valore di controllo
     //in entrambi i casi prendo i comandi esattamente come faccio in start.c, cambia l'insieme di comandi disponibili
-    //Quindi cambia solo il processCmd con una serie di funzioni bultin diverse per i due casi
+    //Quindi cambia solo il processCmd con una serie di funzioni builtin diverse per i due casi
     do{
-        printf("\033[0;34m"); //Set the text to the color blue
+        printf("\033[0;34m"); //Setto il colore del testo a blu
         if(controlloPid==0)
             printf("Inserisci il comando:>");
         else
@@ -208,6 +208,7 @@ int cen_processCmd(char **command){
                     //Pid trovato e diverso da -1
                     //Setto correttamente anche la variabile contenente l'id del dispositivo controllato
                     controlloId=atoi(command[1]);
+                    //"Creo" la fifo per la connessione diretta con il dispositivo cercato
                     inizializzaFifo(controlloPid);
                     return controlloPid;
                 }
@@ -220,7 +221,7 @@ int cen_processCmd(char **command){
         }
     }
 
-    //Se comando inserito non esiste
+    //Se comando inserito non esiste avviso l'utente
     printf("Comando non riconosciuto, digitare \"help\" per la lista\n");
     return 1;
 }

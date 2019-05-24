@@ -1,10 +1,10 @@
 int hand_control(char **, int *, char *); //Dovra ritornare il pid del dispositivo specificato come argomento
-int hand_help(char **, int *, char *);
-int hand_exit(char **, int *, char *);
-int hand_exit1(char **, int *, int, char);
-int hand_release(char **, int *, int, char);
-int hand_switch(char **, int *, int, char);
-int hand_set(char **, int *, int, char);
+int hand_help(char **, int *, char *); //Indica i diversi comandi disponibili
+int hand_exit(char **, int *, char *); //Per eseguire un'uscita sicura dal sistema
+int hand_exit1(char **, int *, int, char); //Richiama hand_exit per eseguire uscita sicura
+int hand_release(char **, int *, int, char); //Rilascia il dispositivo controllato 
+int hand_switch(char **, int *, int, char); //Esegue switch sul comando controllato 
+int hand_set(char **, int *, int, char); //Esegue set sul comando controllato
 
 void inizializzaFifo(int);
 
@@ -43,6 +43,9 @@ void inizializzaFifo(int pidCont)
     sprintf(fifoManDisp, "/tmp/fifoManComp%d", pidCont);
 }
 
+//Ritorna il numero di comandi
+//Comandi con dispositivo controllato se type!=0
+//Comandi senza dispositivo controllato se type==0
 int cen_numCommands(int type)
 {
     if (type == 0)
@@ -83,6 +86,7 @@ int hand_control(char **args, int *cenPid, char *tipoDisp)
         strcat(msg, "contpid ");
         strcat(msg, args[1]); //args1 conterrà l'id del dispositivo che si vuole controllare
 
+        //Scrivo il messaggio 'contpid ID' sulla fifo con la centralina
         if (write(fd, msg, strlen(msg) + 1) < 0)
         {
             fprintf(stderr, "Errore nella scrittura sulla fifo %s %s\n", manCenFifo, strerror(errno));
@@ -97,6 +101,8 @@ int hand_control(char **args, int *cenPid, char *tipoDisp)
             fprintf(stderr, "Errore nell'apertura in READ ONLY della fifo %s %s\n", manCenFifo, strerror(errno));
         }
 
+        //Utilizzo la struct risp per catturare la risposta
+        //Conterra sia il PID del dispositivo cercato che il suo tipo
         risp dispCercato;
 
         if (read(fd, &dispCercato, sizeof(risp)) < 0)
@@ -104,7 +110,10 @@ int hand_control(char **args, int *cenPid, char *tipoDisp)
             fprintf(stderr, "Errore nella lettura dalla fifo %s %s\n", manCenFifo, strerror(errno));
         }
         close(fd); //Chiudo in lettura
+
+        //Memorizzo il pid del dispositivo cercato
         int pidCerc = dispCercato.info_disp.pid;
+
         //Passo dal tipo scritto in stringa ad il tipo scritto con singolo carattere
         char c = dispCercato.info_disp.tipo[0];
         *tipoDisp = ((c <= 'Z' && c >= 'A') ? c + 32 : c);
@@ -115,7 +124,10 @@ int hand_control(char **args, int *cenPid, char *tipoDisp)
             printf("ID indicato non riconosciuto\nL'ID inserito deve essere un dispositivo valido\n");
         }
 
+        //Rimuovo la fifo per la connessione diretta alla centralina che aveva creato poco prima
         remove(manCenFifo);
+
+        //Se ID non valido verrà tornato -1
         return pidCerc;
     }
 }
@@ -245,6 +257,8 @@ void esegui_set(char **args, int *cont, int idCont, char tipoCont){
     char msg[10];
     //leggo la risposta
     read(fdManual, msg, 10);
+
+    close(fdManual);
 
     if(strcmp(args[1], "delay")==0){
         printf("Il tempo di delay del frigorifero (pid %d, id %d, tipo %c) è ora pari a %s\n", *cont, idCont, tipoCont, msg);
