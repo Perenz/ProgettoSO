@@ -158,7 +158,11 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
     //il padre potrebbe essere un dispositivo diverso dalla centralina ma comunque sarà in ascolto
     comando.profondita+=1;
     risposta_to_padre.profondita = comando.profondita;
+<<<<<<< HEAD
     if(comando.manuale != 1)
+=======
+    if(comando.manuale!=1)
+>>>>>>> 981a37a9830b353dae6e09df98d4098ba62f710b
         write(fd_papi, &risposta_to_padre, sizeof(risp));
     comando.id_padre = informazioni.id;
     
@@ -196,8 +200,13 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
                 //continuerà a mandare risposte in su nell'albero verso la centralina, quando tutti avranno mandato il messaggio di terminazione
                 //egli manderà 1 messaggio di terminazione al padre
                 //scrivo a mio padre la risposta che ho appena letto
+<<<<<<< HEAD
                 if(answer.considera==1 ){
                     if(comando.manuale != 1)
+=======
+                if(answer.considera==1){
+                    if(comando.manuale!=1)
+>>>>>>> 981a37a9830b353dae6e09df98d4098ba62f710b
                         write(fd_papi, &answer, sizeof(risp));
                 }
                 
@@ -215,7 +224,11 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
     }
     //comunico al padre di aver finito di comunicare mettendo il parametro termina_comunicazione = 1
     risposta_to_padre.termina_comunicazione = 1;
+<<<<<<< HEAD
     if(comando.manuale != 1)
+=======
+    if(comando.manuale!=1)
+>>>>>>> 981a37a9830b353dae6e09df98d4098ba62f710b
         write(fd_papi, &risposta_to_padre,sizeof(risp));
     return 1;
 }

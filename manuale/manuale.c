@@ -3,9 +3,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <errno.h>
 #include <ctype.h>
 #include "../strutture/comandiH.h"
@@ -58,7 +55,9 @@ int getCenPid(){
     
     //Gestisco l'errore
     if(fd<0){
-        fprintf(stderr, "Errore nell'apertura della fifo %s: %s", myFIFO, strerror(errno));
+        fprintf(stderr, "Non è stata individuata nessuna centralina alla quale connettersi: %s %s\n", myFIFO, strerror(errno));
+        char **args=NULL;
+        exit(0);
     }
 
     //Invio msg "hand" sulla fifo
