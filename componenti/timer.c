@@ -50,7 +50,8 @@ char *builtin_command[]={
     "i",//getInfo
     "d", //delete
     "a", //addDevice / link   da cambiare scegliendo lettera corrispondente
-    "m"
+    "m",//manual
+    "p"//Set
 };
 int (*builtin_func_hub[]) (cmd comando) = {
         &dev_list,
@@ -137,6 +138,35 @@ int rispondi(risp risposta_controllore, cmd comando){
     //vado io in controllo e mando le varie risposte al papi
     //attenz, buono che salto il primo
     broadcast_controllo(dispList, comando, informazioni, fd_write, risposta_controllore);
+    return 1;
+}
+
+
+int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, info informazioni){
+  risp answer;
+    if(id == comando.id){//comando forzato per avere le info di dispositivi situati nel sott'albero di un processo che ha id 
+
+        answer.pid = pid;
+        answer.considera = 1;
+        answer.id = id;
+        answer.dispositivo_interazione = 1;
+        answer.info_disp.def = 0;
+        answer.info_disp = informazioni;
+        //get_info_string(&(answer.info_disp));
+
+        //Devo creare la fifo per il collegamento diretto
+        char fifoManComp[30];
+        
+        sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
+        mkfifo(fifoManComp, 0666);
+    
+    }else{
+        answer.considera = 0;
+        answer.dispositivo_interazione = 1;
+    }
+    rispondi(answer, comando);
+    
+    //famo ritornare l'errore poi
     return 1;
 }
 
@@ -257,8 +287,8 @@ int dev_link(cmd comando){
 
 int dev_manualControl(cmd comando){
     fifoCreata=1;
-    //int err = dev_manual_info_gen(comando, id, informazioni.pid_padre, fd_write, pid); //dov'è bro?
-    //return err;
+    int err = dev_manual_info_gen(comando, informazioni.id, informazioni.pid_padre, fd_write, informazioni.pid, informazioni);
+    return err;
 }
 
 ////////////////////////////////////////////////////////
@@ -287,35 +317,62 @@ int dev_switch(cmd comando){//////DA MODIFICARE
         risposta_controllore.info_disp = informazioni;
         */
         risposta_controllore.info_disp = informazioni;
-        rispondi(risposta_controllore, comando);
+
+        if(comando.manuale==1){
+            //Devo rispondere al manuale
+            //fd_manuale
+            //devo aprire la fifo prima di rispondere
+            char fifoManComp[30], msg[10];
+            
+            sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
+            //Apro Fifo in scrittura
+            int fd_manuale = open(fifoManComp, O_WRONLY);
+
+            sprintf(msg, "%s", comando.cmdInterruttore.stato);//Rispondo solamente con lo status attuale del dispositivo
+            int esito=write(fd_manuale, msg, 10);
+
+            //Chiudo in scrittura
+            close(fd_manuale);
+        }   
     }else{
         risposta_controllore.considera = 0;
         risposta_controllore.id = informazioni.id;
     }
+    
+    rispondi(risposta_controllore, comando); 
+    return 1;
+}
+
+int dev_set(cmd comando){
+    risp risposta_controllore;
+    //Il set arriverà per forza dal manuale
+    //Faccio comunque il controllo in caso di modifiche future
     if(comando.manuale==1){
+        comando.forzato = 1;
+        risposta_controllore.id = informazioni.id;
+        risposta_controllore.considera = 1;
+        risposta_controllore.info_disp = informazioni;
+
+        rispondi(risposta_controllore, comando);  
+
         //Devo rispondere al manuale
         //fd_manuale
         //devo aprire la fifo prima di rispondere
         char fifoManComp[30], msg[10];
-        
+            
         sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
         //Apro Fifo in scrittura
         int fd_manuale = open(fifoManComp, O_WRONLY);
 
-        //sprintf(msg, "%d", informazioni.stato);//Rispondo solamente con lo status attuale del dispositivo
+        sprintf(msg, "%s", comando.cmdInterruttore.stato);//Rispondo solamente con lo status attuale del dispositivo
         int esito=write(fd_manuale, msg, 10);
 
         //Chiudo in scrittura
         close(fd_manuale);
-    }else{
-        rispondi(risposta_controllore, comando);
+      
+        return 1;
     }
-    
-    return 1;
 }
-
-
-
 
 
 int main(int argc, char **args){

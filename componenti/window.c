@@ -125,12 +125,12 @@ int dev_list(cmd comando){
 int dev_switch(cmd comando){
     risp answer;
     if(comando.id == informazioni.id || comando.forzato == 1){
-        if(strcmp(comando.cmdInterruttore.nome , "apertura")==0){
+        if(strcmp(comando.cmdInterruttore.nome , "apertura")==0 || strcmp(comando.cmdInterruttore.nome , "aperturaW")==0){
             //get_info_string(&(answer.info_disp));
             if(strcmp(informazioni.stato,"chiusa")== 0 && strcmp(comando.cmdInterruttore.stato , "on")==0){
                 strcpy(informazioni.stato, "aperta");  
             }
-        }else if(strcmp(comando.cmdInterruttore.nome , "chiusura")==0){
+        }else if(strcmp(comando.cmdInterruttore.nome , "chiusura")==0 || strcmp(comando.cmdInterruttore.nome , "chiusuraW")==0){
             if(strcmp(informazioni.stato,"aperta")== 0 && strcmp(comando.cmdInterruttore.stato , "on")==0){
                 strcpy(informazioni.stato, "chiusa");  
             }

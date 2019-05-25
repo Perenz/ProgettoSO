@@ -115,6 +115,8 @@ void signint_handler(int sig){
     //Vado in pausa
     //Per il bulb è inutile andare in pause perchè tanto c'è while(1) pause;
 }
+
+
 //COMANDO   l
 /*restituisce in pipe
     se comando è l: <informazioni>
@@ -133,7 +135,7 @@ int dev_list(cmd comando){
 int dev_switch(cmd comando){
     risp answer;
     if(comando.id == informazioni.id || comando.forzato == 1){
-        if(strcmp(comando.cmdInterruttore.nome , "apertura")==0){
+        if(strcmp(comando.cmdInterruttore.nome , "apertura")==0 || strcmp(comando.cmdInterruttore.nome , "aperturaF")==0){
             //get_info_string(&(answer.info_disp));
             if(strcmp(informazioni.stato,"chiuso")== 0 && strcmp(comando.cmdInterruttore.stato , "on")==0){
                 strcpy(informazioni.stato, "aperto"); 
@@ -156,7 +158,7 @@ int dev_switch(cmd comando){
             int fd_manuale = open(fifoManComp, O_WRONLY);
 
             //////////////////////////////////////////////////////////
-            (strcmp(comando.cmdInterruttore.nome , "apertura")==0) ? sprintf(msg, "%s", informazioni.stato) : sprintf(msg, "%d", informazioni.frigo.temperatura);//Rispondo solamente con lo status attuale del dispositivo
+            ((strcmp(comando.cmdInterruttore.nome , "apertura")==0) || strcmp(comando.cmdInterruttore.nome , "aperturaF")==0) ? sprintf(msg, "%s", informazioni.stato) : sprintf(msg, "%d", informazioni.frigo.temperatura);//Rispondo solamente con lo status attuale del dispositivo
             int esito=write(fd_manuale, msg, 10);
             /////////////////////////////////////////////////////////
 

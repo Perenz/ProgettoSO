@@ -49,7 +49,7 @@ void inizializzaFifo(int pidCont)
 }
 
 void stampaOutput(char **args, int *cont, int idCont, char tipoCont, char* msg){
-    if(tipoCont=='h'){
+    if(tipoCont=='h' || tipoCont=='t'){
         //Se sto controllando un HUB devo controllare quale su quale interruttore sto lavorando per decidere l'output
         if((strcmp(args[1], "apertura")==0 || strcmp(args[1], "chiusura")==0)){
             printf("L'hub (pid %d, id %d, tipo %c), i frigoriferi e le finestre controllati risultano ora %s\n", *cont, idCont, tipoCont, (strcmp(msg, "on")==0 ? "aperti" : "chiusi"));       
@@ -128,14 +128,17 @@ int hand_control(char **args, int *cenPid, char *tipoDisp)
             fprintf(stderr, "Errore nell'apertura in WRITE ONLY della fifo %s %s\n", manCenFifo, strerror(errno));
         }
         char msg[20];
+        memset(msg, 0, strlen(msg));
+
         strcat(msg, "contpid ");
         strcat(msg, args[1]); //args1 conterrà l'id del dispositivo che si vuole controllare
 
         //Scrivo il messaggio 'contpid ID' sulla fifo con la centralina
-        if (write(fd, msg, strlen(msg) + 1) < 0)
+        if (write(fd, msg, strlen(msg)) < 0)
         {
             fprintf(stderr, "Errore nella scrittura sulla fifo %s %s\n", manCenFifo, strerror(errno));
         }
+        memset(msg, 0, strlen(msg));
         close(fd); //Chiudo in scrittura
 
         //Ascolto per la risposta
@@ -157,6 +160,7 @@ int hand_control(char **args, int *cenPid, char *tipoDisp)
         close(fd); //Chiudo in lettura
 
         //Memorizzo il pid del dispositivo cercato
+        printf("Disp cercato %d\n",dispCercato.info_disp.pid);
         int pidCerc = dispCercato.info_disp.pid;
 
         //Passo dal tipo scritto in stringa ad il tipo scritto con singolo carattere
@@ -209,8 +213,6 @@ int hand_exit(char **args, int *cenPid, char *tipo)
 int hand_release(char **args, int *cont, int idCont, char tipoCont)
 {
     *cont = 0;
-    //TODO da fare la chiusura e la rimozione della fifo
-    //Va fatta lato dispositivo
     return 1;
 }
 
@@ -299,10 +301,20 @@ void esegui_set(char **args, int *cont, int idCont, char tipoCont){
     close(fdManual);
 
     //TODO Compattare il tutto e fare il caso degli hub
-    if(strcmp(args[1], "delay")==0){
-        printf("Il tempo di delay del frigorifero (pid %d, id %d, tipo %c) è ora pari a %s\n", *cont, idCont, tipoCont, msg);
-    }else if(strcmp(args[1], "perc")==0){
-        printf("La percentuale di riempimento del frigorifero (pid %d, id %d, tipo %c) è ora pari a %s\n", *cont, idCont, tipoCont, msg);
+    
+
+    if(tipoCont=='h' || tipoCont=='f'){
+        if(strcmp(args[1], "delay")==0){
+            printf("Il tempo di delay dell'hub (pid %d, id %d, tipo %c) e dei frigoriferi controllati è ora pari a %s sec\n", *cont, idCont, tipoCont, msg);
+        }else if(strcmp(args[1], "perc")==0){
+            printf("La percentuale di riempimento dell'hub (pid %d, id %d, tipo %c) e dei frigoriferi controllati è ora pari a %s%%\n", *cont, idCont, tipoCont, msg);
+        }
+    }else{
+        if(strcmp(args[1], "delay")==0){
+            printf("Il tempo di delay del frigorifero (pid %d, id %d, tipo %c) è ora pari a %s sec\n", *cont, idCont, tipoCont, msg);
+        }else if(strcmp(args[1], "perc")==0){
+            printf("La percentuale di riempimento del frigorifero (pid %d, id %d, tipo %c) è ora pari a %s%%\n", *cont, idCont, tipoCont, msg);
+        }
     }
 }
 
@@ -337,7 +349,7 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont)
 
         return -1;
     }
-    else if (tipoCont == 'b' && strcmp(args[1], "accensione") == 0)
+    else if ((tipoCont == 'b' || tipoCont =='h' || tipoCont=='t') && strcmp(args[1], "accensione") == 0)
     {
         //Controlli per dispositivo BULB
         if (strcmp(args[2], "on") != 0 && strcmp(args[2], "off") != 0)

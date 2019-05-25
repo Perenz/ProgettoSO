@@ -603,12 +603,8 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
                 return 1;
             }
             
-            
-
         }
-
-
-        
+     
         free(array_risposte_collegati_list);
         free(array_risposte_magazzino_list);    
 
@@ -642,6 +638,8 @@ risp manualCen_info(char *arg, NodoPtr collegati_list, NodoPtr magazzino_list){
 
     free(array_risposte_collegati_list);
     free(array_risposte_magazzino_list);
+
+
     //gestione non c'è nessun dispositivo con questo id 
 
     //Se non trova ritorna -1
@@ -712,6 +710,7 @@ void getManualPid(NodoPtr collegati_list, NodoPtr magazzino_list){
 
         //CAMBIA SOLO QUI
         //CON il nuovo info devo prendere pidCercato
+
         dispCercato = manualCen_info(args[1], collegati_list, magazzino_list); 
         //printf("Questo è il pid cercato %d\n", pidCercato); 
     }

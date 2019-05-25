@@ -92,20 +92,46 @@ void sigquit_handler(int sig){
 }
 
 void sigint_handler(int sig){
-    printf("Programma interrotto a causa di un errore improvviso\n");
-    exit(0);
+    printf("\n\nProgramma interrotto a causa di un errore improvviso\n");
+    printf("Riavvio...\n...\n...\n");
+    char conPid[10], conId[10], contType[2];
+    sprintf(conPid,"%d", controlloPid);
+    sprintf(conId,"%d", controlloId);
+    sprintf(contType,"%c", controlloTipo);
+    //levo il campo info (args[3])
+    char *args[]={"./binaries/CENPIDWRITE",conPid, conId, contType, NULL}; 
+    int err = execvp(args[0],args);
+    if(err<0){
+        printf("Errore nell'exec %s\n", strerror(errno));
+        exit(1);
+    }
 }
 
-int main(){
+int main(int argc, char **argv){
+    if(argv[1]!=NULL && argv[2]!=NULL && argv[3]!=NULL){
+        printf("Riavvio completato\n");
+        controlloPid=atoi(argv[1]);
+        controlloId=atoi(argv[2]);
+        controlloTipo=argv[3][0];
+        sprintf(fifoManDisp, "/tmp/fifoManComp%d", controlloPid);
+    }
+    else{
+        controlloPid=0;
+        
+    }
+
+    signal(SIGINT, sigint_handler);
+    signal(SIGPIPE, SIG_IGN);
+    signal(SIGQUIT, sigquit_handler);
+        
+
     char *command;
     char **params;
 
     size_t bufS = 0;
     int status =1;
 
-    signal(SIGINT, sigint_handler);
-    signal(SIGPIPE, SIG_IGN);
-    signal(SIGQUIT, sigquit_handler);
+    
     //Passo 1: Prendere il pid della centralina grazie ad il processo di supporto
 
     //Stampo il pi della centralina
@@ -120,7 +146,7 @@ int main(){
         if(controlloPid==0)
             printf("Inserisci il comando:>");
         else
-            printf("(Controllo su: pid %d, id %d, tipo %c) Inserisci il comando :>", controlloPid, controlloId, controlloTipo);
+            printf("Mio pid %d\n(Controllo su: pid %d, id %d, tipo %c) Inserisci il comando :>", getpid(), controlloPid, controlloId, controlloTipo);
         printf("\033[0m");
 
         //Prendo il comando dall'utente
@@ -202,7 +228,7 @@ int cen_processCmd(char **command){
                 {
                     //Devo uscire
                     return 0;
-                }
+                }else
                 {
                     //Pid trovato e diverso da -1
                     //Setto correttamente anche la variabile contenente l'id del dispositivo controllato
