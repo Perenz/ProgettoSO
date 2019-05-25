@@ -158,7 +158,8 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
     //il padre potrebbe essere un dispositivo diverso dalla centralina ma comunque sarà in ascolto
     comando.profondita+=1;
     risposta_to_padre.profondita = comando.profondita;
-    write(fd_papi, &risposta_to_padre, sizeof(risp));
+    if(comando.manuale!=1)
+        write(fd_papi, &risposta_to_padre, sizeof(risp));
     comando.id_padre = informazioni.id;
     
     //finchè ho figli
@@ -195,8 +196,10 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
                 //continuerà a mandare risposte in su nell'albero verso la centralina, quando tutti avranno mandato il messaggio di terminazione
                 //egli manderà 1 messaggio di terminazione al padre
                 //scrivo a mio padre la risposta che ho appena letto
-                if(answer.considera==1)
-                    write(fd_papi, &answer, sizeof(risp));
+                if(answer.considera==1){
+                    if(comando.manuale!=1)
+                        write(fd_papi, &answer, sizeof(risp));
+                }
                 
                 //mando un segnale al figlio per comunicare di continuare la comunicazione                
                 err_signal = kill(pid_figlio, SIGCONT);
@@ -212,7 +215,8 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
     }
     //comunico al padre di aver finito di comunicare mettendo il parametro termina_comunicazione = 1
     risposta_to_padre.termina_comunicazione = 1;
-    write(fd_papi, &risposta_to_padre,sizeof(risp));
+    if(comando.manuale!=1)
+        write(fd_papi, &risposta_to_padre,sizeof(risp));
     return 1;
 }
 
