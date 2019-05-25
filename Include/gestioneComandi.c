@@ -95,8 +95,9 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
         write(nodo->fd_writer, &comando, sizeof(comando));
         //Comunico al figlio di gestire il comando appena inviato
         err_signal = kill(nodo->data, SIGUSR1); 
-        if(err_signal != 0)
+        if(err_signal != 0){
             perror("errore in invio segnale");
+        }
 
         //Finchè il figlio non mi manda un messaggio con terminazione == 1 significa che 
         //ha ancora dei figli e perciò devo rimanere in ascolto e gestire le sue risposte
@@ -116,9 +117,6 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
                     array_risposte[i] = answer_tmp;
                     i++;
                 }
-                if(answer_tmp.eliminato == 1){
-                    removeNode(list, answer_tmp.pid);
-                }
                 //se non è un messaggio di terminazione significa che il figlio ha ancora risp da comunicare
                 //nel caso dei dispositivi di interazione (o controllo senza figli) verrà mandato
                 //1 messaggio contenente le informazioni e un successivo messaggio di terminazione
@@ -136,8 +134,12 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
                 //mando un segnale al figlio per comunicare di continuare la comunicazione dato 
                 //che ho letto la sua risposta
                 err_signal = kill(nodo->data, SIGCONT); 
-                if(err_signal != 0)
+                if(err_signal != 0){
                     perror("errore in invio segnale");
+                }
+                if(answer_tmp.eliminato == 1){
+                    removeNode(list, answer_tmp.pid);
+                }
                 //andrò in pausa perché all'inizio del while c'è la read bloccante
             }
         }

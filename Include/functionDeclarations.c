@@ -482,7 +482,7 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
             //n_id1 rappresenta il numero di dispositivi del sott'albero di id_src
             n_id_src = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);
             if(n_id_src != 0){//il dispositivo da collegare si trova in magazzino_list
-
+                printf("dentro magazzino list! verso centralina\n");
                 risp dispostivo = array_risposte_magazzino_list[0];
                 //MARCELLO TOGLI IL NULL QUANDO HAI SISTEMATO ADD_DEVICE
                 //non serve che lo aggiungo a collegati_list dato che è già stato aggiunto in add_device_generale
@@ -522,14 +522,12 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
                 }
             
             }
-        
         }else{//la destinazione del linking non è la centralina
             //LINKING CON DESTINAZIONE GIÁ COLLEGATA E SORGENTE GIÀ COLLEGATA
             comando.tipo_comando = 'i';//info
             comando.id = id_src;
-            
+            comando.info_forzate = 1;
             n_id_src = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list);  
-
 
             if(n_id_src != 0){//il dispositivo source esiste in collegati
                 comando.id = id_dst;
@@ -565,7 +563,7 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
                 //LINKING CON DESTINAZIONE GIÁ COLLEGATA E SORGENTE NON COLLEGATA
                 }/////////
 
-            }else{//verifico se il dispositivo source esiste nel magazzino_list
+            }else{//verifico se il dispositivo source esiste nel magazzino_list //////////////////////////////////////////////////////////////////////////////////
                 comando.tipo_comando = 'i';//info
                 comando.id = id_src;
                 
@@ -579,8 +577,8 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
                                 comando.tipo_comando = 'd';
                                 comando.forzato = 0;//elimina anche i figli
                                 comando.id = id_src;
-                                n_id_src = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);
-                                
+                                n_id_src = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);//in questo broadcast c'è l'errore di invio segnale
+                                printf("è gia stato dato l'errore invio segnale ADESSO?!\n");
                                 printRisp(array_risposte_magazzino_list, n_id_dst, 0);
                                 comando.tipo_comando = 'a';//link aggiungendo
 
