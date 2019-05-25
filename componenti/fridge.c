@@ -142,13 +142,10 @@ int dev_switch(cmd comando){
                 strcpy(informazioni.stato, "chiuso");  
             }
             //get_info_string(&(answer.info_disp));
-            answer.considera = 1;
         }else if(strcmp(comando.cmdInterruttore.nome , "termostato")==0){
             informazioni.frigo.temperatura = atoi(comando.cmdInterruttore.stato);
-            answer.considera = 1;
         }
-
-        if(comando.manuale==1 && answer.considera==1){
+        if(comando.manuale==1){
             //Devo rispondere al manuale
             //fd_manuale
             //devo aprire la fifo prima di rispondere
@@ -165,13 +162,14 @@ int dev_switch(cmd comando){
 
             //Chiudo in scrittura
             close(fd_manuale);
-
+            return 1;
         }
+        answer.considera = 1;
     }else
     {
         answer.considera = 0;
     }
-
+    answer.info_disp = informazioni;
     rispondi(answer, comando, fd_write);
     return 1;
 }

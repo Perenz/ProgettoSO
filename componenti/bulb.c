@@ -132,8 +132,6 @@ int dev_switch(cmd comando){
                 strcpy(informazioni.stato, "off");  
             }
             //get_info_string(&(answer.info_disp));
-            answer.considera = 1;
-
             if(comando.manuale==1){
                 //Devo rispondere al manuale
                 //fd_manuale
@@ -151,10 +149,10 @@ int dev_switch(cmd comando){
 
                 //Chiudo in scrittura
                 close(fd_manuale);
-
                 return 1;
             }   
         }
+        answer.considera = 1;
     }else{
         answer.considera = 0;
     }

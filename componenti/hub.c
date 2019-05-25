@@ -134,9 +134,11 @@ int device_handle_command(cmd comando){
     return 1;
 }
 int rispondi(risp risposta_controllore, cmd comando){
-    risposta_controllore.id_padre = comando.id_padre;
-    risposta_controllore.termina_comunicazione = 0;
-    risposta_controllore.pid = informazioni.pid;
+    if(comando.manuale != 1){
+        risposta_controllore.id_padre = comando.id_padre;
+        risposta_controllore.termina_comunicazione = 0;
+        risposta_controllore.pid = informazioni.pid;
+    }
 
     //vado io in controllo e mando le varie risposte al papi
     //attenz, buono che salto il primo
@@ -253,7 +255,7 @@ int dev_info(cmd comando){
         risposta_controllore.considera = 1;
         risposta_controllore.pid = informazioni.pid;
         risposta_controllore.dispositivo_interazione = 0;
-        dev_depth_info(comando, informazioni);
+        //dev_depth_info(comando, informazioni);
 
         risposta_controllore.info_disp = informazioni;
         //set_info
@@ -293,7 +295,7 @@ int dev_depth_info(cmd comando, info informazione_dispositivo){
             /////VERIFICO CHE INTERRUTTORE NON SIA A 0, LI METTO A 0 NEL MAIN RICORDA
         }
     }
-
+    //free(array_risposte_figli);
     return 1;
 }
 

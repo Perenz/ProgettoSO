@@ -361,28 +361,32 @@ int cen_switch(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
         comando.manuale = 0;
         comando.id = atoi(args[1]);
         
-
         strcpy(comando.cmdInterruttore.nome,args[2]);
         strcpy(comando.cmdInterruttore.stato,args[3]);
+        if(strcmp(comando.cmdInterruttore.nome,"accensione") == 0 || strcmp(comando.cmdInterruttore.nome,"apertura") == 0 ||
+            strcmp(comando.cmdInterruttore.nome,"chiusura") == 0 || strcmp(comando.cmdInterruttore.nome,"termostato") == 0){
 
-        risp* array_risposte_magazzino_list;
-        malloc_array(&array_risposte_magazzino_list, N_MAX_DISP);
-        risp* array_risposte_collegati_list;
-        malloc_array(&array_risposte_collegati_list, N_MAX_DISP);
+            risp* array_risposte_magazzino_list;
+            malloc_array(&array_risposte_magazzino_list, N_MAX_DISP);
+            risp* array_risposte_collegati_list;
+            malloc_array(&array_risposte_collegati_list, N_MAX_DISP);
 
-        int n = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);
-        printRisp(array_risposte_magazzino_list, n, 1);
-        printf("Numero dispositivi: %d\n", n);
-        
+            int n = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);
+            printRisp(array_risposte_magazzino_list, n, 1);
+            printf("Numero dispositivi: %d\n", n);
+            
 
-        comando.profondita = 0;
+            comando.profondita = 0;
 
-        n = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list);
-        printRisp(array_risposte_collegati_list, n, 1);
-        printf("Numero dispositivi: %d\n", n);
+            n = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list);
+            printRisp(array_risposte_collegati_list, n, 1);
+            printf("Numero dispositivi: %d\n", n);
 
-        free(array_risposte_collegati_list);
-        free(array_risposte_magazzino_list);
+            free(array_risposte_collegati_list);
+            free(array_risposte_magazzino_list);
+        }else{
+            printf("Nome interruttore non valido!\n");
+        }
         return 1; //esci che sennò va avanti    
     }
     printf("Device indicato non riconosciuto\n");
@@ -405,9 +409,9 @@ int cen_info(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     }
 
     risp* array_risposte_magazzino_list;
-    malloc_array(&array_risposte_magazzino_list, 1);
+    malloc_array(&array_risposte_magazzino_list, N_MAX_DISP);
     risp* array_risposte_collegati_list;
-    malloc_array(&array_risposte_collegati_list, 1);
+    malloc_array(&array_risposte_collegati_list, N_MAX_DISP);
 
     signal(SIGCONT, sign_cont_handler);
     cmd comando;
