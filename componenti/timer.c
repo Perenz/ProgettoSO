@@ -24,6 +24,7 @@ int fd_read;
 //File descriptor in cui il figlio scrive e il padre legge
 int fd_write;
 info informazioni;
+int sigEntrata=0;
 
 int dev_list(cmd);
 int dev_switch(cmd);
@@ -80,10 +81,20 @@ void sigint_handler(int sig){
     //Come per bulb non serve andare in pausa
 }
 
-//SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
-void sighandle_usr1_timer(int sig){
-    signal(SIGCONT, sign_cont_handler_timer);
-    signal(SIGUSR1, sighandle_usr1_timer);
+void sighandle2(int sig){
+    if(sig == SIGUSR2){
+        char fifoManComp[30];
+        sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
+        int fd_manuale = open(fifoManComp, O_RDONLY);
+        cmd comando;
+        read(fd_manuale, &comando, sizeof(cmd));//uso 10 per intanto, vedi sopra poi
+        close(fd_manuale);
+        comando.manuale=1;
+        int errnum = device_handle_command(comando);
+    }
+}
+
+void sighandle1(int sig, int fd_read, int fd_write){
     if(sig == SIGUSR1){
         cmd comando;
         int err_signal;
@@ -98,14 +109,16 @@ void sighandle_usr1_timer(int sig){
     }
 }
 
+//SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
+void sighandle_usr1_timer(int sig){
+    sigEntrata=1;
+}
+
 //USATO PER SVEGLIARE IL PROCESSO
 void sighandle_usr2(int sig){
-    
-    signal(SIGUSR2, sighandle_usr2);
-    if(sig == SIGUSR2){
-        return;
-    }
+    sigEntrata=2;
 }   
+
 int device_handle_command(cmd comando){
     //da fare come in functionDeclarations in file dispositivi
     int i;
@@ -333,7 +346,8 @@ int main(int argc, char **args){
     signal(SIGCONT, sign_cont_handler_timer);//Segnale per riprendere il controllo 
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1_timer); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
-    
+    signal(SIGUSR2, sighandle_usr2);
+
     if(informazioni.def == 1){
         printf("\nTimer posto in magazzino \n");
     }else{
@@ -363,6 +377,14 @@ int main(int argc, char **args){
             add = 0;
             write(fd_write, &risposta_terminazione, sizeof(risp));
         }
+
+        if(sigEntrata==1)
+            sighandle1(SIGUSR1, fd_read, fd_write);
+        else if(sigEntrata==2)
+            sighandle2(SIGUSR2);
+
+        //Resetto ogni volta il sig di entrata
+        sigEntrata=0;
             
         pause();
     }

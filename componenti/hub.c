@@ -25,6 +25,7 @@ int fd_read;
 //File descriptor in cui il figlio scrive e il padre legge
 int fd_write;
 info informazioni;
+int sigEntrata=0;
 
 
 
@@ -122,8 +123,7 @@ void sighandle2(int sig){
     }
 }
 
-//SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
-void sighandle_usr1_hub(int sig){
+void sighandle1(int sig, int fd_read, int fd_write){
     if(sig == SIGUSR1){
         cmd comando;
         int err_signal;
@@ -136,11 +136,17 @@ void sighandle_usr1_hub(int sig){
         //printf("Termina in modo adeguato.\n");
         return;
     }
+
+}
+
+//SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
+void sighandle_usr1_hub(int sig){
+    sigEntrata=1;
 }
 
 //USATO PER SVEGLIARE IL PROCESSO
 void sighandle_usr2(int sig){
-    sighandle2(sig);
+    sigEntrata=2;
 } 
 
 int device_handle_command(cmd comando){
@@ -462,6 +468,14 @@ int main(int argc, char **args){
             add = 0;
             write(fd_write, &risposta_terminazione, sizeof(risp));
         }
+
+        if(sigEntrata==1)
+            sighandle1(SIGUSR1, fd_read, fd_write);
+        else if(sigEntrata==2)
+            sighandle2(SIGUSR2);
+
+        //Resetto ogni volta il sig di entrata
+        sigEntrata=0;
             
         pause();
     }

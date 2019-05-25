@@ -45,6 +45,7 @@ int fd_write;
 
 int fifoCreata=0;
 info informazioni;
+int sigEntrata=0;
 
 
 
@@ -92,10 +93,10 @@ void signhandle_quit(int sig){
     }
 }
 void sighandle_usr1(int sig){
-    sighandle1(sig, fd_read, fd_write);
+    sigEntrata=1;
 }
 void sighandle_usr2(int sig){
-    sighandle2(sig);
+    sigEntrata=2;
 }
 void sign_cont_handler(int sig){
     return;
@@ -245,6 +246,13 @@ int main(int argc, char *args[]){
     
     
     while(1){
+        if(sigEntrata==1)
+            sighandle1(SIGUSR1, fd_read, fd_write);
+        else if(sigEntrata==2)
+            sighandle2(SIGUSR2);
+
+        //Resetto ogni volta il sig di entrata
+        sigEntrata=0;
         pause();
     }
 
