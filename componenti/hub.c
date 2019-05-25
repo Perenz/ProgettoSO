@@ -53,6 +53,13 @@ void signhandle_quit(int sig){
             sprintf(fifo, "/tmp/fifoManComp%d", informazioni.pid);
             remove(fifo);
         }
+        //Devo mandare il SIGQUIT a tutti i suoi figli
+        NodoPtr nodo = dispList;
+        while(nodo!=NULL){
+            kill(SIGQUIT, nodo->data);
+            nodo=nodo->next;
+        }
+
         _exit(0);
     }
 }
@@ -84,6 +91,11 @@ void sign_cont_handler_hub(int sig){
 }
 
 void sigint_handler(int sig){
+    char fifo[30];
+    if(fifoCreata!=0){
+            sprintf(fifo, "/tmp/fifoManComp%d", informazioni.pid);
+            remove(fifo);
+    }
     //Devo mandare il SIGINT a tutti i suoi figli
     NodoPtr nodo = dispList;
     while(nodo!=NULL){
@@ -109,8 +121,6 @@ void sighandle2(int sig){
 
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
 void sighandle_usr1_hub(int sig){
-    signal(SIGCONT, sign_cont_handler_hub);
-    signal(SIGUSR1, sighandle_usr1_hub);
     if(sig == SIGUSR1){
         cmd comando;
         int err_signal;
