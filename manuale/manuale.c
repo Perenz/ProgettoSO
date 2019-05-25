@@ -92,7 +92,7 @@ void sigquit_handler(int sig){
 }
 
 void sigint_handler(int sig){
-    printf("\n\nProgramma interrotto a causa di un errore improvviso\n");
+    /*printf("\n\nProgramma interrotto a causa di un errore improvviso\n");
     printf("Riavvio...\n...\n...\n");
     char conPid[10], conId[10], contType[2];
     sprintf(conPid,"%d", controlloPid);
@@ -104,15 +104,18 @@ void sigint_handler(int sig){
     if(err<0){
         printf("Errore nell'exec %s\n", strerror(errno));
         exit(1);
-    }
+    }*/
+
+    printf("\nProgramma interrotto a cause di un errore improvviso\n");
+    exit(0);
 }
 
 int main(int argc, char **argv){
     if(argv[1]!=NULL && argv[2]!=NULL && argv[3]!=NULL){
         printf("Riavvio completato\n");
-        controlloPid=atoi(argv[1]);
         controlloId=atoi(argv[2]);
-        controlloTipo=argv[3][0];
+        cenPid=getCenPid();
+        controlloPid = controlla(controlloId, &cenPid, &controlloTipo);
         sprintf(fifoManDisp, "/tmp/fifoManComp%d", controlloPid);
     }
     else{

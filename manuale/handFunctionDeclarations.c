@@ -101,18 +101,8 @@ int cen_numCommands(int type)
     }
 }
 
-int hand_control(char **args, int *cenPid, char *tipoDisp)
-{
-    int fd;
-    if (args[1] == NULL || args[2] != NULL)
-    {
-        printf("Errore nei parametri\n");
-        printf("Usage: control <pid/nome>\n");
-
-        return -1;
-    }
-    else
-    {
+int controlla(int idDisp, int* cenPid, char* tipoDisp){
+        int fd;
         //Uso una fifo tra manuale e centralina
         char *manCenFifo = "/tmp/manCenFifo";
         if (mkfifo(manCenFifo, 0666) < 0)
@@ -130,8 +120,7 @@ int hand_control(char **args, int *cenPid, char *tipoDisp)
         char msg[20];
         memset(msg, 0, strlen(msg));
 
-        strcat(msg, "contpid ");
-        strcat(msg, args[1]); //args1 conterrà l'id del dispositivo che si vuole controllare
+        sprintf(msg, "contpid %d", idDisp);
 
         //Scrivo il messaggio 'contpid ID' sulla fifo con la centralina
         if (write(fd, msg, strlen(msg)) < 0)
@@ -178,6 +167,20 @@ int hand_control(char **args, int *cenPid, char *tipoDisp)
 
         //Se ID non valido verrà tornato -1
         return pidCerc;
+}
+
+int hand_control(char **args, int *cenPid, char *tipoDisp)
+{
+    if (args[1] == NULL || args[2] != NULL )
+    {
+        printf("Errore nei parametri\n");
+        printf("Usage: control <pid/nome>\n");
+
+        return -1;
+    }
+    else
+    {
+        return controlla(atoi(args[1]), cenPid, tipoDisp);
     }
 }
 
@@ -443,7 +446,7 @@ int hand_set(char **args, int *contPid, int contId, char tipoCont)
 {
     if ((tipoCont != 'f' && tipoCont != 'h' && tipoCont != 't') || args[2] == NULL || args[3] != NULL)
     {
-        printf("Comando set valido solo con frigorifero come tipo di dispositivo controllato\n");
+        printf("Comando set valido solo con frigorifero, hub o timer come tipo di dispositivo controllato\n");
         printf("Indicare una delle 3 proprietà: delay, perc, termostato\n");
         printf("Usage: set <proprietà> <valore>\n");
         printf("Indicare i valori nelle seguenti modalità:\n-Secondi per delay\n-Percentuale 0-100 per perc\n-Gradi Celsius per temp\n");
@@ -475,6 +478,7 @@ int hand_set(char **args, int *contPid, int contId, char tipoCont)
         }
         else if (strcmp(args[1], "perc") == 0)
         {
+            //Controllo che il valore per la percentuale inserito sia tra 0 e 100
             int p = atoi(args[2]);
             if (p < 0 || p > 100)
             {

@@ -33,6 +33,7 @@ int dev_delete(cmd);
 int dev_link(cmd);
 int dev_manualControl(cmd);
 int dev_depth_info(cmd comando, info informazione_dispositivo);
+int dev_set(cmd);
 
 //int dev_link(char** args);
 int device_handle_command(cmd);
@@ -59,7 +60,8 @@ int (*builtin_func_hub[]) (cmd comando) = {
         &dev_info,
         &dev_delete,
         &dev_link,
-        &dev_manualControl
+        &dev_manualControl,
+        &dev_set
 };
 int cont_numCommands(){
     return (sizeof(builtin_command)/ sizeof(char*));
