@@ -36,6 +36,7 @@ int dev_info(cmd);
 int dev_delete(cmd);
 int dev_link(cmd);
 int dev_manualControl(cmd);
+int dev_set(cmd);
 int dev_depth_info(cmd comando, info informazione_dispositivo);
 
 //int dev_link(char** args);
@@ -70,7 +71,8 @@ char *builtin_command[]={
     "i",//getInfo
     "d", //delete
     "a", //addDevice / link   da cambiare scegliendo lettera corrispondente
-    "m"
+    "m", //manualControl
+    "p" //set
 };
 int (*builtin_func_hub[]) (cmd comando) = {
         &dev_list,
@@ -78,7 +80,8 @@ int (*builtin_func_hub[]) (cmd comando) = {
         &dev_info,
         &dev_delete,
         &dev_link,
-        &dev_manualControl
+        &dev_manualControl,
+        &dev_set
 };
 int cont_numCommands(){
     return (sizeof(builtin_command)/ sizeof(char*));
@@ -256,6 +259,37 @@ int dev_switch(cmd comando){//////DA MODIFICARE
     
     rispondi(risposta_controllore, comando);  
     return 1;
+}
+
+int dev_set(cmd comando){
+    risp risposta_controllore;
+    //Il set arriverà per forza dal manuale
+    //Faccio comunque il controllo in caso di modifiche future
+    if(comando.manuale==1){
+        comando.forzato = 1;
+        risposta_controllore.id = informazioni.id;
+        risposta_controllore.considera = 1;
+        risposta_controllore.info_disp = informazioni;
+
+        rispondi(risposta_controllore, comando);  
+
+        //Devo rispondere al manuale
+        //fd_manuale
+        //devo aprire la fifo prima di rispondere
+        char fifoManComp[30], msg[10];
+            
+        sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
+        //Apro Fifo in scrittura
+        int fd_manuale = open(fifoManComp, O_WRONLY);
+
+        sprintf(msg, "%s", comando.cmdInterruttore.stato);//Rispondo solamente con lo status attuale del dispositivo
+        int esito=write(fd_manuale, msg, 10);
+
+        //Chiudo in scrittura
+        close(fd_manuale);
+      
+        return 1;
+    }
 }
 
 

@@ -177,7 +177,7 @@ int dev_switch(cmd comando){
 int dev_set(cmd comando){
     risp answer;
     char fifoManComp[30], msg[10];
-    if(comando.id==informazioni.id){
+    if(comando.id==informazioni.id || comando.forzato==1){
         if(strcmp(comando.cmdInterruttore.nome, "delay")==0){
             informazioni.frigo.delay = atoi(comando.cmdInterruttore.stato);
         }
@@ -210,6 +210,7 @@ int dev_set(cmd comando){
         answer.considera = 0;
     }
     
+    answer.info_disp = informazioni;
     rispondi(answer, comando, fd_write);
 
     return 1; 
