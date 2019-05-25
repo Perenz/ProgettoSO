@@ -202,6 +202,7 @@ int hand_help(char **args, int *cenPid, char *tipo)
 
 int hand_exit(char **args, int *cenPid, char *tipo)
 {
+    //Ritorno 0 in modo che lo stato imponga l'uscita dal sistema
     return 0;
 }
 
@@ -215,7 +216,7 @@ int hand_release(char **args, int *cont, int idCont, char tipoCont)
 
 void esegui_switch(char **args, int *cont, int idCont, char tipoCont)
 {
-    //Qui comando
+    //Creo il comando e gli assegno le informazioni relative allo switch
     cmd comando;
     comando.tipo_comando = 's';
     comando.manuale = 1;
@@ -225,6 +226,7 @@ void esegui_switch(char **args, int *cont, int idCont, char tipoCont)
     //Scrivo sulla fifo e mando sig2
     //Apro la fifo in scrittura
 
+    //mando segnale al dispositivo che dovrà aprire fifo e mettersi in ascolto
     kill(*cont, SIGUSR2);
 
     fdManual =  open(fifoManDisp, O_WRONLY);
@@ -250,12 +252,13 @@ void esegui_switch(char **args, int *cont, int idCont, char tipoCont)
     read(fdManual, msg, 10);
     close(fdManual);
     
+    //Funzione per la stampa dell'output a seconda dei diversi casi: dispositivo, label e valore
     stampaOutput(args, cont, idCont, tipoCont, msg);
 }
 
 
 void esegui_set(char **args, int *cont, int idCont, char tipoCont){
-    //Qui comando
+    //Creo il comando e gli assegno le informazioni relative al set
     cmd comando;
     comando.tipo_comando = 'p'; //Comando p per il set
     comando.manuale = 1;
@@ -265,23 +268,25 @@ void esegui_set(char **args, int *cont, int idCont, char tipoCont){
     //Scrivo sulla fifo e mando sig2
     //Apro la fifo in scrittura
 
+    //mando segnale al dispositivo che dovrà aprire fifo e mettersi in ascolto
     kill(*cont, SIGUSR2);
 
+    //apro fifo in write only con controllo di eventuale errore
     fdManual =  open(fifoManDisp, O_WRONLY);
     if (fdManual < 0)
     {
         fprintf(stderr, "Errore in apertura WRITE ONLY della fifo %s %s", fifoManDisp, strerror(errno));
     }
 
-    //Scrivo sulla fifo il messaggio ed invio SIGUSR2 al dispositivo per indicare che è stato scritto un nuovo comando nella fifo
+    //Scrivo sulla fifo il messaggio
     write(fdManual, &comando, sizeof(comando));
     if (fdManual < 0)
     {
         fprintf(stderr, "Errore in scrittura sulla fifo %s %s", fifoManDisp, strerror(errno));
     }
+
     //Chiudo la Fifo in scrittura
     close(fdManual);
-    //TODO
 
     //Apro in lettura
     fdManual = open(fifoManDisp, O_RDONLY);
@@ -290,8 +295,10 @@ void esegui_set(char **args, int *cont, int idCont, char tipoCont){
     //leggo la risposta
     read(fdManual, msg, 10);
 
+    //Chiudo in readonly
     close(fdManual);
 
+    //TODO Compattare il tutto e fare il caso degli hub
     if(strcmp(args[1], "delay")==0){
         printf("Il tempo di delay del frigorifero (pid %d, id %d, tipo %c) è ora pari a %s\n", *cont, idCont, tipoCont, msg);
     }else if(strcmp(args[1], "perc")==0){
@@ -299,6 +306,7 @@ void esegui_set(char **args, int *cont, int idCont, char tipoCont){
     }
 }
 
+//Funzioni che passata una stringa ritorna 1 se è un numero intero, 0 se non lo è
 int isNum(char* str){
     int length = strlen (str);
     int i;
@@ -319,10 +327,10 @@ int checkHubArgs(char **args, char tipoCont){
         strcmp(args[1], "chiusuraF")==0 || strcmp(args[1], "aperturaW")==0 || strcmp(args[1], "chiusuraW")==0 || strcmp(args[1], "termostato")==0);
 }
 
-
+//Si occupa dei controlli degli argomenti per l'esecuzione dello switch
 int hand_switch(char **args, int *cont, int idCont, char tipoCont)
 {
-    if (args[2] == NULL || args[3] != NULL)
+    if (args[2] == NULL || args[3] != NULL) //Controlla che il numero di argomenti inseriti sia corretto
     {
         printf("Errore nei parametri\n");
         printf("Usage: switch <label> <nuovostato>\n");
@@ -375,16 +383,20 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont)
         return -1;
     }
     else if(tipoCont == 'f' && (strcmp(args[1],"termostato") ==0 )){
+        //Controllo per dispositivo FRIDGE con termostato come label
+
+        //argomento rappresentante la temperatura deve essere un numero intero
         if(isNum(args[2])==0){
             printf("Errore nei parametri\n");
             printf("Usage: switch termostato <nuovaTemp>\n");
             printf("Temperatura deve essere di tipo intero\n");
             return -1;
         }
+
         esegui_switch(args,cont,idCont, 'f');
         return -1;
     }
-    else if (checkHubArgs)
+    else if (checkHubArgs(args, tipoCont))
     {
         //Controlli per dispositivo hub
         if ((strcmp(args[2], "on") != 0 && strcmp(args[2], "off") != 0) && (strcmp(args[1], "termostato")==0 && isNum(args[2])==0))
