@@ -1,3 +1,8 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include "../strutture/comandiH.h"
+
 int hand_control(char **, int *, char *); //Dovra ritornare il pid del dispositivo specificato come argomento
 int hand_help(char **, int *, char *); //Indica i diversi comandi disponibili
 int hand_exit(char **, int *, char *); //Per eseguire un'uscita sicura dal sistema
@@ -41,6 +46,46 @@ void inizializzaFifo(int pidCont)
     //file gia creato dal dispositivo
     int fdManDisp;
     sprintf(fifoManDisp, "/tmp/fifoManComp%d", pidCont);
+}
+
+void stampaOutput(char **args, int *cont, int idCont, char tipoCont, char* msg){
+    if(tipoCont=='h'){
+        //Se sto controllando un HUB devo controllare quale su quale interruttore sto lavorando per decidere l'output
+        if((strcmp(args[1], "apertura")==0 || strcmp(args[1], "chiusura")==0)){
+            printf("L'hub (pid %d, id %d, tipo %c), i frigoriferi e le finestre controllati risultano ora %s\n", *cont, idCont, tipoCont, (strcmp(msg, "on")==0 ? "aperti" : "chiusi"));       
+        }
+        else if((strcmp(args[1], "aperturaW")==0 || strcmp(args[1], "chiusuraW")==0)){
+            printf("L'hub (pid %d, id %d, tipo %c) e le finestre controllate risultano ora %s\n", *cont, idCont, tipoCont, (strcmp(msg, "on")==0 ? "aperte" : "chiuse"));       
+
+        }
+        else if((strcmp(args[1], "aperturaF")==0 || strcmp(args[1], "chiusuraF")==0)){
+            printf("L'hub (pid %d, id %d, tipo %c) e i frigoriferi controllati risultano ora %s\n", *cont, idCont, tipoCont, (strcmp(msg, "on")==0 ? "aperti" : "chiusi"));
+        }
+        else if((strcmp(args[1], "accensione")==0)){
+            printf("L'hub (pid %d, id %d, tipo %c) e le lampadine controllate risultano ora %s\n", *cont, idCont, tipoCont, (strcmp(msg, "on")==0 ? "accese" : "spente"));
+        }
+        else if((strcmp(args[1], "termostato")==0)){
+            printf("L'hub (pid %d, id %d, tipo %c) e i frigoriferi controllati hanno ora temperatura interna pari a %s\n", *cont, idCont, tipoCont, msg);
+        }
+        return;
+    }
+
+    if(strcmp(args[1],"termostato")!=0){
+        if (strcmp(msg, "on")==0 || strcmp(msg, "aperto")==0)
+        {
+            printf("Il dispositivo (pid %d, id %d, tipo %c) risulta ora %s\n", *cont, idCont, tipoCont, (tipoCont=='b' ? "acceso" : "aperto"));
+        }
+        else
+        {
+            printf("Il dispositivo (pid %d, id %d, tipo %c) risulta ora %s\n", *cont, idCont, tipoCont, (tipoCont=='b' ? "spento" : "chiuso"));
+        }
+    }
+    else
+    {
+        printf("Il frigorifero (pid %d, id %d, tipo %c) ha ora una temperatura di %s° C\n", *cont, idCont, tipoCont, msg);
+
+    }   
+    return;
 }
 
 //Ritorna il numero di comandi
@@ -196,7 +241,6 @@ void esegui_switch(char **args, int *cont, int idCont, char tipoCont)
     }
     //Chiudo la Fifo in scrittura
     close(fdManual);
-    //TODO
 
     //Apro in lettura
     fdManual = open(fifoManDisp, O_RDONLY);
@@ -204,23 +248,11 @@ void esegui_switch(char **args, int *cont, int idCont, char tipoCont)
     char msg[10];
     //leggo la risposta
     read(fdManual, msg, 10);
-    if(strcmp(args[1],"termostato")!=0){
-        if (strcmp(msg, "on")==0 || strcmp(msg, "aperto")==0)
-        {
-            printf("Il dispositivo (pid %d, id %d, tipo %c) risulta ora %s\n", *cont, idCont, tipoCont, (tipoCont=='b' ? "acceso" : "aperto"));
-        }
-        else
-        {
-            printf("Il dispositivo (pid %d, id %d, tipo %c) risulta ora %s\n", *cont, idCont, tipoCont, (tipoCont=='b' ? "spento" : "chiuso"));
-        }
-    }
-    else
-    {
-        printf("Il frigorifero (pid %d, id %d, tipo %c) ha ora una temperatura di %s° C\n", *cont, idCont, tipoCont, msg);
-
-    }
     close(fdManual);
+    
+    stampaOutput(args, cont, idCont, tipoCont, msg);
 }
+
 
 void esegui_set(char **args, int *cont, int idCont, char tipoCont){
     //Qui comando
@@ -273,9 +305,11 @@ int isNum(char* str){
     for (i=0;i<length; i++){
         if (!isdigit(str[i]) && str[i]!='-')
         {
+            //Ritorno 0 se non è numero
             return 0;
         }
     }
+    //Ritorno 1 se è numero
     return 1;
 }
 
@@ -353,7 +387,7 @@ int hand_switch(char **args, int *cont, int idCont, char tipoCont)
     else if (checkHubArgs)
     {
         //Controlli per dispositivo hub
-        if ((strcmp(args[2], "on") != 0 && strcmp(args[2], "off") != 0) || (strcmp(args[1], "termostato")==0 && !isNum(args[2])))
+        if ((strcmp(args[2], "on") != 0 && strcmp(args[2], "off") != 0) && (strcmp(args[1], "termostato")==0 && isNum(args[2])==0))
         {
             printf("Errore nei parametri\n");
             printf("Usage: switch <label> <nuovostato>\n");

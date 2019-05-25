@@ -47,9 +47,16 @@ int dev_add(char*, char*);
 
 
 void signhandle_quit(int sig){
-    signal(SIGQUIT, signhandle_quit);
-    _exit(0);
+    char fifo[30];
+    if(sig==SIGQUIT){
+        if(fifoCreata!=0){
+            sprintf(fifo, "/tmp/fifoManComp%d", informazioni.pid);
+            remove(fifo);
+        }
+        _exit(0);
+    }
 }
+
 char *builtin_command[]={
     "l",//list
     "s",//switch
@@ -223,7 +230,7 @@ int dev_switch(cmd comando){//////DA MODIFICARE
             //Apro Fifo in scrittura
             int fd_manuale = open(fifoManComp, O_WRONLY);
 
-            //sprintf(msg, "%d", informazioni.stato);//Rispondo solamente con lo status attuale del dispositivo
+            sprintf(msg, "%s", comando.cmdInterruttore.stato);//Rispondo solamente con lo status attuale del dispositivo
             int esito=write(fd_manuale, msg, 10);
 
             //Chiudo in scrittura
