@@ -129,13 +129,11 @@ int dev_switch(cmd comando){
             if(strcmp(informazioni.stato,"chiusa")== 0 && strcmp(comando.cmdInterruttore.stato , "on")==0){
                 strcpy(informazioni.stato, "aperta");  
             }
-            answer.considera = 1;
         }else if(strcmp(comando.cmdInterruttore.nome , "chiusura")==0){
             if(strcmp(informazioni.stato,"aperta")== 0 && strcmp(comando.cmdInterruttore.stato , "on")==0){
                 strcpy(informazioni.stato, "chiusa");  
             }
             //get_info_string(&(answer.info_disp));
-            answer.considera = 1;
         }
         if(comando.manuale==1){
             //Devo rispondere al manuale
@@ -156,10 +154,11 @@ int dev_switch(cmd comando){
             close(fd_manuale);
             return 1;
         }
-        
+        answer.considera=1;
     }else{
             answer.considera = 0;
     }
+    answer.info_disp = informazioni;
     rispondi(answer, comando, fd_write);
     return 1;
 }
