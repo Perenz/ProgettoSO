@@ -65,6 +65,7 @@ int add_device_generale(char* execPath, NodoPtr list, info info, char* nome){
         perror("errore fork");
     } 
     else{
+        //signal(SIGCONT, sign_handler);
         close(fd_reader[1]);
         close(fd_writer[0]);
         

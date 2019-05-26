@@ -119,14 +119,15 @@ void sighandle2(int sig){
         sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
         int fd_manuale = open(fifoManComp, O_RDONLY);
         cmd comando;
-        read(fd_manuale, &comando, sizeof(cmd));//uso 10 per intanto, vedi sopra poi
+        read(fd_manuale, &comando, sizeof(cmd));
         close(fd_manuale);
         comando.manuale=1;
         int errnum = device_handle_command(comando);
     }
 }
 
-void sighandle1(int sig, int fd_read, int fd_write){
+//SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
+void sighandle_usr1_hub(int sig){
     if(sig == SIGUSR1){
         cmd comando;
         int err_signal;
@@ -139,17 +140,12 @@ void sighandle1(int sig, int fd_read, int fd_write){
         //printf("Termina in modo adeguato.\n");
         return;
     }
-
-}
-
-//SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
-void sighandle_usr1_hub(int sig){
-    sighandle1(sig, fd_read, fd_write);
 }
 
 //USATO PER SVEGLIARE IL PROCESSO
 void sighandle_usr2(int sig){
-    sigEntrata=2;
+    sighandle2(sig);
+    //sigEntrata=2;
 } 
 
 int device_handle_command(cmd comando){
@@ -251,6 +247,7 @@ int dev_switch(cmd comando){//////DA MODIFICARE
         }
         
         
+  
         else if(strcmp(comando.cmdInterruttore.nome , "apertura")==0 || strcmp(comando.cmdInterruttore.nome , "aperturaF")==0){//si tratta di un frigo
             //get_info_string(&(answer.info_disp));
             if(strcmp(informazioni.frigo.apertura.stato,"chiuso")== 0 && strcmp(comando.cmdInterruttore.stato , "on")==0){
@@ -302,14 +299,21 @@ int dev_switch(cmd comando){//////DA MODIFICARE
 
             //Chiudo in scrittura
             close(fd_manuale);
+
+            int n;
+            risp* array_risposte;
+            malloc_array(&array_risposte, N_MAX_DISP);
+            comando.manuale = 0;
+            n = broadcast_centralina(dispList, comando, array_risposte);
+            return 1;
         }
 
     }else{
         risposta_controllore.considera = 0;
-        risposta_controllore.id = informazioni.id;
+        risposta_controllore.id = informazioni.id;  
     }
+    rispondi(risposta_controllore, comando); 
     
-    rispondi(risposta_controllore, comando);  
     return 1;
 }
 
@@ -529,7 +533,8 @@ int main(int argc, char **args){
     signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1_hub); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
-    signal(SIGUSR2, sighandle_usr2);
+    //signal(SIGUSR2, sighandle_usr2);
+    signal(SIGUSR2, sighandle2);
     signal(SIGALRM,sighandle_alarm);
 
     if(informazioni.def == 1){
@@ -555,6 +560,7 @@ int main(int argc, char **args){
             if(strcmp(info_device_to_add.tipo, builtin_device[i])==0)
                 add_device_generale(builtin_dev_path[i], dispList, info_device_to_add, NULL);//ho invertito proc e disp
             }
+            signal(SIGCONT, sign_cont_handler_hub);
             risposta_controllore.termina_comunicazione = 1;
             write(fd_write, &risposta_controllore, sizeof(risp));
         }

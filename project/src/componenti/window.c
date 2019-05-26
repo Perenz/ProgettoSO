@@ -155,7 +155,7 @@ int dev_switch(cmd comando){
 
             //Chiudo in scrittura
             close(fd_manuale);
-            return 1;
+            //return 1;
         }
         answer.considera=1;
     }else{
@@ -225,7 +225,8 @@ int main(int argc, char *args[]){
 
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
-    signal(SIGUSR2, sighandle_usr2); //Alla ricezione di SIGUSR2 leggere il comanda sulla fifo direttamente connessa al manuale
+   //signal(SIGUSR2, sighandle_usr2);
+    signal(SIGUSR2, sighandle2); //Alla ricezione di SIGUSR2 leggere il comanda sulla fifo direttamente connessa al manuale
     signal(SIGCONT, sign_cont_handler);//Segnale per riprendere il controllo 
 
     if(informazioni.def == 1){

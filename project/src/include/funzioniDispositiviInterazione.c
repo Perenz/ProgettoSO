@@ -34,8 +34,8 @@ void sighandle1(int sig, int fd_read, int fd_write){
             risp answer;  
             answer.considera = 0;
             answer.eliminato = 0;
-            if(comando.tipo_comando == 'a')//stai tentando il linking con un dispositivo di interazione? 
-                answer.errore = 1;
+                //stai tentando il linking con un dispositivo di interazione? 
+            answer.errore = 1;
             rispondi(answer, comando, fd_write);
         }
     }

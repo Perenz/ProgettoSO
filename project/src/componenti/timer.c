@@ -418,7 +418,8 @@ int main(int argc, char **args){
     signal(SIGCONT, sign_cont_handler_timer);//Segnale per riprendere il controllo 
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1_timer); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
-    signal(SIGUSR2, sighandle_usr2);
+   //signal(SIGUSR2, sighandle_usr2);
+    signal(SIGUSR2, sighandle2);
 
     if(informazioni.def == 1){
         printf("\nTimer posto in magazzino \n");

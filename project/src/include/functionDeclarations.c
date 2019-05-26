@@ -421,6 +421,7 @@ int cen_info(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     cmd comando;
     int n;
     comando.tipo_comando = 'i';
+    
 
     //Per comando forzato aggiungere 
     if(strcmp(args[1], "-f") == 0){

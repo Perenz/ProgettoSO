@@ -71,7 +71,7 @@ char** splitLine(char* line){
 
 int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
     //Setto il gestore di SIGCONT, l'ho giò settato ma per sicurezza lo risetto
-    signal(SIGCONT, sign_cont_handler);
+    //signal(SIGCONT, sign_cont_handler);
     int err_signal;//errore kill
     //Salto il primo nodo della lista dato che appartiene alla centralina
     NodoPtr nodo = list->next;
@@ -162,8 +162,7 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
     comando.profondita+=1;
     risposta_to_padre.profondita = comando.profondita;
     
-    if(comando.manuale != 1)
-        write(fd_papi, &risposta_to_padre, sizeof(risp));
+    write(fd_papi, &risposta_to_padre, sizeof(risp));
     comando.id_padre = informazioni.id;
     
     //finchè ho figli
@@ -197,8 +196,7 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
                 //egli manderà 1 messaggio di terminazione al padre
                 //scrivo a mio padre la risposta che ho appena letto
                 if(answer.considera==1 ){
-                    if(comando.manuale != 1)
-                        write(fd_papi, &answer, sizeof(risp));
+                    write(fd_papi, &answer, sizeof(risp));
                 }
                 
                 //mando un segnale al figlio per comunicare di continuare la comunicazione                
@@ -219,8 +217,7 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
     }
     //comunico al padre di aver finito di comunicare mettendo il parametro termina_comunicazione = 1
     risposta_to_padre.termina_comunicazione = 1;
-    if(comando.manuale != 1)
-        write(fd_papi, &risposta_to_padre,sizeof(risp));
+    write(fd_papi, &risposta_to_padre,sizeof(risp));
     return 1;
 }
 
@@ -234,7 +231,7 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
 
 void stampaRisp(risp answer){
     if(strcmp(answer.info_disp.tipo, "bulb") == 0){
-        printf("%d Bulb %d %s time: %.2f \n",answer.info_disp.pid,answer.info_disp.id,answer.info_disp.stato,answer.info_disp.time);
+        printf("%d Bulb %d %s time: %.2f \n",answer.info_disp.pid,answer.info_disp.id, answer.info_disp.stato, answer.info_disp.time);
     }else if(strcmp(answer.info_disp.tipo, "fridge") == 0){
         printf("%d Fridge %d %s time: %.2f  delay: %.2f  percentualeRiempimento: %d  temperatura: %d \n",answer.info_disp.pid,answer.info_disp.id,answer.info_disp.stato,answer.info_disp.time,
        answer.info_disp.frigo.delay,answer.info_disp.frigo.percentuale,answer.info_disp.frigo.temperatura);
