@@ -43,7 +43,6 @@ int dev_depth_info(cmd comando, risp* risposta);
 int device_handle_command(cmd);
 void h_sigstop_handler ( int sig ) ;
 //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-int dev_add(char*, char*);
 
 
 
@@ -64,7 +63,7 @@ void signhandle_quit(int sig){
         _exit(0);
     }
 }
-void sighandle_alarm(int sig){
+void sighandle_alarm_hub(int sig){
     if(sig == SIGALRM){
         strcpy(informazioni.frigo.apertura.stato, "chiuso");
     }
@@ -92,9 +91,7 @@ int cont_numCommands(){
 }
 
 void sign_cont_handler_hub(int sig){
-    signal(SIGCONT, sign_cont_handler_hub);
     return;
-
 }
 
 void sigint_handler(int sig){
@@ -137,7 +134,6 @@ void sighandle_usr1_hub(int sig){
         if(err_signal != 0)
             perror("errore in invio segnale");
 
-        //printf("Termina in modo adeguato.\n");
         return;
     }
 }
@@ -374,11 +370,11 @@ int dev_info(cmd comando){
         write(fd_write, &risposta_controllore, sizeof(risposta_controllore));
         */
         //Se VOGLIAMO FARE CHE IL DISPOSITIVO CHIEDE AI SUOI FIGLI SE C'è QUALCUNO CON QUELL'ID ANCHE SE LUI HA GIà QUELL'ID
-        rispondi(risposta_controllore, comando);
     }else{
         risposta_controllore.considera = 0;//non considerarmi
-        rispondi(risposta_controllore, comando);
     }
+    rispondi(risposta_controllore, comando);
+
     return 1;
 }
 
@@ -535,7 +531,7 @@ int main(int argc, char **args){
     signal(SIGUSR1, sighandle_usr1_hub); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
     //signal(SIGUSR2, sighandle_usr2);
     signal(SIGUSR2, sighandle2);
-    signal(SIGALRM,sighandle_alarm);
+    signal(SIGALRM,sighandle_alarm_hub);
 
     if(informazioni.def == 1){
         printf("\nHub posto in magazzino \n");

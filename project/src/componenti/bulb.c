@@ -124,6 +124,17 @@ int dev_list(cmd comando){
 //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 int dev_switch(cmd comando){
     risp answer;
+    //comando.forzato == 2 risulta esser il commuta_stato dettato dal timer
+    //per questioni di tempo non siamo riusciti a realizzare il timer vero e proprio
+    //abbiamo realizzato un timer che ogni 100 secondi spegne (se accese) e accende (se spente)
+    //le lampadine
+    if(comando.forzato == 2){
+        if(strcmp(informazioni.stato,"off")== 0){
+                strcpy(informazioni.stato, "on");  
+            }else if(strcmp(informazioni.stato,"off")==0){
+                strcpy(informazioni.stato, "on");  
+        }   
+    }
     if(comando.id == informazioni.id || comando.forzato == 1){
         if(strcmp(comando.cmdInterruttore.nome , "accensione")==0){
             //get_info_string(&(answer.info_disp));
