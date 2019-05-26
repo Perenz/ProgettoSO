@@ -149,7 +149,6 @@ int controlla(int idDisp, int* cenPid, char* tipoDisp){
         close(fd); //Chiudo in lettura
 
         //Memorizzo il pid del dispositivo cercato
-        printf("Disp cercato %d\n",dispCercato.info_disp.pid);
         int pidCerc = dispCercato.info_disp.pid;
 
         //Passo dal tipo scritto in stringa ad il tipo scritto con singolo carattere
