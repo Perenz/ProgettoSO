@@ -15,7 +15,7 @@ Il processo manuale si occuperà autonomamente di recuperare il PID della centra
 
 * Il **primo** è relativo ai comandi eseguibili mentre non si è in controllo di alcun dispositivo, devono permettere all'utente di assicurarsi il controllo diretto di un dispositivo
 Si ha:
-* **control** *<idDispositivo>*: indicando un idDispositivo valido il processo manuale contatterà la centralina tramite FIFO la quale risponderà con le informazione principali sul dispositivo cercato, cioe PID e tipo. A questo punto si sta controllando un dispositivo e si possono eseguire i comandi del secondo insieme.
+	* **control** *<idDispositivo>*: indicando un idDispositivo valido il processo manuale contatterà la centralina tramite FIFO la quale risponderà con le informazione principali sul dispositivo cercato, cioe PID e tipo. A questo punto si sta controllando un dispositivo e si possono eseguire i comandi del secondo insieme.
 
 	* **exit**: Verrà eseguita un uscita sicura dal sistema, tale comando è eseguibile anche mentre si controlla un dispositivo.
 	
@@ -30,13 +30,14 @@ Si ha:
 			* **apertura** per agire su FRIDGE/WINDOW o controllori tramite i valori on/off (Utilizzando questa label verso un dispositivo di controllo si agirà sull'apertura sia dei FRIDGE che delle WINDOW controllate						* **aperturaF* per agire su WINDOW o controllori tramite i valori on/off (Utilizzando questa label verso un dispositivo di controllo si agirà sull'apertura delle sole WINDOW)
 			* **aperturaW** per agire su WINDOW o controllori tramite i valori on/off (Utilizzando questa label verso un dispositivo di controllo si agirà sull'apertura dei soli FRIDGE)
 			* **termostato** per agire su FRIDGE o controllori tramite un valore numerico intero, permetterà di cambiare la temperatura interna del dispositivo controllato
-			* ***set <label><valore>***: Permette di agire sui registri dei FRIDGE e di eventuali loro controllori
+	* ***set <label><valore>***: Permette di agire sui registri dei FRIDGE e di eventuali loro controllori
 				* *label disponibili*: 
 					* **termostato**: Si comporta in maniera identica alla switch con label termostato
 					* **perc** per settare la percentuale di riempimento, accetta valori interi compresi tra 0 e 100
 					* **delay** per settare l'intervallo di tempo dopo il quale un frigo aperto si chiude automaticamente
-			* **release**: Per rilasciare il dispositivo controllato, solamente dopo aver rilasciato quello attuale si potrà prendere il controllo di uno nuovo, sempre tramite comando 'control'
+	* **release**: Per rilasciare il dispositivo controllato, solamente dopo aver rilasciato quello attuale si potrà prendere il controllo di uno nuovo, sempre tramite comando 'control'
 			* **exit**: Per eseguire un uscita sicura dal sistema
 			* **help**: Verranno indicati i diversi comandi permessi da entrambi gli insieme
 
+## Specifiche *NON* manuale 
 
