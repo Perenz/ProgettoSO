@@ -8,7 +8,6 @@
 #define CEN_BUFSIZE 128
 #define CEN_DELIM " \t\r\n\a"
 
-
 //PER ORA LE DEFINISCO QUI, POI VERRA FATTA UNA LIBRARY
 void sighandle1(int sig, int fd_read, int);
 void sighandle2(int sig);
@@ -20,9 +19,6 @@ int dev_add_gen(cmd comando, int id, int pid, int fd_write);
 int rispondi(risp answer, cmd comando, int fd_write);
 int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, info informazioni);
 
-
-
-//TODO I due handler sono compattabili in uno unico con controllo del tipo di segnale appena prima del read
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
 void sighandle1(int sig, int fd_read, int fd_write){
     if(sig == SIGUSR1){
@@ -34,12 +30,12 @@ void sighandle1(int sig, int fd_read, int fd_write){
             risp answer;  
             answer.considera = 0;
             answer.eliminato = 0;
-                //stai tentando il linking con un dispositivo di interazione? 
             answer.errore = 1;
             rispondi(answer, comando, fd_write);
         }
     }
 }
+//SIGURS2 usato per gestire il comando manuale
 void sighandle2(int sig){
     if(sig == SIGUSR2){
         char fifoManComp[30];
@@ -49,7 +45,7 @@ void sighandle2(int sig){
             printf("Errore nell'apertura della Fifo in READONLY %s\n", strerror(errno));
         }
         cmd comando;
-        read(fd_manuale, &comando, sizeof(cmd));//uso 10 per intanto, vedi sopra poi
+        read(fd_manuale, &comando, sizeof(cmd));
         close(fd_manuale);
         comando.manuale=1;
         int errnum = device_handle_command(comando);
@@ -59,15 +55,11 @@ void sighandle2(int sig){
 int rispondi(risp answer, cmd comando, int fd_write){
     comando.profondita += 1;
     answer.errore = 0;
-
     answer.profondita = comando.profondita;
-
     answer.id_padre = comando.id_padre;
-
     answer.termina_comunicazione = 0;
 
     write(fd_write, &answer, sizeof(risp));
-
 
     answer.termina_comunicazione = 1;
     write(fd_write, &answer, sizeof(risp));
@@ -78,8 +70,6 @@ int rispondi(risp answer, cmd comando, int fd_write){
 /*restituisce in pipe
     <info> := <tipo> <pid???> <id> <status> <time>
 */
-//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-//GUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LISTGUARDA LIST
 int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, info informazioni){
     risp answer;
     if(id == comando.id || comando.forzato == 1){//comando forzato per avere le info di dispositivi situati nel sott'albero di un processo che ha id 
@@ -89,14 +79,12 @@ int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, info inf
         answer.dispositivo_interazione = 1;
         answer.info_disp.def = 0;
         answer.info_disp = informazioni;
-        //get_info_string(&(answer.info_disp));
     }else{
         answer.considera = 0;
         answer.dispositivo_interazione = 1;
     }
     rispondi(answer, comando, fd_write);
-    
-    //famo ritornare l'errore poi
+
     return 1;
 }
 
@@ -109,7 +97,6 @@ int dev_list_gen(cmd comando, int idPar, int fd_write, info informazioni){
     answer.info_disp = informazioni;
     answer.considera = 1;
     answer.info_disp.def = 0;
-    
     rispondi(answer, comando, fd_write);
 
     return 1;
@@ -122,8 +109,6 @@ int dev_list_gen(cmd comando, int idPar, int fd_write, info informazioni){
     0 se NON sono il dispositivo da eliminare
     pid se sono il dispositivo da eliminare
 */
-//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-
 int dev_delete_gen(cmd comando, int pid, int id, int idPar, int fd_write, info informazioni){
     //printf("pid: %d\n",pid);
     risp answer;
@@ -159,8 +144,6 @@ int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, i
         answer.dispositivo_interazione = 1;
         answer.info_disp.def = 0;
         answer.info_disp = informazioni;
-        //get_info_string(&(answer.info_disp));
-
         //Devo creare la fifo per il collegamento diretto
         char fifoManComp[30];
         
@@ -173,6 +156,5 @@ int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, i
     }
     rispondi(answer, comando,fd_write);
     
-    //famo ritornare l'errore poi
     return 1;
 }

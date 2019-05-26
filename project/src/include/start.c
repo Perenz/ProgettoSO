@@ -68,9 +68,6 @@ int cen_start(){
     //Lancio i processi di supporto
     //getCenPid che comunica tramite FIFO con manuale.c
     supportReadPid = lanciaGetCenPid();
-    //TODO assicurarsi che il processo CENPIDREAD venga terminato anche quando si esce dal programma tramite ctr+C
-    //Cosi come tutte le componenti
-
 
     //Continuo ad ascoltare in input su stdin
     do{
@@ -81,7 +78,6 @@ int cen_start(){
 
             //Splitta la linea in singoli parametri/argomenti
             params = splitLine(command);
-            //TODO potrei passare il comando non splittato così da poterlo mandare direttamente
             //Esegue il comando
             status = cen_processCmd(params, collegati_list, magazzino_list);
         

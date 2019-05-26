@@ -10,12 +10,10 @@
 #include "../include/gestioneComandi.c"
 #include "../include/addDevice.c"
 
-//voglio usare le funzioni definite in functionDeclaration urca
 #define CEN_BUFSIZE 128
 
 int add = 0;
 info info_device_to_add;
-
 
 NodoPtr dispList; //lista dei dispositivi collegati all'hub
 int fifoCreata=0;
@@ -69,7 +67,6 @@ void signhandle_quit(int sig){
             kill(SIGQUIT, nodo->data);
             nodo=nodo->next;
         }
-
         _exit(0);
     }
 }
@@ -95,13 +92,10 @@ int (*builtin_func_hub[]) (cmd comando) = {
 int cont_numCommands(){
     return (sizeof(builtin_command)/ sizeof(char*));
 }
-
 void sign_cont_handler_timer(int sig){
     return;
 
 }
-
-
 void sigint_handler(int sig){
     char fifo[30];
     if(fifoCreata!=0){
@@ -117,7 +111,6 @@ void sigint_handler(int sig){
     return;
     //Come per bulb non serve andare in pausa
 }
-
 void sighandle2(int sig){
     if(sig == SIGUSR2){
         char fifoManComp[30];
@@ -151,7 +144,6 @@ void sighandle1_usr1_timer(int sig){
 void sighandle_usr2(int sig){
     sigEntrata=2;
 }   
-
 int device_handle_command(cmd comando){
     //da fare come in functionDeclarations in file dispositivi
     int i;
@@ -178,7 +170,6 @@ int rispondi(risp risposta_controllore, cmd comando){
     return 1;
 }
 
-
 int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, info informazioni){
   risp answer;
     if(id == comando.id){//comando forzato per avere le info di dispositivi situati nel sott'albero di un processo che ha id 
@@ -189,11 +180,9 @@ int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, i
         answer.dispositivo_interazione = 1;
         answer.info_disp.def = 0;
         answer.info_disp = informazioni;
-        //get_info_string(&(answer.info_disp));
 
         //Devo creare la fifo per il collegamento diretto
-        char fifoManComp[30];
-        
+        char fifoManComp[30]; 
         sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
         mkfifo(fifoManComp, 0666);
     
@@ -209,8 +198,6 @@ int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, i
 
 int dev_list(cmd comando){
     risp risposta_controllore;
-
-
     risposta_controllore.id = informazioni.id;
     risposta_controllore.pid = informazioni.pid;
     risposta_controllore.considera = 1;
@@ -235,17 +222,6 @@ int dev_info(cmd comando){
         risposta_controllore.dispositivo_interazione = 0;
         dev_depth_info(comando, &risposta_controllore);
         risposta_controllore.info_disp = informazioni;
-        //set_info
-
-        //SE VOGLIAMO FARE CHE IL DISPOSITIVO MANDA UN MESSAGGIO E NON CERCA SE I SUOI FIGLI HANNO LO STESSO ID: 
-        /* NON VA SE NON è STATO FATTO UN LIST PRIMA ED IN ALCUNI CASI SI BLOCCA
-        risposta_controllore.termina_comunicazione = 0;
-        write(fd_write, &risposta_controllore, sizeof(risp));
-        risposta_controllore.termina_comunicazione = 1;
-        write(fd_write, &risposta_controllore, sizeof(risposta_controllore));
-        */
-        //Se VOGLIAMO FARE CHE IL DISPOSITIVO CHIEDE AI SUOI FIGLI SE C'è QUALCUNO CON QUELL'ID ANCHE SE LUI HA GIà QUELL'ID
-        
     }else{
         risposta_controllore.considera = 0;//non considerarmi
     }
@@ -257,8 +233,8 @@ int dev_depth_info(cmd comando, risp* risposta){
     malloc_array(&array_risposte_figli, N_MAX_DISP);
     comando.forzato = 1;
     int n = broadcast_centralina(dispList, comando, array_risposte_figli);
+    
     int i;
-
     risposta->errore = 0;
     for(i=0; i<n; i++){
         if( strcmp ( array_risposte_figli[i].info_disp.tipo , "bulb" ) == 0){
@@ -311,14 +287,12 @@ int dev_delete(cmd comando){
     risp risposta_controllore;
     if(comando.forzato == 1 || comando.id == informazioni.id){//comando --all 
         risposta_controllore.id = informazioni.id;
-       
         risposta_controllore.considera = 1;
         risposta_controllore.eliminato = 1;
         risposta_controllore.pid = informazioni.pid;
         comando.forzato = 1;//indico ai miei figli di eliminarsi
         //set_info 
-        risposta_controllore.info_disp = informazioni;
-        
+        risposta_controllore.info_disp = informazioni;   
         rispondi(risposta_controllore, comando);
     
         exit(0);
@@ -340,7 +314,6 @@ int dev_link(cmd comando){
         add = 1;
         risposta_controllore.errore = 0;
         risposta_controllore.termina_comunicazione = 0;
-
         write(fd_write, &risposta_controllore, sizeof(risp));
         //La continuazione della risposta si trova nel main
     }else{
@@ -356,13 +329,6 @@ int dev_manualControl(cmd comando){
     int err = dev_manual_info_gen(comando, informazioni.id, informazioni.pid_padre, fd_write, informazioni.pid, informazioni);
     return err;
 }
-
-void set_alarm(time_t begin, time_t end){
-
-    int sec = difftime(begin, end);
-    alarm(sec);
-}
-
 
 int dev_switch(cmd comando){//////DA MODIFICARE
     //puoi richiamare la funzione che c'è sopra bro, guarda, per il resto non dovrebbe variare nulla
@@ -489,17 +455,13 @@ int dev_set(cmd comando){
     }
 }
 
-
 int main(int argc, char **args){
   dispList = listInit(getpid());
-
-    //UGUALE A BULB 
 
     fd_read = atoi(args[1]);
     fd_write = atoi(args[2]);
     //MANCA IL SET_INFO, sbaglia l'id
     int err = read(fd_read, &informazioni,sizeof(info));
-    
     informazioni.pid = getpid(); // chiedo il mio pid
     
     informazioni.pid_padre = getppid(); //chiedo il pid di mio padre
@@ -527,7 +489,6 @@ int main(int argc, char **args){
     signal(SIGCONT, sign_cont_handler_timer);//Segnale per riprendere il controllo 
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle1_usr1_timer); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
-    //signal(SIGUSR2, sighandle_usr2);
     signal(SIGUSR2, sighandle2);
     signal(SIGALRM,sighandle_alarm_timer);
 

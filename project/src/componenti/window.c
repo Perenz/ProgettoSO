@@ -13,12 +13,8 @@
 #include "../strutture/listH.h"
 #include "../strutture/comandiH.h"
 
-
 //ho spostato i metodi getLine e splitLine in una nuova libreria 
-//TODO tale verrà linkata nel gestore generale dei processi di interazione
-//void get_info_string(info*);
 int device_handle_command(cmd);
-
 
 int dev_getinfo(cmd);
 int dev_delete(cmd);
@@ -28,13 +24,11 @@ int dev_switch(cmd);
 int dev_list(cmd);
 int dev_info(cmd);
 
-
 void set_time();
 
 void sign_cont_handler(int);
 
 #include "../include/funzioniDispositiviInterazione.c"
-
 
 time_t tempoUltimaMisurazione;
 //TODO : potrei usare un unico node
@@ -47,16 +41,12 @@ int sigEntrata=0;
 int fifoCreata=0;
 info informazioni;
 
-
-
-
 char *builtin_command[]={
     "l",//list
     "s",//switch
     "i",//getInfo
     "d", //delete
     "m"//Manual
-
 };
 int (*builtin_func[]) (cmd comando) = { //int man: 0 allora il comando arriva da centralina, 1 il comando arriva da manuale
     &dev_list,
@@ -69,8 +59,6 @@ int dev_numCommands(){
     return (sizeof(builtin_command)/ sizeof(char*));
 }
 int device_handle_command(cmd comando){
-    //da fare come in functionDeclarations in file dispositivi
-    //NON FUNZICA
     int i;
     for(i=0; i<dev_numCommands(); i++){
         char tmp = *builtin_command[i];
@@ -100,11 +88,9 @@ void sighandle_usr1(int sig){
 void sighandle_usr2(int sig){
     sigEntrata=2;
 } 
-
 void sign_cont_handler(int sig){
     return;
 }
-
 void signint_handler(int sig){
     //Segnale int inviato da comando power
     //Vado in pausa
@@ -124,7 +110,6 @@ int dev_list(cmd comando){
     0 se NON sono il dispositivo in cui ho modificato lo stato
     1 se sono il dispositivo in cui ho modificato lo stato
 */
-//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 int dev_switch(cmd comando){
     risp answer;
     if(comando.id == informazioni.id || comando.forzato == 1){
@@ -136,7 +121,6 @@ int dev_switch(cmd comando){
             if(strcmp(informazioni.stato,"aperta")== 0 && strcmp(comando.cmdInterruttore.stato , "on")==0){
                 strcpy(informazioni.stato, "chiusa");  
             }
-            //get_info_string(&(answer.info_disp));
         }
         if(comando.manuale==1){
             //Devo rispondere al manuale
@@ -148,10 +132,8 @@ int dev_switch(cmd comando){
             //Apro Fifo in scrittura
             int fd_manuale = open(fifoManComp, O_WRONLY);
 
-            //////////////////////////////////////////////////////////
             sprintf(msg, "%s", informazioni.stato);//Rispondo solamente con lo status attuale del dispositivo
             int esito=write(fd_manuale, msg, 10);
-            /////////////////////////////////////////////////////////
 
             //Chiudo in scrittura
             close(fd_manuale);
@@ -184,7 +166,6 @@ int dev_delete(cmd comando){
     return err;
 }
 
-
 void set_time(){
     if(strcmp(informazioni.stato,"aperta")== 0){
         time_t tmp;
@@ -203,14 +184,13 @@ int dev_manualControl(cmd comando){
     return err;
 }
 
-
 int main(int argc, char *args[]){
     //leggo args per prendere gli argomenti passati(puntatore al lato di scrittura della pipe)
     fd_read = atoi(args[1]);
     fd_write = atoi(args[2]);  
     int err = read(fd_read, &informazioni,sizeof(info));
     if(err == -1)
-        printf("eerore nella lettura delle info BULB\n");
+        printf("errore nella lettura delle info BULB\n");
     
     time(&tempoUltimaMisurazione);
     if(informazioni.def == 1){
@@ -220,12 +200,9 @@ int main(int argc, char *args[]){
     }
     informazioni.pid = getpid(); // chiedo il mio pid
     informazioni.pid_padre = getppid(); //chiedo il pid di mio padre
-    
-
 
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
-   //signal(SIGUSR2, sighandle_usr2);
     signal(SIGUSR2, sighandle2); //Alla ricezione di SIGUSR2 leggere il comanda sulla fifo direttamente connessa al manuale
     signal(SIGCONT, sign_cont_handler);//Segnale per riprendere il controllo 
 
@@ -246,7 +223,6 @@ int main(int argc, char *args[]){
     int ris = kill(informazioni.pid_padre, SIGCONT); 
 
     //Child va in pausa
-    
     
     while(1){
         if(sigEntrata==2){
