@@ -20,6 +20,7 @@ void printRisp(risp* array_risposte, int n, int indentazione);
 void alloc_array(risp** array_risposte, int n);
 void stampaRisp(risp);
 void printColorato(char* string, char* color);
+
 void sign_cont_handler(int sig){
     return;
 }
@@ -233,7 +234,7 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
 
 void stampaRisp(risp answer){
     if(strcmp(answer.info_disp.tipo, "bulb") == 0){
-        printf("%d Bulb %d %s time: %.2f \n",answer.info_disp.id,answer.info_disp.id,answer.info_disp.stato,answer.info_disp.time);
+        printf("%d Bulb %d %s time: %.2f \n",answer.info_disp.pid,answer.info_disp.id,answer.info_disp.stato,answer.info_disp.time);
     }else if(strcmp(answer.info_disp.tipo, "fridge") == 0){
         printf("%d Fridge %d %s time: %.2f  delay: %.2f  percentualeRiempimento: %d  temperatura: %d \n",answer.info_disp.pid,answer.info_disp.id,answer.info_disp.stato,answer.info_disp.time,
        answer.info_disp.frigo.delay,answer.info_disp.frigo.percentuale,answer.info_disp.frigo.temperatura);
