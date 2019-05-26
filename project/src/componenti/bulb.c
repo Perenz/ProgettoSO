@@ -150,7 +150,6 @@ int dev_switch(cmd comando){
 
                 //Chiudo in scrittura
                 close(fd_manuale);
-                printf("arrivo qui\n");
                 //return 1;
             }   
         }
