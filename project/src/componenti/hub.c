@@ -8,7 +8,7 @@
 #include "../strutture/list.c"
 
 #include "../include/gestioneComandi.c"
-#include "../includeaddDevice.c"
+#include "../include/addDevice.c"
 //#include "../includefunzioniDispositiviControllo.c"
 
 //voglio usare le funzioni definite in functionDeclaration urca
