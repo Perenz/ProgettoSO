@@ -10,5 +10,4 @@ Il file README.md attuale non è completo e verrà aggiornato in seguito.
 
 ## Acknowledgments
 
-* W la gnocca
 
