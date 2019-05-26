@@ -141,7 +141,6 @@ void sighandle1(int sig, int fd_read, int fd_write){
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
 void sighandle_usr1_hub(int sig){
     sighandle1(sig, fd_read, fd_write);
-    sigEntrata=1;
 }
 
 //USATO PER SVEGLIARE IL PROCESSO
@@ -545,8 +544,11 @@ int main(int argc, char **args){
             risposta_controllore.termina_comunicazione = 1;
             write(fd_write, &risposta_controllore, sizeof(risp));
         }
-        
-           
+
+        if(sigEntrata==2){
+            sighandle2(SIGUSR2);
+        }
+        sigEntrata = 0;
         pause();
     }
 

@@ -98,10 +98,9 @@ void sighandle_usr1(int sig){
     //sigEntrata=1;    
 }
 void sighandle_usr2(int sig){
-    sighandle2(sig);
+    sigEntrata=2;
+} 
 
-    //sigEntrata=2;
-}
 void sign_cont_handler(int sig){
     return;
 }
@@ -249,6 +248,10 @@ int main(int argc, char *args[]){
     
     
     while(1){
+        if(sigEntrata==2){
+            sighandle2(SIGUSR2);
+        }
+        sigEntrata = 0;
         pause();
     }
 

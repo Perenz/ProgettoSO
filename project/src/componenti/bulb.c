@@ -250,7 +250,10 @@ int main(int argc, char *args[]){
     
     
     while(1){
-
+        if(sigEntrata==2){
+            sighandle2(SIGUSR2);
+        }
+        sigEntrata = 0;
         pause();
     }
 

@@ -450,14 +450,10 @@ int main(int argc, char **args){
             write(fd_write, &risposta_terminazione, sizeof(risp));
         }
 
-        if(sigEntrata==1)
-            sighandle1(SIGUSR1, fd_read, fd_write);
-        else if(sigEntrata==2)
+        if(sigEntrata==2){
             sighandle2(SIGUSR2);
-
-        //Resetto ogni volta il sig di entrata
-        sigEntrata=0;
-            
+        }
+        sigEntrata = 0;            
         pause();
     }
 
