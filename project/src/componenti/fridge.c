@@ -268,7 +268,7 @@ int main(int argc, char *args[]){
     
     time(&tempoUltimaMisurazione);
     if(informazioni.def == 1){
-        informazioni.frigo.delay = 10.0; //di default 5 secondi
+        informazioni.frigo.delay = 10.0; //di default 1 secondi
         informazioni.frigo.temperatura = 3; //di default 3 gradi
         informazioni.frigo.percentuale = 0; //di default frigo vuoto
         strcpy(informazioni.tipo, "fridge");
