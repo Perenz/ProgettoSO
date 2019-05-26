@@ -64,7 +64,11 @@ void signhandle_quit(int sig){
         _exit(0);
     }
 }
-
+void sighandle_alarm(int sig){
+    if(sig == SIGALRM){
+        strcpy(informazioni.frigo.apertura.stato, "chiuso");
+    }
+}
 char *builtin_command[]={
     "l",//list
     "s",//switch
@@ -257,6 +261,12 @@ int dev_switch(cmd comando){//////DA MODIFICARE
             }
             //get_info_string(&(answer.info_disp));
         }
+        if(strcmp(comando.cmdInterruttore.nome, "delay")==0){
+            informazioni.frigo.delay = atoi(comando.cmdInterruttore.stato);
+        }
+        else if(strcmp(comando.cmdInterruttore.nome, "perc")==0){
+            informazioni.frigo.percentuale = atoi(comando.cmdInterruttore.stato);
+        }
 
         if(strcmp(comando.cmdInterruttore.nome , "apertura")==0 || strcmp(comando.cmdInterruttore.nome , "aperturaW")==0){
             //get_info_string(&(answer.info_disp));
@@ -392,6 +402,8 @@ int dev_depth_info(cmd comando, risp* risposta){
                 informazioni.lampadina.maxTime = array_risposte_figli[i].info_disp.time;
             
         }else if( strcmp ( array_risposte_figli[i].info_disp.tipo , "fridge" ) == 0){
+            printf("%s\n", array_risposte_figli[i].info_disp.stato);
+            printf("%s\n",  informazioni.frigo.apertura.stato);
             if(strcmp(array_risposte_figli[i].info_disp.stato , informazioni.frigo.apertura.stato) != 0){
                 //override errore = 4
                informazioni.frigo.override_hub = '1';
@@ -507,6 +519,7 @@ int main(int argc, char **args){
         informazioni.frigo.maxTime = -1.0;
         strcpy(informazioni.lampadina.accensione.stato , "off");
         strcpy(informazioni.frigo.apertura.stato , "chiuso");
+        informazioni.frigo.delay = 10;
         strcpy(informazioni.finestra.apertura.stato , "chiusa");
         strcpy(informazioni.finestra.chiusura.stato , "aperta");
     }
@@ -517,6 +530,7 @@ int main(int argc, char **args){
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1_hub); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
     signal(SIGUSR2, sighandle_usr2);
+    signal(SIGALRM,sighandle_alarm);
 
     if(informazioni.def == 1){
         printf("\nHub posto in magazzino \n");
