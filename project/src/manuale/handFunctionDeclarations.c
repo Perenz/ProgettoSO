@@ -9,6 +9,7 @@ int hand_control(char **, int *, char *); //Dovra ritornare il pid del dispositi
 int hand_help(char **, int *, char *); //Indica i diversi comandi disponibili
 int hand_exit(char **, int *, char *); //Per eseguire un'uscita sicura dal sistema
 int hand_exit1(char **, int *, int, char); //Richiama hand_exit per eseguire uscita sicura
+int hand_help1(char **, int *, int, char); //Indica i diversi comandi disponibili
 int hand_release(char **, int *, int, char); //Rilascia il dispositivo controllato 
 int hand_switch(char **, int *, int, char); //Esegue switch sul comando controllato 
 int hand_set(char **, int *, int, char); //Esegue set sul comando controllato
@@ -35,14 +36,16 @@ char *control_builtin_cmd[] = {
     "exit",
     "release",
     "switch",
-    "set" //Per settare: delay, perc e temp del frigorifero
+    "set", //Per settare: delay, perc e temp del frigorifero
+    "help"
 };
 
 int (*control_builtin_func[])(char **, int *, int, char) = {
     &hand_exit1,
     &hand_release,
     &hand_switch,
-    &hand_set};
+    &hand_set,
+    &hand_help1};
 
 void inizializzaFifo(int pidCont)
 {
@@ -443,6 +446,11 @@ int hand_exit1(char **args, int *contPid, int contId, char tipoCont)
 {
     return hand_exit(args, contPid, &tipoCont);
 }
+
+int hand_help1(char **args, int *contPid, int contId, char tipoCont){
+    return hand_help(args, contPid, &tipoCont);
+}
+
 
 int hand_set(char **args, int *contPid, int contId, char tipoCont)
 {
