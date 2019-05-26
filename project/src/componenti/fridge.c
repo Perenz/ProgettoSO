@@ -59,6 +59,7 @@ int (*builtin_func[]) (cmd comando) = { //int man: 0 allora il comando arriva da
 int dev_numCommands(){
     return (sizeof(builtin_command)/ sizeof(char*));
 }
+//gestione dei vari comandi
 int device_handle_command(cmd comando){
     int i;
     for(i=0; i<dev_numCommands(); i++){
@@ -71,6 +72,7 @@ int device_handle_command(cmd comando){
     //comando non riconosciuto
     return -1;
 }
+//gestione del segnale di quit per la chiusura
 void signhandle_quit(int sig){
     char fifo[30];
     if(sig==SIGQUIT){
@@ -81,6 +83,7 @@ void signhandle_quit(int sig){
         _exit(0);
     }
 }
+//segnale utilizzato per gestire il delay
 void sighandle_alarm(int sig){
     if(sig == SIGALRM){
         set_time();
@@ -106,7 +109,7 @@ void signint_handler(int sig){
 //COMANDO   l
 /*restituisce in pipe
     se comando è l: <informazioni>
-*/
+*/ //ritorna le info del dispositivo
 int dev_list(cmd comando){
     int err = dev_list_gen(comando, informazioni.pid_padre, fd_write, informazioni);
     return err;
@@ -116,7 +119,7 @@ int dev_list(cmd comando){
 /*restituisco in pipe:
     0 se NON sono il dispositivo in cui ho modificato lo stato
     1 se sono il dispositivo in cui ho modificato lo stato
-*/
+*/ //interruttore, va a cambiare lo stato del dispositivo
 int dev_switch(cmd comando){
     risp answer;
     if(comando.id == informazioni.id || comando.forzato == 1){
@@ -156,7 +159,7 @@ int dev_switch(cmd comando){
     rispondi(answer, comando, fd_write);
     return 1;
 }
-
+//funzione per settare i parametri che non sono modificabili tramite interruttore "normale" ma solamente da manuale
 int dev_set(cmd comando){
     risp answer;
     char fifoManComp[30], msg[10];
@@ -200,7 +203,7 @@ int dev_set(cmd comando){
 //COMANDO   info <id>
 /*restituisce in pipe
     <info> := <tipo> <pid???> <id> <status> <time>
-*/
+*/ //restituisce le info del dispositivo
 int dev_info(cmd comando){
     int err = dev_info_gen(comando, informazioni.id, informazioni.pid_padre, fd_write, informazioni.pid, informazioni);
     return err;
@@ -214,7 +217,7 @@ int dev_delete(cmd comando){
     int err = dev_delete_gen(comando, informazioni.pid, informazioni.id, informazioni.pid_padre, fd_write, informazioni);
     return err;
 }
-
+//funzione per tenere traccia del tempo di utilizzo del dispositivo
 void set_time(){
     if(strcmp(informazioni.stato,"aperto")== 0){
         time_t tmp;
@@ -226,7 +229,7 @@ void set_time(){
         time(&tempoUltimaMisurazione);
     }
 }
-
+//per interagire tramite comando manuale
 int dev_manualControl(cmd comando){
     fifoCreata=1;
     int err = dev_manual_info_gen(comando, informazioni.id, informazioni.pid_padre, fd_write, informazioni.pid, informazioni);
@@ -242,6 +245,7 @@ int main(int argc, char *args[]){
         printf("errore nella lettura delle info BULB\n");
     
     time(&tempoUltimaMisurazione);
+    //se è stato creato nuovo le info saranno quelle di default, altrimenti saranno state passate nel read precedente
     if(informazioni.def == 1){
         informazioni.frigo.delay = 10.0; //di default 1 secondi
         informazioni.frigo.temperatura = 3; //di default 3 gradi
@@ -256,18 +260,20 @@ int main(int argc, char *args[]){
     informazioni.pid = getpid(); // chiedo il mio pid
     informazioni.pid_padre = getppid(); //chiedo il pid di mio padre  
 
+    //varie gestioni dei segnali
     signal(SIGALRM, sighandle_alarm);//segnale usato per il delay
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
     signal(SIGUSR2, sighandle2); //Alla ricezione di SIGUSR2 leggere il comanda sulla fifo direttamente connessa al manuale
     signal(SIGCONT, sign_cont_handler);//Segnale per riprendere il controllo 
 
+    //se le info sono di default è una nuova aggiunta
     if(informazioni.def == 1){
         printf("\nFrigo posto in magazzino\n");
         printf("Id: %d\n", informazioni.id);
         printf("Nome: %s\n", informazioni.nome);
         printf("Pid: %d\nPid padre: %d\n\n", informazioni.pid, informazioni.pid_padre);
-    }else{
+    }else{ //altrimenti se viene collegata le info verranno sempre passate
         printf("\nFrigo collegata\n");
         printf("Id: %d\n", informazioni.id);
         printf("Nome: %s\n", informazioni.nome);
