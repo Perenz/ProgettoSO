@@ -156,6 +156,10 @@ int rispondi(risp risposta_controllore, cmd comando){
         risposta_controllore.termina_comunicazione = 0;
         risposta_controllore.pid = informazioni.pid;
     }
+    if(risposta_controllore.considera == 1){
+        comando.profondita+=1;
+        risposta_controllore.profondita = comando.profondita;
+    }
     //vado io in controllo e mando le varie risposte al papi
     //attenz, buono che salto il primo
     broadcast_controllo(dispList, comando, informazioni, fd_write, risposta_controllore);

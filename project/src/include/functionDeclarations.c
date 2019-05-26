@@ -145,10 +145,10 @@ int cen_list(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     cmd comando;
     comando.manuale=0;
     comando.tipo_comando = 'l'; //imposto il comando
-    comando.profondita = 0;
     
     int n = 0;
-    printf("\n\tLista dei dispositivi COLLEGATI:\n");
+    printColorato("\n\tLista dei dispositivi COLLEGATI:\n\n", "green");
+    printColorato("\tCentralina ID: 0\n", "yellow");
     //invio a tutti i miei figli il comando per ricevere le loro informazioni (dispositivi collegati)
     n = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list);
     //stampo le informazioni ricevute  
@@ -157,8 +157,7 @@ int cen_list(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
 
     comando.manuale=0;
     comando.tipo_comando = 'l';
-    comando.profondita = 0;
-    printf("\n\tLista dei dispositivi DISPONIBILI:\n");
+    printColorato("\n\tLista dei dispositivi DISPONIBILI:\n\n", "green");
     //invio a tutti i miei figli il comando per ricevere le loro informazioni (dispositivi aggiunti ma non ancora collegati)
     n = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);
     //stampo le informazioni ricevute 
@@ -344,13 +343,16 @@ int cen_switch(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
             //inoltro il comando ai figli che lo gestiranno solo se l'id coinciderà o il comando sarà forzato, perchè inviato verso un hub
             //il quale lo forza ai figli
             int n = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);
+            printf("\n");
             printRisp(array_risposte_magazzino_list, n, 1);
             
             comando.profondita = 0;
 
             n = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list);
+            printf("\n");
             printRisp(array_risposte_collegati_list, n, 1);
-            printf("Numero dispositivi: %d\n", n);
+            printColorato("Numero dispositivi accesi: ", "green");
+            printf("%d\n", n);
 
             free(array_risposte_collegati_list);
             free(array_risposte_magazzino_list);
@@ -398,7 +400,7 @@ int cen_info(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
         comando.id = atoi(args[1]);
     }
     
-
+    printf("\n");
     n = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list);
     printRisp(array_risposte_collegati_list, n, 1);
     n = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);
@@ -413,7 +415,7 @@ int cen_info(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     Funzione: collega due dispositivi (uno deve essere di controllo) 
     Sintassi lato utente:                          link <id1> to <id2>
     TODO Sintassi comunicata dalla centralina : 
-*///AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+*/
 int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
     //L'ID DEL PADRE MANCA
     if(powerOn==0){
@@ -436,10 +438,12 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
         //link id1 to id2
     int id1 = atoi(args[1]);
     int id2 = atoi(args[3]);
-    risp* array_risposte_collegati_list = malloc(N_MAX_DISP * sizeof(risp));
-    risp* array_risposte_magazzino_list = malloc(N_MAX_DISP * sizeof(risp));
+    risp* array_risposte_collegati_list;
+    risp* array_risposte_magazzino_list;
+    malloc_array(&array_risposte_collegati_list, N_MAX_DISP);
+    malloc_array(&array_risposte_magazzino_list, N_MAX_DISP);
     //ricorda di pulire gli array
-
+    printf("\n");
     signal(SIGCONT, sign_cont_handler);
     cmd comando;
     comando.manuale = 0;

@@ -155,6 +155,10 @@ int device_handle_command(cmd comando){
     return 1;
 }
 int rispondi(risp risposta_controllore, cmd comando){
+    if(risposta_controllore.considera == 1){
+        comando.profondita += 1;
+        risposta_controllore.profondita = comando.profondita;
+    }
     risposta_controllore.id_padre = comando.id_padre;
     risposta_controllore.termina_comunicazione = 0;
     risposta_controllore.pid = informazioni.pid;

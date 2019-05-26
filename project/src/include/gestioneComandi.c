@@ -78,7 +78,7 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
     risp answer_tmp;//Risposta che verrà inserita in un array di risposte
     //Imposto a zero la terminazione della comunicazione che fa continuare il ciclio di comunicazione con i figli
     answer_tmp.termina_comunicazione = 0;
-    comando.profondita = 0;
+    comando.profondita = 1;
     int i = 0;//indice array statico delle risposte PROVA
 
     //Finchè ho figli prova ad instaurare la comunicazione
@@ -147,8 +147,7 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
     int err_signal;//errore kill
     //scrivo al padre la risposta del dispositivo di controllo contenente le sue info
     //il padre potrebbe essere un dispositivo diverso dalla centralina ma comunque sarà in ascolto
-    comando.profondita+=1;
-    risposta_to_padre.profondita = comando.profondita;
+    
     
     write(fd_papi, &risposta_to_padre, sizeof(risp));
     comando.id_padre = informazioni.id;
