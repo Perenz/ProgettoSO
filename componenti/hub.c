@@ -38,8 +38,7 @@ int dev_delete(cmd);
 int dev_link(cmd);
 int dev_manualControl(cmd);
 int dev_set(cmd);
-int dev_depth_info(cmd comando, info informazione_dispositivo);
-
+int dev_depth_info(cmd comando, risp* risposta);
 //int dev_link(char** args);
 int device_handle_command(cmd);
 void h_sigstop_handler ( int sig ) ;
@@ -141,6 +140,7 @@ void sighandle1(int sig, int fd_read, int fd_write){
 
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
 void sighandle_usr1_hub(int sig){
+    sighandle1(sig, fd_read, fd_write);
     sigEntrata=1;
 }
 
@@ -160,6 +160,17 @@ int device_handle_command(cmd comando){
     return 1;
 }
 int rispondi(risp risposta_controllore, cmd comando){
+    //se il comando è diverso da i non restituisco i tempi massimi 
+    if(comando.tipo_comando != 'i'){
+        informazioni.lampadina.maxTime = -1.0;
+        informazioni.frigo.maxTime = -1.0;
+        informazioni.finestra.maxTime = -1.0;
+
+        risposta_controllore.info_disp.lampadina.maxTime = -1.0;
+        risposta_controllore.info_disp.frigo.maxTime = -1.0;
+        risposta_controllore.info_disp.finestra.maxTime = -1.0;
+
+    }
     if(comando.manuale != 1){
         risposta_controllore.id_padre = comando.id_padre;
         risposta_controllore.termina_comunicazione = 0;
@@ -208,6 +219,9 @@ int dev_list(cmd comando){
     risposta_controllore.pid = informazioni.pid;
     risposta_controllore.considera = 1;
     risposta_controllore.eliminato = 0;
+
+    //Metto a -1 i max time così che non vengano stampati con il comando list, con il comando info verranno trovati e stampati
+    
     //set_info
     risposta_controllore.info_disp = informazioni;
     rispondi(risposta_controllore, comando);
@@ -220,23 +234,46 @@ int dev_switch(cmd comando){//////DA MODIFICARE
         comando.forzato = 1;
         risposta_controllore.id = informazioni.id;
         risposta_controllore.considera = 1;
-        /*
+        
         risposta_controllore.pid = informazioni.pid;
         risposta_controllore.profondita = comando.profondita+1;
 
-        /////////////////////////////////////////////////////
-        risposta_controllore.info_disp.time = 0;
-        
-        if(strcmp(comando.info_disp.interruttore[0].nome , "accensione")==0){
-            if(strcmp(informazioni.stato,"off")== 0 && strcmp(comando.info_disp.interruttore[0].stato , "on")==0){
-                strcpy(informazioni.stato, "on");  
-            }else if(strcmp(informazioni.stato,"on")== 0 && strcmp(comando.info_disp.interruttore[0].stato , "off")==0){
-                strcpy(informazioni.stato, "off");  
+        if(strcmp(comando.cmdInterruttore.nome , "accensione")==0){//si tratta di un comando per una bulb 
+            //get_info_string(&(answer.info_disp));
+            if(strcmp(informazioni.lampadina.accensione.stato,"off")== 0 && strcmp(comando.cmdInterruttore.stato , "on")==0){
+                strcpy(informazioni.lampadina.accensione.stato, "on");  
+            }else if(strcmp(informazioni.lampadina.accensione.stato,"on")== 0 && strcmp(comando.cmdInterruttore.stato , "off")==0){
+                strcpy(informazioni.lampadina.accensione.stato, "off");  
             }
-            risposta_controllore.considera = 1;
         }
-        risposta_controllore.info_disp = informazioni;
-        */
+        
+        
+        else if(strcmp(comando.cmdInterruttore.nome , "apertura")==0 || strcmp(comando.cmdInterruttore.nome , "aperturaF")==0){//si tratta di un frigo
+            //get_info_string(&(answer.info_disp));
+            if(strcmp(informazioni.frigo.apertura.stato,"chiuso")== 0 && strcmp(comando.cmdInterruttore.stato , "on")==0){
+                strcpy(informazioni.frigo.apertura.stato, "aperto"); 
+                alarm(informazioni.frigo.delay); 
+            }else if(strcmp(informazioni.frigo.apertura.stato,"aperto")== 0 && strcmp(comando.cmdInterruttore.stato , "off")==0){
+                strcpy(informazioni.frigo.apertura.stato, "chiuso");  
+            }
+            //get_info_string(&(answer.info_disp));
+        }
+
+        if(strcmp(comando.cmdInterruttore.nome , "apertura")==0 || strcmp(comando.cmdInterruttore.nome , "aperturaW")==0){
+            //get_info_string(&(answer.info_disp));
+            if(strcmp(informazioni.finestra.apertura.stato,"chiusa")== 0 && strcmp(comando.cmdInterruttore.stato , "on")==0){
+                strcpy(informazioni.finestra.apertura.stato, "aperta");  
+               
+            }
+        }else if(strcmp(comando.cmdInterruttore.nome, "chiusura")==0 || strcmp(comando.cmdInterruttore.nome , "chiusuraW")==0){
+            if(strcmp(informazioni.finestra.chiusura.stato,"aperta")== 0 && strcmp(comando.cmdInterruttore.stato , "on")==0){
+                strcpy(informazioni.finestra.chiusura.stato, "chiusa");  
+            }
+            //get_info_string(&(answer.info_disp));
+        }
+
+        risposta_controllore.considera = 1;    
+        
         risposta_controllore.info_disp = informazioni;
         if(comando.manuale==1){
             //comando.manuale=0;
@@ -312,8 +349,7 @@ int dev_info(cmd comando){
         risposta_controllore.considera = 1;
         risposta_controllore.pid = informazioni.pid;
         risposta_controllore.dispositivo_interazione = 0;
-        //dev_depth_info(comando, informazioni);
-
+        dev_depth_info(comando, &risposta_controllore);
         risposta_controllore.info_disp = informazioni;
         //set_info
 
@@ -333,26 +369,56 @@ int dev_info(cmd comando){
     return 1;
 }
 
-int dev_depth_info(cmd comando, info informazione_dispositivo){
+int dev_depth_info(cmd comando, risp* risposta){
     risp* array_risposte_figli;
     malloc_array(&array_risposte_figli, N_MAX_DISP);
+    comando.forzato = 1;
     int n = broadcast_centralina(dispList, comando, array_risposte_figli);
-    
-
     int i;
+
+    risposta->errore = 0;
     for(i=0; i<n; i++){
-        if( strcmp ( array_risposte_figli[i].info_disp.tipo , "bulb" )){
+        if( strcmp ( array_risposte_figli[i].info_disp.tipo , "bulb" ) == 0){
+            //C'è override 
+            if(strcmp(array_risposte_figli[i].info_disp.stato , informazioni.lampadina.accensione.stato) != 0){
+                //override errore = 3 bulb 
+                informazioni.lampadina.override_hub = '1';
+            }else{
+                informazioni.lampadina.override_hub = '0';
+            }
             /////VERIFICO CHE INTERRUTTORE NON SIA A 0, LI METTO A 0 NEL MAIN RICORDA
             /////variabile settata a 1 se esiste info o tempo messo a -1
             ////confronto con me, se diverso metto override = 1
+            if(informazioni.lampadina.maxTime < array_risposte_figli[i].info_disp.time)
+                informazioni.lampadina.maxTime = array_risposte_figli[i].info_disp.time;
             
-        }else if( strcmp ( array_risposte_figli[i].info_disp.tipo , "fridge" )){
+        }else if( strcmp ( array_risposte_figli[i].info_disp.tipo , "fridge" ) == 0){
+            if(strcmp(array_risposte_figli[i].info_disp.stato , informazioni.frigo.apertura.stato) != 0){
+                //override errore = 4
+               informazioni.frigo.override_hub = '1';
+            }else{
+                informazioni.frigo.override_hub = '0';
+            }
+
             /////VERIFICO CHE INTERRUTTORE NON SIA A 0, LI METTO A 0 NEL MAIN RICORDA
-        }else if( strcmp ( array_risposte_figli[i].info_disp.tipo , "window" )){
+            if(informazioni.frigo.maxTime < array_risposte_figli[i].info_disp.time)
+                informazioni.frigo.maxTime = array_risposte_figli[i].info_disp.time;
+
+        }else if( strcmp ( array_risposte_figli[i].info_disp.tipo , "window" ) == 0){
+            if(strcmp(array_risposte_figli[i].info_disp.stato , informazioni.finestra.apertura.stato) != 0){
+                //override errore = 3
+                informazioni.finestra.override_hub = '1';
+            }else{
+                informazioni.finestra.override_hub = '0';
+            }
             /////VERIFICO CHE INTERRUTTORE NON SIA A 0, LI METTO A 0 NEL MAIN RICORDA
+            if(informazioni.finestra.maxTime < array_risposte_figli[i].info_disp.time)
+                informazioni.finestra.maxTime = array_risposte_figli[i].info_disp.time;
         }
     }
-    //free(array_risposte_figli);
+    
+
+    free(array_risposte_figli);
     return 1;
 }
 
@@ -362,7 +428,7 @@ int dev_delete(cmd comando){
     risp risposta_controllore;
     if(comando.forzato == 1 || comando.id == informazioni.id){//comando --all 
         risposta_controllore.id = informazioni.id;
-       
+        risposta_controllore.errore = 0;
         risposta_controllore.considera = 1;
         risposta_controllore.eliminato = 1;
         risposta_controllore.pid = informazioni.pid;
@@ -387,10 +453,14 @@ int dev_link(cmd comando){
         int i, err;
         risposta_controllore.considera = 0;
         risposta_controllore.eliminato = 0;
-        add = 1;
         info_device_to_add = comando.info_disp;
+        add = 1;
+        risposta_controllore.errore = 0;
         risposta_controllore.termina_comunicazione = 0;
+
         write(fd_write, &risposta_controllore, sizeof(risp));
+
+        
 
         //La continuazione della risposta si trova nel main
     }else{
@@ -428,10 +498,20 @@ int main(int argc, char **args){
 
     if(informazioni.def == 1){
         strcpy(informazioni.stato, "off");
-        strcpy(informazioni.stato, "off");
+
+
+
         strcpy(informazioni.tipo, "hub");
         informazioni.time = 0.0;
+        informazioni.lampadina.maxTime = -1.0;
+        informazioni.finestra.maxTime = -1.0;
+        informazioni.frigo.maxTime = -1.0;
+        strcpy(informazioni.lampadina.accensione.stato , "off");
+        strcpy(informazioni.frigo.apertura.stato , "chiuso");
+        strcpy(informazioni.finestra.apertura.stato , "chiusa");
+        strcpy(informazioni.finestra.chiusura.stato , "aperta");
     }
+    sigEntrata=0;
 
     signal(SIGINT, sigint_handler);
     signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
@@ -455,28 +535,18 @@ int main(int argc, char **args){
     //Child va in pausa
     while(1){
         if(add == 1){
-            int i=0; 
-            for(i=0; i<device_number(); i++){
-                if(strcmp(info_device_to_add.tipo, builtin_device[i])==0)
-                    add_device_generale(builtin_dev_path[i], dispList, info_device_to_add, NULL);//ho invertito proc e disp
-            }
-            risp risposta_terminazione;
-            signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
-            
-            risposta_terminazione.considera = 0;
-            risposta_terminazione.termina_comunicazione = 1;
+            int i;
             add = 0;
-            write(fd_write, &risposta_terminazione, sizeof(risp));
+            risp risposta_controllore;
+            for(i=0; i<device_number(); i++){
+            if(strcmp(info_device_to_add.tipo, builtin_device[i])==0)
+                add_device_generale(builtin_dev_path[i], dispList, info_device_to_add, NULL);//ho invertito proc e disp
+            }
+            risposta_controllore.termina_comunicazione = 1;
+            write(fd_write, &risposta_controllore, sizeof(risp));
         }
-
-        if(sigEntrata==1)
-            sighandle1(SIGUSR1, fd_read, fd_write);
-        else if(sigEntrata==2)
-            sighandle2(SIGUSR2);
-
-        //Resetto ogni volta il sig di entrata
-        sigEntrata=0;
-            
+        
+           
         pause();
     }
 

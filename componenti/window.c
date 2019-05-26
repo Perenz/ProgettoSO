@@ -93,10 +93,14 @@ void signhandle_quit(int sig){
     }
 }
 void sighandle_usr1(int sig){
-    sigEntrata=1;    
+    sighandle1(sig, fd_read, fd_write);
+
+    //sigEntrata=1;    
 }
 void sighandle_usr2(int sig){
-    sigEntrata=2;
+    sighandle2(sig);
+
+    //sigEntrata=2;
 }
 void sign_cont_handler(int sig){
     return;
@@ -126,7 +130,6 @@ int dev_switch(cmd comando){
     risp answer;
     if(comando.id == informazioni.id || comando.forzato == 1){
         if(strcmp(comando.cmdInterruttore.nome , "apertura")==0 || strcmp(comando.cmdInterruttore.nome , "aperturaW")==0){
-            //get_info_string(&(answer.info_disp));
             if(strcmp(informazioni.stato,"chiusa")== 0 && strcmp(comando.cmdInterruttore.stato , "on")==0){
                 strcpy(informazioni.stato, "aperta");  
             }
@@ -246,14 +249,6 @@ int main(int argc, char *args[]){
     
     
     while(1){
-        if(sigEntrata==1)
-            sighandle1(SIGUSR1, fd_read, fd_write);
-        else if(sigEntrata==2)
-            sighandle2(SIGUSR2);
-
-        //Resetto ogni volta il sig di entrata
-        sigEntrata=0;
-
         pause();
     }
 

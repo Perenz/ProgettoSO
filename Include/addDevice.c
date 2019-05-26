@@ -4,7 +4,7 @@
 #include <signal.h>
 #include "../strutture/listH.h"
 #include "../strutture/comandiH.h"
-int id_gen = 2;
+int id_gen = 0;
 
 int add_device(char* execPath, NodoPtr magazzino_list, char* nome);
 int add_device_generale(char* execPath, NodoPtr list, info info, char* nome);
@@ -65,7 +65,6 @@ int add_device_generale(char* execPath, NodoPtr list, info info, char* nome){
         perror("errore fork");
     } 
     else{
-        signal(SIGCONT, sign_handler);//?
         close(fd_reader[1]);
         close(fd_writer[0]);
         
@@ -92,8 +91,8 @@ int add_device(char* execPath, NodoPtr magazzino_list, char* nome){
     //char info[16];
     info infoD;
     infoD.def = 1; //info default = 1
-    strcpy(infoD.nome,nome);
     infoD.id = id_gen;
+    strcpy(infoD.nome,nome);
     
     add_device_generale(execPath, magazzino_list, infoD, nome);
     return 1;

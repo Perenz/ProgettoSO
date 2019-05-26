@@ -19,7 +19,8 @@
 int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte);
 void printRisp(risp* array_risposte, int n, int indentazione);
 void alloc_array(risp** array_risposte, int n);
-void stampaDisp(info infoDisp);
+void stampaRisp(risp);
+void printColorato(char* string, char* color);
 void sign_cont_handler(int sig){
     return;
 }
@@ -160,6 +161,7 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
     //il padre potrebbe essere un dispositivo diverso dalla centralina ma comunque sarà in ascolto
     comando.profondita+=1;
     risposta_to_padre.profondita = comando.profondita;
+    
     if(comando.manuale != 1)
         write(fd_papi, &risposta_to_padre, sizeof(risp));
     comando.id_padre = informazioni.id;
@@ -189,11 +191,7 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
                 //se non è un messaggio di terminazione significa che il figlio ha ancora risp da comunicare
                 //nel caso dei dispositivi di interazione (o controllo senza figli) verrà mandato
                 //1 messaggio contenente le informazioni e un successivo messaggio di terminazione
-                if(answer.eliminato == 1){//questo vale quando risalgo, se il dispositivo è da eliminare lo tolgo dalla lista dei processi
-                    //printList(list);
-                    removeNode(list, answer.pid);
-                    answer.eliminato = 0;//setto a 0 sennò lo toglie anche il padre che non lo ha nella lista 
-                }
+                
                 //finchè tutti i figli non avranno mandato il messaggio di terminazione
                 //continuerà a mandare risposte in su nell'albero verso la centralina, quando tutti avranno mandato il messaggio di terminazione
                 //egli manderà 1 messaggio di terminazione al padre
@@ -205,7 +203,11 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
                 
                 //mando un segnale al figlio per comunicare di continuare la comunicazione                
                 err_signal = kill(pid_figlio, SIGCONT);
-
+                if(answer.eliminato == 1){//questo vale quando risalgo, se il dispositivo è da eliminare lo tolgo dalla lista dei processi
+                    //printList(list);
+                    removeNode(list, answer.pid);
+                    answer.eliminato = 0;//setto a 0 sennò lo toglie anche il padre che non lo ha nella lista 
+                }
                 if(err_signal != 0)
                     perror("errore in invio segnale");
                 //messaggio di terminazione o
@@ -230,20 +232,49 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
 
 
 
-void stampaDisp(info infoDisp){
-    if(strcmp(infoDisp.tipo, "bulb") == 0){
-        printf("%d Bulb %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
-    }else if(strcmp(infoDisp.tipo, "fridge") == 0){
-        printf("%d Fridge %d %s time: %.2f  delay: %.2f  percentualeRiempimento: %d  temperatura: %d \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time,
-        infoDisp.frigo.delay, infoDisp.frigo.percentuale, infoDisp.frigo.temperatura);
-    }else if(strcmp(infoDisp.tipo, "window") == 0){
-        printf("%d Window %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);
-    }else if(strcmp(infoDisp.tipo, "timer") == 0){
+void stampaRisp(risp answer){
+    if(strcmp(answer.info_disp.tipo, "bulb") == 0){
+        printf("%d Bulb %d %s time: %.2f \n",answer.info_disp.id,answer.info_disp.id,answer.info_disp.stato,answer.info_disp.time);
+    }else if(strcmp(answer.info_disp.tipo, "fridge") == 0){
+        printf("%d Fridge %d %s time: %.2f  delay: %.2f  percentualeRiempimento: %d  temperatura: %d \n",answer.info_disp.pid,answer.info_disp.id,answer.info_disp.stato,answer.info_disp.time,
+       answer.info_disp.frigo.delay,answer.info_disp.frigo.percentuale,answer.info_disp.frigo.temperatura);
+    }else if(strcmp(answer.info_disp.tipo, "window") == 0){
+        printf("%d Window %d %s time: %.2f \n",answer.info_disp.pid,answer.info_disp.id,answer.info_disp.stato,answer.info_disp.time);
+    }else if(strcmp(answer.info_disp.tipo, "timer") == 0){
         ////////////////da cambiare
-        printf("%d Timer %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);//aggiungere override 1 / 0
-    }else if(strcmp(infoDisp.tipo, "hub") == 0){
-        ////////////////da cambiare
-        printf("%d Hub %d %s time: %.2f \n", infoDisp.pid, infoDisp.id, infoDisp.stato, infoDisp.time);//aggiungere override 1 / 0
+        printf("%d Timer %d %s time: %.2f \n",answer.info_disp.pid,answer.info_disp.id,answer.info_disp.stato,answer.info_disp.time);//aggiungere override 1 / 0
+    }else if(strcmp(answer.info_disp.tipo, "hub") == 0){        
+        printf("%d Hub %d ",answer.info_disp.pid,answer.info_disp.id);
+
+        if(answer.info_disp.lampadina.maxTime != -1){     
+            printColorato("\n\t\tTempo max lampadine: ", "yellow" );
+            printf("%.2f ",answer.info_disp.lampadina.maxTime);
+            printColorato("\tInterruttore lampadine (in hub): ", "yellow" );
+            printf("%s",answer.info_disp.lampadina.accensione.stato);
+            if(answer.info_disp.lampadina.override_hub == '1')
+                printColorato("\tOverrode ", "red" );
+        }
+
+        if(answer.info_disp.finestra.maxTime != -1){
+            printColorato("\n\t\tTempo max finestre: ", "cyan" );
+            printf("%.2f ",answer.info_disp.finestra.maxTime);
+            printColorato("\tInterruttore finestre (in hub): ", "cyan" );
+            printf("%s",answer.info_disp.finestra.apertura.stato);
+            if(answer.info_disp.finestra.override_hub == '1')
+                printColorato("\tOverrode ", "red" );
+        }
+
+
+        if(answer.info_disp.frigo.maxTime != -1){
+            printColorato("\n\t\tTempo max frigoriferi: ", "green" );
+            printf("%.2f ",answer.info_disp.frigo.maxTime);
+            printColorato("\tInterruttore frigoriferi (in hub): ", "green" );
+            printf("%s",answer.info_disp.frigo.apertura.stato);
+            if(answer.info_disp.frigo.override_hub == '1')
+                printColorato("\tOverrode ", "red" );
+        }
+        
+        printf("\n");
 
     }
 }
@@ -258,10 +289,22 @@ void printRisp(risp* array_risposte, int n, int indentazione){
                 printf("\t");
             }
         }
-        stampaDisp(array_risposte[i].info_disp);
+        stampaRisp(array_risposte[i]);
     }
 }
-
+void printColorato(char* string, char* color){
+    if(strcmp(color, "red") == 0){
+        printf("\033[0;31m");
+    }else if(strcmp(color, "green") == 0){
+        printf("\033[0;32m");
+    }else if(strcmp(color, "cyan") == 0){
+        printf("\033[0;36m");
+    }else if(strcmp(color, "yellow") == 0){
+        printf("\033[0;33m");
+    }
+    printf("%s", string);
+    printf("\033[0m");
+}
 
 void malloc_array(risp** array_risposte, int n){
     *array_risposte = malloc(n * sizeof(risp));

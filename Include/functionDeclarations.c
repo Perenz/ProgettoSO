@@ -269,6 +269,7 @@ int cen_unlink(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
             for(j=0; j<device_number(); j++){
                 if(strcmp(array_risposte_collegati_list[i].info_disp.tipo, builtin_device[j])==0){
                     add_device_generale(builtin_dev_path[j], magazzino_list, array_risposte_collegati_list[i].info_disp, NULL);
+
                 }
             }
         }
@@ -304,6 +305,7 @@ int cen_add(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     }
     //3 device disponibili: bulb, window, fridge
     else{
+        signal(SIGCONT, sign_handler);
         if(args[2]==NULL){
             //Devo concatenare nome del device piu id 
             //Es: bulb3
@@ -320,7 +322,9 @@ int cen_add(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
         for(i=0; i<device_number(); i++){
             if(strcmp(args[1], builtin_device[i])==0){
                     id_gen+=1;
-                    return add_device(builtin_dev_path[i], magazzino_list, nome);//viene sempre aggiunto prima al magazzino
+                    return add_device(builtin_dev_path[i], collegati_list, nome);//viene sempre aggiunto prima al magazzino
+
+                    //return add_device(builtin_dev_path[i], magazzino_list, nome);//viene sempre aggiunto prima al magazzino
             }
         }
     }
@@ -417,13 +421,21 @@ int cen_info(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     cmd comando;
     int n;
     comando.tipo_comando = 'i';
-    comando.info_forzate = 1;
-    comando.id = atoi(args[1]);
+
+    //Per comando forzato aggiungere 
+    if(strcmp(args[1], "-f") == 0){
+        comando.info_forzate = 1;
+        comando.id = atoi(args[2]);
+    }else{
+        comando.info_forzate = 0;
+        comando.id = atoi(args[1]);
+    }
+    
 
     n = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list);
-    printRisp(array_risposte_collegati_list, n, 0);
+    printRisp(array_risposte_collegati_list, n, 1);
     n = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);
-    printRisp(array_risposte_magazzino_list, n, 0);
+    printRisp(array_risposte_magazzino_list, n, 1);
 
     free(array_risposte_collegati_list);
     free(array_risposte_magazzino_list);
@@ -468,6 +480,7 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
 
         signal(SIGCONT, sign_cont_handler);
         cmd comando;
+        comando.manuale = 0;
         int n_id_src;
         int n_id_dst;
         int id_src, id_dst;
@@ -475,10 +488,11 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
         id_dst = atoi(args[3]);
         int i;
         //LINKING CON DESTINAZIONE LA CENTRALINA FUNZIONA
-        if(id2 == 2){//collegamento alla centralina, id_dst == centralina_id
+        if(id2 == 0){//collegamento alla centralina, id_dst == centralina_id
             comando.tipo_comando = 'i';
             comando.info_forzate = 1;
             comando.id = id_src;
+            
             //n_id1 rappresenta il numero di dispositivi del sott'albero di id_src
             n_id_src = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);
             if(n_id_src != 0){//il dispositivo da collegare si trova in magazzino_list
@@ -527,8 +541,10 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
             comando.tipo_comando = 'i';//info
             comando.id = id_src;
             comando.info_forzate = 1;
-            n_id_src = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list);  
 
+            
+            n_id_src = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list);  
+                
             if(n_id_src != 0){//il dispositivo source esiste in collegati
                 comando.id = id_dst;
                 n_id_dst = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list); 
@@ -536,11 +552,12 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
                     if(array_risposte_collegati_list[0].dispositivo_interazione !=1){//Il dispositivo di destinazione è un dispositivo di controllo? 
                         comando.tipo_comando = 'd';
                         comando.id = id_src;
-                        comando.forzato = 1;//elimina anche i figli
-                        comando.forzato = 0;
+                        comando.forzato = 0;//elimina anche i figli, non tutti però
+                        //comando.forzato = 0; PORCODIO
 
                         //Elimino il dispositivo source e il suo sottoalbero
                         n_id_src = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list);
+                                    printRisp(array_risposte_collegati_list, n_id_src, 0);
                         comando.tipo_comando = 'a';//link aggiungendo
                         //potrei aggiungere un controllo se l'array = NULL non aggiunge elementi
                         risp* array_tmp_esito_linking = malloc(1 * sizeof(risp));
@@ -550,7 +567,10 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
                         comando.info_disp = array_risposte_collegati_list[0].info_disp;
                         int tmp = broadcast_centralina(collegati_list, comando, array_tmp_esito_linking);
                         //se ha altri figli
+
                         for(i=1; i<n_id_src; i++){
+                            printf("Sono tornato all'aggiunta\n");
+
                             comando.id = array_risposte_collegati_list[i].id_padre;
                             comando.id2 = array_risposte_collegati_list[i].id;
                             comando.info_disp = array_risposte_collegati_list[i].info_disp;
@@ -578,7 +598,6 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
                                 comando.forzato = 0;//elimina anche i figli
                                 comando.id = id_src;
                                 n_id_src = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);//in questo broadcast c'è l'errore di invio segnale
-                                printf("è gia stato dato l'errore invio segnale ADESSO?!\n");
                                 printRisp(array_risposte_magazzino_list, n_id_dst, 0);
                                 comando.tipo_comando = 'a';//link aggiungendo
 
@@ -587,6 +606,8 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
                                 comando.id = id_dst; 
                                 comando.id2 = id_src;
                                 comando.info_disp = array_risposte_magazzino_list[0].info_disp;
+
+                                ////////QUA SI BLOCCA
                                 int tmp = broadcast_centralina(collegati_list, comando, array_tmp_esito_linking);
                                 //se ha altri figli
                                 for(i=1; i<n_id_src; i++){

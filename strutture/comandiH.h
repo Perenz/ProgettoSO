@@ -12,11 +12,16 @@ typedef struct{
 
 typedef struct{
     interruttore accensione;
+    double maxTime;
+    char override_hub;
 }bulb;
 typedef struct{
     interruttore apertura;
     interruttore chiusura;
+    double maxTime;
+    char override_hub;
 }window;
+
 typedef struct{
     interruttore apertura;
     interruttore termostato;
@@ -25,7 +30,11 @@ typedef struct{
     double delay;
     int percentuale;
     int temperatura;
+    double maxTime;
+    char override_hub;
 }fridge;
+
+
 
 typedef struct{
     int id;
@@ -36,6 +45,7 @@ typedef struct{
     char stato[10];
     double time;
     int def; //default, nuovo dispositivo
+
     bulb lampadina;
     window finestra;
     fridge frigo;
@@ -44,15 +54,14 @@ typedef struct{
 typedef struct{
     char tipo_comando;
     int id;//se == 0 --> list
-    int forzato;//utile per delete --all e per far sì che i figli rispondano con terminazione 
+    int forzato;//utile per delete --all e per far sì che i figli rispondano anche se l'id non coincide
     int info_forzate;
     int profondita;
     int manuale; //se 1 significa che il comando arriva tramite controllo manuale
     int id2; //caso link
     int id_padre;
-    interruttore cmdInterruttore;
-    info info_disp;
-    //aggiungere vari campi per comandi più complessi come link
+    interruttore cmdInterruttore;//interruttore utilizzato nello switch
+    info info_disp;//info dispositivo utilizzate nel link
 }cmd;
 
 
@@ -67,7 +76,12 @@ typedef struct{
     int profondita;
     int termina_comunicazione;
     int eliminato;
+    //potrei usare errore e settare gli errori: 
+        //1 per dispostivio interazione in fase di linking
+        //2 aggiunta dispositivo a timer che possiede già un dispositivo
+        //3 override su hub
     int dispositivo_interazione;
+    int errore;
     info info_disp;
 }risp;
 

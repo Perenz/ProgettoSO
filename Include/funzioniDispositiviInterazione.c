@@ -38,6 +38,8 @@ void sighandle1(int sig, int fd_read, int fd_write){
             risp answer;  
             answer.considera = 0;
             answer.eliminato = 0;
+            if(comando.tipo_comando == 'a')//stai tentando il linking con un dispositivo di interazione? 
+                answer.errore = 1;
             rispondi(answer, comando, fd_write);
         }
     }
@@ -60,15 +62,19 @@ void sighandle2(int sig){
 
 int rispondi(risp answer, cmd comando, int fd_write){
     comando.profondita += 1;
+    answer.errore = 0;
+
     answer.profondita = comando.profondita;
+
     answer.id_padre = comando.id_padre;
+
     answer.termina_comunicazione = 0;
 
-    write(fd_write, &answer, sizeof(answer));
+    write(fd_write, &answer, sizeof(risp));
 
 
     answer.termina_comunicazione = 1;
-    write(fd_write, &answer, sizeof(answer));
+    write(fd_write, &answer, sizeof(risp));
     return 1;
 }
 
@@ -87,7 +93,6 @@ int dev_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, info inf
         answer.dispositivo_interazione = 1;
         answer.info_disp.def = 0;
         answer.info_disp = informazioni;
-        
         //get_info_string(&(answer.info_disp));
     }else{
         answer.considera = 0;

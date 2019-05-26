@@ -50,7 +50,7 @@ char *builtin_command[]={
     "s",//switch
     "i",//getInfo
     "d", //delete
-    "a", //addDevice / link   da cambiare scegliendo lettera corrispondente
+    "a", //addDevice 
     "m",//manual
     "p"//Set
 };
@@ -269,7 +269,7 @@ int dev_delete(cmd comando){
 }
 int dev_link(cmd comando){
     risp risposta_controllore;
-    if(comando.id == informazioni.id){    
+    if(comando.id == informazioni.id && dispList->next == NULL){//Il controllo sulla dispList è effettuato per verificare che ci siano già altri disp. collegati    
         int i, err;
         risposta_controllore.considera = 0;
         risposta_controllore.eliminato = 0;
@@ -280,6 +280,7 @@ int dev_link(cmd comando){
 
         //La continuazione della risposta si trova nel main
     }else{
+        //rispondi_controllore.errore = 1; cambio dispositivo interazione con errore in risposta
         risposta_controllore.considera = 0;
         risposta_controllore.eliminato = 0;
         rispondi(risposta_controllore, comando);
