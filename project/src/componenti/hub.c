@@ -120,10 +120,6 @@ void sighandle_usr1_hub(int sig){
         err_signal = kill(informazioni.pid_padre, SIGCONT);
         if(err_signal != 0)
             perror("errore in invio segnale");
-<<<<<<< HEAD
-
-=======
->>>>>>> c0f53bf034867c2795d3f3699eb8134b0ebf7926
         return;
     }
 }
