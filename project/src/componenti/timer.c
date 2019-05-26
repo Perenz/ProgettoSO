@@ -87,6 +87,11 @@ void sign_cont_handler_timer(int sig){
 }
 
 void sigint_handler(int sig){
+    char fifo[30];
+    if(fifoCreata!=0){
+            sprintf(fifo, "/tmp/fifoManComp%d", informazioni.pid);
+            remove(fifo);
+    }
     //Devo mandare il SIGINT a tutti i suoi figli
     NodoPtr nodo = dispList;
     while(nodo!=NULL){
@@ -94,7 +99,6 @@ void sigint_handler(int sig){
         nodo=nodo->next;
     }
     return;
-    //Come per bulb non serve andare in pausa
 }
 
 void sighandle2(int sig){

@@ -1,6 +1,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <signal.h>
 #include <fcntl.h>
+#include <errno.h>
 #include "../strutture/comandiH.h"
 
 int hand_control(char **, int *, char *); //Dovra ritornare il pid del dispositivo specificato come argomento
