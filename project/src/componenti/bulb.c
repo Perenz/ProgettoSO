@@ -13,7 +13,6 @@
 #include "../strutture/listH.h"
 #include "../strutture/comandiH.h"
 
-//ho spostato i metodi getLine e splitLine in una nuova libreria 
 int device_handle_command(cmd);
 
 int dev_getinfo(cmd);
@@ -23,7 +22,6 @@ int dev_manualControl(cmd);
 int dev_switch(cmd);
 int dev_list(cmd);
 int dev_info(cmd);
-
 void set_time();
 
 void sign_cont_handler(int);

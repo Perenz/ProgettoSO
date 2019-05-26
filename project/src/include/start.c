@@ -4,36 +4,29 @@
 #include "../strutture/listH.h"
 #include "functionDeclarations.c"
 
-
-#define CEN_DELIM " \t\r\n\a"
-#define CEN_BUFSIZE 128
-
 NodoPtr collegati_list = NULL; //lista dei dispositivi collegati 
 NodoPtr magazzino_list; //lista dei dispositivi disponibili (aggiunti ma non collegati a niente)
 int supportReadPid;
 
 int cen_processCmd(char **command, NodoPtr, NodoPtr);
-char* cen_getLine();
-char** cen_splitLine(char *line);
 int lanciaGetCenPid();
-
+int cen_start();
 
 int lanciaGetCenPid(){
     int pid;
     pid=fork();
     if(pid<0){
-        perror("cen");
+        perror("Errore in fase di fork lancio centralina");
         exit(0);
     }else if(pid == 0){
         //Child code
         char *args[]={"./binaries/CENPIDREAD",NULL}; 
         execvp(args[0],args);
     }
-    else if(pid >0){
+    else if(pid > 0){
         //parent code
         return pid;
     }
-    //toglie il warning gg
     return 1;
 }
 
@@ -71,16 +64,15 @@ int cen_start(){
 
     //Continuo ad ascoltare in input su stdin
     do{
-            printf("\033[0;34m"); //Set the text to the color blue
-            printf("Inserisci il comando:>");
-            printf("\033[0m");
-            command = getLine();
+        printf("\033[0;34m"); //Set the text to the color blue
+        printf("Inserisci il comando:>");
+        printf("\033[0m");
+        command = getLine();
 
-            //Splitta la linea in singoli parametri/argomenti
-            params = splitLine(command);
-            //Esegue il comando
-            status = cen_processCmd(params, collegati_list, magazzino_list);
-        
+        //Splitta la linea in singoli parametri/argomenti
+        params = splitLine(command);
+        //Esegue il comando
+        status = cen_processCmd(params, collegati_list, magazzino_list);
     }while(status);
 
     kill(supportReadPid, SIGQUIT);

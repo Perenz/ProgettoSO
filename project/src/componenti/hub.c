@@ -10,9 +10,10 @@
 #include "../include/gestioneComandi.c"
 #include "../include/addDevice.c"
 
-#define CEN_BUFSIZE 128
 
+//parametro utilizzato per segnalare che vi è un dispositivo da aggiungere
 int add = 0;
+//info del dispositivo da aggiungere
 info info_device_to_add;
 
 NodoPtr dispList; //lista dei dispositivi collegati all'hub
@@ -21,7 +22,10 @@ int fifoCreata=0;
 int fd_read;
 //File descriptor in cui il figlio scrive e il padre legge
 int fd_write;
+//informazioni hub
 info informazioni;
+//volevamo fare la gestione dei segnali al di fuori dell'handler del segnale stesso ma per questioni di tempo tale funzionalità non è 
+//stata completamente implementata
 int sigEntrata=0;
 
 int dev_list(cmd);
@@ -31,10 +35,32 @@ int dev_delete(cmd);
 int dev_link(cmd);
 int dev_manualControl(cmd);
 int dev_set(cmd);
-int dev_depth_info(cmd comando, risp* risposta);
+int dev_depth_info(cmd, risp*);
 int device_handle_command(cmd);
-void h_sigstop_handler ( int sig ) ;
+void h_sigstop_handler (int) ;
 
+//comandi gestiti
+char *builtin_command[]={
+    "l",//list
+    "s",//switch
+    "i",//getInfo
+    "d", //delete
+    "a", //addDevice / link  
+    "m", //manualControl
+    "p" //set
+};
+//funzioni relative ai comandi inseriti
+int (*builtin_func_hub[]) (cmd comando) = {
+        &dev_list,
+        &dev_switch,
+        &dev_info,
+        &dev_delete,
+        &dev_link,
+        &dev_manualControl,
+        &dev_set
+};
+
+//handler segnale quit
 void signhandle_quit(int sig){
     char fifo[30];
     if(sig==SIGQUIT){
@@ -52,35 +78,11 @@ void signhandle_quit(int sig){
         _exit(0);
     }
 }
-void sighandle_alarm_hub(int sig){
-    if(sig == SIGALRM){
-        strcpy(informazioni.frigo.apertura.stato, "chiuso");
-    }
-}
-char *builtin_command[]={
-    "l",//list
-    "s",//switch
-    "i",//getInfo
-    "d", //delete
-    "a", //addDevice / link   da cambiare scegliendo lettera corrispondente
-    "m", //manualControl
-    "p" //set
-};
-int (*builtin_func_hub[]) (cmd comando) = {
-        &dev_list,
-        &dev_switch,
-        &dev_info,
-        &dev_delete,
-        &dev_link,
-        &dev_manualControl,
-        &dev_set
-};
-int cont_numCommands(){
-    return (sizeof(builtin_command)/ sizeof(char*));
-}
+//handler segnale ripresa controllo
 void sign_cont_handler_hub(int sig){
     return;
 }
+//handler segnale per fifo
 void sigint_handler(int sig){
     char fifo[30];
     if(fifoCreata!=0){
@@ -96,7 +98,7 @@ void sigint_handler(int sig){
     return;
     //Come per bulb non serve andare in pausa
 }
-
+//handler segnale per fifo
 void sighandle2(int sig){
     if(sig == SIGUSR2){
         char fifoManComp[30];
@@ -109,7 +111,6 @@ void sighandle2(int sig){
         int errnum = device_handle_command(comando);
     }
 }
-
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
 void sighandle_usr1_hub(int sig){
     if(sig == SIGUSR1){
@@ -123,13 +124,21 @@ void sighandle_usr1_hub(int sig){
         return;
     }
 }
-
-//USATO PER SVEGLIARE IL PROCESSO
+//handler segnale alarm per info frigo
+void sighandle_alarm_hub(int sig){
+    if(sig == SIGALRM){
+        strcpy(informazioni.frigo.apertura.stato, "chiuso");
+    }
+}
 void sighandle_usr2(int sig){
     sighandle2(sig);
     //sigEntrata=2;
 } 
-
+//restituisce numero comandi gestiti
+int cont_numCommands(){
+    return (sizeof(builtin_command)/ sizeof(char*));
+}
+//dato un comando presente in builtin_command avvia la funzione presente in builtin_func_hub corrispondente
 int device_handle_command(cmd comando){
     //da fare come in functionDeclarations in file dispositivi
     int i;
@@ -140,8 +149,10 @@ int device_handle_command(cmd comando){
     }
     return 1;
 }
+//funzione utilizzata in generale per la comunicazione dell'hub con i figli e il padre
+//essa richiama broadcast_controllo presente in gestioneComandi
 int rispondi(risp risposta_controllore, cmd comando){
-    //se il comando è diverso da i non restituisco i tempi massimi 
+    //se il comando è diverso da i (info) non restituisco i tempi massimi 
     if(comando.tipo_comando != 'i'){
         informazioni.lampadina.maxTime = -1.0;
         informazioni.frigo.maxTime = -1.0;
@@ -192,7 +203,7 @@ int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, i
     //famo ritornare l'errore poi
     return 1;
 }
-
+//funzione che restituisce la lista di dispositivi 
 int dev_list(cmd comando){
     risp risposta_controllore;
 
@@ -208,10 +219,10 @@ int dev_list(cmd comando){
     rispondi(risposta_controllore, comando);
     return 1;
 }
-int dev_switch(cmd comando){//////DA MODIFICARE
-    //puoi richiamare la funzione che c'è sopra bro, guarda, per il resto non dovrebbe variare nulla
+//funzione che cambia lo stato all'hub e al relativo sott'albero
+int dev_switch(cmd comando){
     risp risposta_controllore;
-    if(comando.id == informazioni.id || comando.forzato == 1){
+    if(comando.id == informazioni.id || comando.forzato == 1){//se comando.forzato == 1 significa che tale hub è presente nel sottalbero di un hub con id uguale a quello digitato dall'utente 
         comando.forzato = 1;
         risposta_controllore.id = informazioni.id;
         risposta_controllore.considera = 1;
@@ -313,15 +324,17 @@ int dev_set(cmd comando){
         //Chiudo in scrittura
         close(fd_manuale);
       
-        return 1;
+        
     }
+    return 1;
 }
 
+//restituisce le info del dispositivo indicando override e stati degli interruttori dei figli che controlla
 int dev_info(cmd comando){
     risp risposta_controllore;
     if(comando.id == informazioni.id || comando.forzato == 1){//comando --all , forzato forza l'invio delle info anche se l'id non è uguale
         //il parametro info_forzate è usato nel link: forza i dispositivi nell'invio delle proprie informazioni 
-        //se figli di un hub con tali informazioni 
+        //dei figli di un hub con tali informazioni 
         if(comando.info_forzate == 1){
             comando.forzato = 1;
         }
@@ -332,17 +345,16 @@ int dev_info(cmd comando){
         risposta_controllore.dispositivo_interazione = 0;
         dev_depth_info(comando, &risposta_controllore);
         risposta_controllore.info_disp = informazioni;
-        //set_info
-
-        //Se VOGLIAMO FARE CHE IL DISPOSITIVO CHIEDE AI SUOI FIGLI SE C'è QUALCUNO CON QUELL'ID ANCHE SE LUI HA GIà QUELL'ID
     }else{
-        risposta_controllore.considera = 0;//non considerarmi
+        risposta_controllore.considera = 0;//non considerarmi padre
     }
     rispondi(risposta_controllore, comando);
 
     return 1;
 }
 
+//Funzione utilizzata per determinare se vi è override confrontando gli stati dei figli con quelli degli interruttori degli hub
+//restituisce anche il tempo massimo delle categorie dei figli che controlla
 int dev_depth_info(cmd comando, risp* risposta){
     risp* array_risposte_figli;
     malloc_array(&array_risposte_figli, N_MAX_DISP);
@@ -355,36 +367,28 @@ int dev_depth_info(cmd comando, risp* risposta){
         if( strcmp ( array_risposte_figli[i].info_disp.tipo , "bulb" ) == 0){
             //C'è override 
             if(strcmp(array_risposte_figli[i].info_disp.stato , informazioni.lampadina.accensione.stato) != 0){
-                //override errore = 3 bulb 
                 informazioni.lampadina.override_hub = '1';
             }else{
                 informazioni.lampadina.override_hub = '0';
             }
-            /////VERIFICO CHE INTERRUTTORE NON SIA A 0, LI METTO A 0 NEL MAIN RICORDA
-            /////variabile settata a 1 se esiste info o tempo messo a -1
-            ////confronto con me, se diverso metto override = 1
             if(informazioni.lampadina.maxTime < array_risposte_figli[i].info_disp.time)
                 informazioni.lampadina.maxTime = array_risposte_figli[i].info_disp.time; 
         }else if( strcmp ( array_risposte_figli[i].info_disp.tipo , "fridge" ) == 0){
             printf("%s\n", array_risposte_figli[i].info_disp.stato);
             printf("%s\n",  informazioni.frigo.apertura.stato);
             if(strcmp(array_risposte_figli[i].info_disp.stato , informazioni.frigo.apertura.stato) != 0){
-                //override errore = 4
                informazioni.frigo.override_hub = '1';
             }else{
                 informazioni.frigo.override_hub = '0';
             }
-            /////VERIFICO CHE INTERRUTTORE NON SIA A 0, LI METTO A 0 NEL MAIN RICORDA
             if(informazioni.frigo.maxTime < array_risposte_figli[i].info_disp.time)
                 informazioni.frigo.maxTime = array_risposte_figli[i].info_disp.time;
         }else if( strcmp ( array_risposte_figli[i].info_disp.tipo , "window" ) == 0){
             if(strcmp(array_risposte_figli[i].info_disp.stato , informazioni.finestra.apertura.stato) != 0){
-                //override errore = 3
                 informazioni.finestra.override_hub = '1';
             }else{
                 informazioni.finestra.override_hub = '0';
             }
-            /////VERIFICO CHE INTERRUTTORE NON SIA A 0, LI METTO A 0 NEL MAIN RICORDA
             if(informazioni.finestra.maxTime < array_risposte_figli[i].info_disp.time)
                 informazioni.finestra.maxTime = array_risposte_figli[i].info_disp.time;
         }
@@ -394,28 +398,30 @@ int dev_depth_info(cmd comando, risp* risposta){
     return 1;
 }
 
+//eli
 int dev_delete(cmd comando){
     risp risposta_controllore;
-    if(comando.forzato == 1 || comando.id == informazioni.id){//comando --all 
+    if(comando.forzato == 1 || comando.id == informazioni.id){//comando.forzato == 1 con comando delete --all e in fase di linking
         risposta_controllore.id = informazioni.id;
         risposta_controllore.errore = 0;
-        risposta_controllore.considera = 1;
-        risposta_controllore.eliminato = 1;
+        risposta_controllore.considera = 1;//indico alla centralina che deve stampare le mie info
+        risposta_controllore.eliminato = 1;//indico a mio padre che deve rimuovermi dalla lista dei figli
         risposta_controllore.pid = informazioni.pid;
         comando.forzato = 1;//indico ai miei figli di eliminarsi
-        //set_info 
         risposta_controllore.info_disp = informazioni; 
         rispondi(risposta_controllore, comando);
     
         exit(0);
     }else{
         risposta_controllore.considera = 0;//non considerarmi, non sono stato eliminato
-        risposta_controllore.eliminato = 0;
+        risposta_controllore.eliminato = 0;//indico a mio padre che NON deve rimuovermi dalla lista dei figli
         risposta_controllore.info_disp = informazioni;
         rispondi(risposta_controllore, comando);
     }
     return 1;
 }
+
+//Funzione di linking
 int dev_link(cmd comando){
     risp risposta_controllore;
     if(comando.id == informazioni.id){    
@@ -443,6 +449,7 @@ int dev_manualControl(cmd comando){
 }
 
 int main(int argc, char **args){
+    //inizializzo la lista dei figli
     dispList = listInit(getpid());
 
     fd_read = atoi(args[1]);
@@ -453,8 +460,7 @@ int main(int argc, char **args){
     informazioni.pid_padre = getppid(); //chiedo il pid di mio padre
     if(err == -1)
         printf("Errore nella lettura delle info date dal padre\n");
-    
-    if(informazioni.def == 1){
+    if(informazioni.def == 1){//informazioni di default
         strcpy(informazioni.stato, "off");
         strcpy(informazioni.tipo, "hub");
         informazioni.time = 0.0;
@@ -468,7 +474,7 @@ int main(int argc, char **args){
         strcpy(informazioni.finestra.chiusura.stato , "aperta");
     }
     sigEntrata=0;
-
+    //HANDLERS SEGNALI
     signal(SIGINT, sigint_handler);
     signal(SIGCONT, sign_cont_handler_hub);//Segnale per riprendere il controllo 
     signal(SIGQUIT, signhandle_quit);
@@ -486,27 +492,31 @@ int main(int argc, char **args){
     printf("Pid: %d\nPid padre: %d\n\n", informazioni.pid, informazioni.pid_padre);
     informazioni.def = 0;
 
-    //Invio segnale al padre
+    //Invio segnale al padre che riprenderà il controllo in addDevice
     int ris = kill(informazioni.pid_padre, SIGCONT);
 
     //Child va in pausa
     while(1){
+        //aggiungo il dispostivo dato da dev_link
+        //tale funzione è stata messa al di fuori dell'handler poichè l'exec dava problemi
         if(add == 1){
             int i;
+            //pongo add = 0 poichè il figlio sta per esser aggiunto e non voglio aggiungerlo solamente una volta
             add = 0;
             risp risposta_controllore;
             for(i=0; i<device_number(); i++){
             if(strcmp(info_device_to_add.tipo, builtin_device[i])==0)
+                //comunico al figlio le informazioni precedenti al linking
                 add_device_generale(builtin_dev_path[i], dispList, info_device_to_add, NULL);//ho invertito proc e disp
             }
             signal(SIGCONT, sign_cont_handler_hub);
             risposta_controllore.termina_comunicazione = 1;
             write(fd_write, &risposta_controllore, sizeof(risp));
         }
-
+        /*
         if(sigEntrata==2){
             sighandle2(SIGUSR2);
-        }
+        }*/
         sigEntrata = 0;
         pause();
     }

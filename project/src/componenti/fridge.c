@@ -13,7 +13,6 @@
 #include "../strutture/listH.h"
 #include "../strutture/comandiH.h"
 
-//ho spostato i metodi getLine e splitLine in una nuova libreria 
 int device_handle_command(cmd);
 
 int dev_getinfo(cmd);

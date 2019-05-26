@@ -67,6 +67,7 @@ int (*builtin_func[]) (char **, NodoPtr, NodoPtr) = {
         &cen_unlink,
         &cen_power
 };
+//restituisce il numero di comandi presenti, utilizzato per nel ciclio for utilizzato determinare quale comando è stato inserito 
 int cen_numCommands(){
     return (sizeof(builtin_cmd)/ sizeof(char*));
 }
@@ -74,6 +75,7 @@ int cen_prova(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     printf("Hai inserito il comando %s\n", args[0]);
     return 1;
 }
+//pulisce l'output
 int cen_clear(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     if(powerOn==0){
         printf("La centralina risulta spenta tramite interrutore generale\n");
@@ -84,6 +86,7 @@ int cen_clear(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     system("clear");
     return 1;
 }
+//esce dalla centralina eliminando i processi e eliminando la fifo
 int cen_exit(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     if(powerOn==0){
         printf("La centralina risulta spento tramite interrutore generale\n");
@@ -109,6 +112,7 @@ int cen_exit(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
 
     return 0;
 }
+//restituisce la lista dei comandi implementati, nelle specifiche sono inseriti dettagli più specifici
 int cen_help(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     printf("Progetto SO realizzato da: Paolo Tasin, "
            "Stefano Perenzoni, Marcello Rigotti\n");
@@ -122,9 +126,8 @@ int cen_help(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     return 1;
 }
 /*
-    Funzione: elenca tutti i dispositivi con <nome>, quelli attivi con <nome> <id> 
+    Funzione: elenca tutti i dispositivi collegati e in magazzino
     Sintassi lato utente: list
-    Sintassi comunicata dalla centralina ai figli: l
 */
 int cen_list(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){ 
     if(powerOn==0){
@@ -134,14 +137,14 @@ int cen_list(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
         return 1;
     }
     signal(SIGCONT, sign_cont_handler);
-
-    //RICEZIONE RISPOSTE
+    //Array ricezione risposte dei dispositivi collegati
     risp* array_risposte_collegati_list;
     malloc_array(&array_risposte_collegati_list, N_MAX_DISP);
-
+    //Array ricezione risposte dei dispositivi in magazzino   
     risp* array_risposte_magazzino_list;
     malloc_array(&array_risposte_magazzino_list, N_MAX_DISP);
 
+    //comando con tipo comando == l
     cmd comando;
     comando.manuale=0;
     comando.tipo_comando = 'l'; //imposto il comando
@@ -154,9 +157,6 @@ int cen_list(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     //stampo le informazioni ricevute  
     printRisp(array_risposte_collegati_list, n, 1);
 
-
-    comando.manuale=0;
-    comando.tipo_comando = 'l';
     printColorato("\n\tLista dei dispositivi DISPONIBILI:\n\n", "green");
     //invio a tutti i miei figli il comando per ricevere le loro informazioni (dispositivi aggiunti ma non ancora collegati)
     n = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);
@@ -168,11 +168,9 @@ int cen_list(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     return 1;
 }
 /*
-    Funzione: rimuove il dispositivo <id>, se di controllo elimina anche i dispositivi sottostanti
-    Sintassi lato utente:                          delete <id>
-    Sintassi comunicata dalla centralina ai figli: d <id>
+    Funzione: rimuove il dispositivo <id>, se di controllo elimina anche l'albero sottostante
+    Sintassi lato utente: delete <id>
 */
-//delete funziona su magazzino_list per ora
 int cen_delete(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     if(powerOn==0){
         printf("La centralina risulta spento tramite interrutore generale\n");
@@ -185,10 +183,10 @@ int cen_delete(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
         printf("Utilizzo: delete <id>\n");
         return 1;
     }else{
-        //RICEZIONE RISPOSTE
+        //Array ricezione risposte dei dispositivi collegati
         risp* array_risposte_collegati_list;
         malloc_array(&array_risposte_collegati_list, N_MAX_DISP);
-
+        //Array ricezione risposte dei dispositivi in magazzino
         risp* array_risposte_magazzino_list;
         malloc_array(&array_risposte_magazzino_list, N_MAX_DISP);
         int n;
@@ -204,7 +202,7 @@ int cen_delete(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
             comando.id = atoi(args[1]);
         }
 
-        //inoltro il comando ai figli(collegati e non)
+        //inoltro il comando ai figli(collegati e non) e stampo le loro risposte
         n = broadcast_centralina(magazzino_list, comando, array_risposte_magazzino_list);
         printRisp(array_risposte_magazzino_list, n, 1);
         n = broadcast_centralina(collegati_list, comando, array_risposte_collegati_list);
@@ -215,7 +213,10 @@ int cen_delete(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     return 1;
 }
 
-//Unlink funziona solo sui dispositivi collegati
+/*
+    Funzione: rimuove il dispositivo <id>, dalla lista dei collegati e lo mette (senza collegamenti) nel magazzino
+    Sintassi lato utente: unlink <id> / unlink --all
+*/
 int cen_unlink(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     if(powerOn==0){
         printf("La centralina risulta spento tramite interrutore generale\n");
@@ -223,13 +224,12 @@ int cen_unlink(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
 
         return 1;
     }
-    //TODO da modificare, pensavo che l'eliminazione avvenisse anche per tipo.
     if(args[1]==NULL){
         printf("Argomenti non validi\n");
         printf("Utilizzo: delete <id>\n");
         return 1;
     }else{
-        //RICEZIONE RISPOSTE
+
         risp* array_risposte_collegati_list;
         malloc_array(&array_risposte_collegati_list, N_MAX_DISP);
         int n;
@@ -264,7 +264,6 @@ int cen_unlink(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
 /*
     Funzione: aggiunge un device al sistema e ne mostra i dettagli
     Sintassi lato utente:                          add <tipo>
-    TODO Sintassi comunicata dalla centralina :    add <tipo> (centralina comunica a processo specifico)
 */
 int cen_add(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     char nome[20];
@@ -282,7 +281,7 @@ int cen_add(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     }
     //5 device disponibili: bulb, window, fridge, hub, timer
     else{
-        signal(SIGCONT, sign_handler);
+        signal(SIGCONT, sign_cont_handler);
         if(args[2]==NULL){ // se non viene inserito nessun nome creo quello di default: device + id
             //Devo concatenare nome del device piu id 
             //Es: bulb3
@@ -295,6 +294,7 @@ int cen_add(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
         info informazioni_disp;
         for(i=0; i<device_number(); i++){
             if(strcmp(args[1], builtin_device[i])==0){
+                    //incremento l'id generale da assegnare ai dispositivi
                     id_gen+=1;
                     return add_device(builtin_dev_path[i], magazzino_list, nome);//viene sempre aggiunto prima al magazzino
             }
@@ -310,7 +310,6 @@ int cen_add(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     Funzione: modifica <stato> di <label> del dispositivo con <id>
         (label sta per interruttore o termostato) //per ora realizzo solo interruttore
     Sintassi lato utente:                          switch <id> <label> <pos>
-    Sintassi comunicata dalla centralina :         s <id> <label> <stato>
 */
 int cen_switch(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     if(powerOn==0){
@@ -370,8 +369,8 @@ int cen_switch(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
 /*
     Funzione: mostra i dettagli del dispositivo 
     Sintassi lato utente:                          info <id>
-    TODO Sintassi comunicata dalla centralina :    i <id> (centralina comunica a processo specifico)
-*/  //da generalizzare 
+    Comunica la risposta di un solo dispositivo, per le info dell'albero sottostante (se esiste) digitare info -f <id>
+*/  
 int cen_info(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
     if(powerOn==0){
         printf("La centralina risulta spento tramite interrutore generale\n");
@@ -414,7 +413,6 @@ int cen_info(char **args, NodoPtr collegati_list, NodoPtr magazzino_list){
 /*
     Funzione: collega due dispositivi (uno deve essere di controllo) 
     Sintassi lato utente:                          link <id1> to <id2>
-    TODO Sintassi comunicata dalla centralina : 
 */
 int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
     //L'ID DEL PADRE MANCA
@@ -434,15 +432,15 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
     //caso 2-->else
         //chiedo le info di id1 per vedere se è dispositivo di controllo
         //chiedo le info di id2 per vedere se è un dispositivo di interazione collegabile (stesso tipo) ad id1
-        //delete id1
-        //link id1 to id2
+        //delete id1 (e il suo sott'albero)
+        //link <id1 e albero sottostante> to id2
     int id1 = atoi(args[1]);
     int id2 = atoi(args[3]);
     risp* array_risposte_collegati_list;
     risp* array_risposte_magazzino_list;
     malloc_array(&array_risposte_collegati_list, N_MAX_DISP);
     malloc_array(&array_risposte_magazzino_list, N_MAX_DISP);
-    //ricorda di pulire gli array
+
     printf("\n");
     signal(SIGCONT, sign_cont_handler);
     cmd comando;
@@ -537,11 +535,13 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
                 }else{//SE È UN DISPOSITIVO DI INTERAZIONE NON POSSO FARE IL LINKING
                     printf("Stai cercando di fare il linking ad un dispositivo di interazione, errore 1\n");
                 }
+                free(array_risposte_collegati_list);
+                free(array_risposte_magazzino_list);
                 return 1;
             //LINKING CON DESTINAZIONE GIÁ COLLEGATA E SORGENTE NON COLLEGATA
             }/////////
 
-        }else{//verifico se il dispositivo source esiste nel magazzino_list //////////////////////////////////////////////////////////////////////////////////
+        }else{//verifico se il dispositivo source esiste nel magazzino_list
             comando.tipo_comando = 'i';//info
             comando.id = id_src;
             
@@ -573,12 +573,18 @@ int cen_link(char** args, NodoPtr collegati_list, NodoPtr magazzino_list){
                                 comando.info_disp = array_risposte_magazzino_list[i].info_disp;
                                 int tmp = broadcast_centralina(collegati_list, comando, array_tmp_esito_linking);
                             }
+                            free(array_risposte_collegati_list);
+                            free(array_risposte_magazzino_list);
+                            return 1;
                         }else{
                             printf("Stai cercando di fare il linking ad un dispositivo di interazione, errore 2\n");
                         }
                     }
-            }
+            }printf("\tLinking non avvenuto, i dispositivi potrebbero non esistere. Digita il comando list\n\n");
+            
             return 1;
+            free(array_risposte_collegati_list);
+            free(array_risposte_magazzino_list);
         }
     }
     

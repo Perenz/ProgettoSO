@@ -10,7 +10,6 @@
 #include "../include/gestioneComandi.c"
 #include "../include/addDevice.c"
 
-#define CEN_BUFSIZE 128
 
 int add = 0;
 info info_device_to_add;
