@@ -10,12 +10,10 @@
 #include "../include/gestioneComandi.c"
 #include "../include/addDevice.c"
 
-//voglio usare le funzioni definite in functionDeclaration urca
 #define CEN_BUFSIZE 128
 
 int add = 0;
 info info_device_to_add;
-
 
 NodoPtr dispList; //lista dei dispositivi collegati all'hub
 int fifoCreata=0;
@@ -35,10 +33,8 @@ int dev_manualControl(cmd);
 int dev_depth_info(cmd comando, info informazione_dispositivo);
 int dev_set(cmd);
 
-//int dev_link(char** args);
 int device_handle_command(cmd);
 void h_sigstop_handler ( int sig ) ;
-
 
 void signhandle_quit(int sig){
     char fifo[30];
@@ -53,7 +49,6 @@ void signhandle_quit(int sig){
             kill(SIGQUIT, nodo->data);
             nodo=nodo->next;
         }
-
         _exit(0);
     }
 }
@@ -79,13 +74,11 @@ int (*builtin_func_hub[]) (cmd comando) = {
 int cont_numCommands(){
     return (sizeof(builtin_command)/ sizeof(char*));
 }
-
 void sign_cont_handler_timer(int sig){
     signal(SIGCONT, sign_cont_handler_timer);
     return;
 
 }
-
 void sigint_handler(int sig){
     //Devo mandare il SIGINT a tutti i suoi figli
     NodoPtr nodo = dispList;
@@ -96,7 +89,6 @@ void sigint_handler(int sig){
     return;
     //Come per bulb non serve andare in pausa
 }
-
 void sighandle2(int sig){
     if(sig == SIGUSR2){
         char fifoManComp[30];
@@ -109,7 +101,6 @@ void sighandle2(int sig){
         int errnum = device_handle_command(comando);
     }
 }
-
 void sighandle1(int sig, int fd_read, int fd_write){
     if(sig == SIGUSR1){
         cmd comando;
@@ -120,21 +111,17 @@ void sighandle1(int sig, int fd_read, int fd_write){
         if(err_signal != 0)
             perror("errore in invio segnale");
 
-        //printf("Termina in modo adeguato.\n");
         return;
     }
 }
-
 //SIGUSR1 usato per l'implementazione della lettura della pipe con il padre
 void sighandle_usr1_timer(int sig){
     sigEntrata=1;
 }
-
 //USATO PER SVEGLIARE IL PROCESSO
 void sighandle_usr2(int sig){
     sigEntrata=2;
 }   
-
 int device_handle_command(cmd comando){
     //da fare come in functionDeclarations in file dispositivi
     int i;
@@ -149,13 +136,11 @@ int rispondi(risp risposta_controllore, cmd comando){
     risposta_controllore.id_padre = comando.id_padre;
     risposta_controllore.termina_comunicazione = 0;
     risposta_controllore.pid = informazioni.pid;
-
     //vado io in controllo e mando le varie risposte al papi
     //attenz, buono che salto il primo
     broadcast_controllo(dispList, comando, informazioni, fd_write, risposta_controllore);
     return 1;
 }
-
 
 int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, info informazioni){
   risp answer;
@@ -167,11 +152,9 @@ int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, i
         answer.dispositivo_interazione = 1;
         answer.info_disp.def = 0;
         answer.info_disp = informazioni;
-        //get_info_string(&(answer.info_disp));
 
         //Devo creare la fifo per il collegamento diretto
-        char fifoManComp[30];
-        
+        char fifoManComp[30]; 
         sprintf(fifoManComp, "/tmp/fifoManComp%d", getpid());
         mkfifo(fifoManComp, 0666);
     
@@ -187,8 +170,6 @@ int dev_manual_info_gen(cmd comando, int id, int idPar, int fd_write, int pid, i
 
 int dev_list(cmd comando){
     risp risposta_controllore;
-
-
     risposta_controllore.id = informazioni.id;
     risposta_controllore.pid = informazioni.pid;
     risposta_controllore.considera = 1;
@@ -216,14 +197,6 @@ int dev_info(cmd comando){
         risposta_controllore.info_disp = informazioni;
         //set_info
 
-        //SE VOGLIAMO FARE CHE IL DISPOSITIVO MANDA UN MESSAGGIO E NON CERCA SE I SUOI FIGLI HANNO LO STESSO ID: 
-        /* NON VA SE NON è STATO FATTO UN LIST PRIMA ED IN ALCUNI CASI SI BLOCCA
-        risposta_controllore.termina_comunicazione = 0;
-        write(fd_write, &risposta_controllore, sizeof(risp));
-        risposta_controllore.termina_comunicazione = 1;
-        write(fd_write, &risposta_controllore, sizeof(risposta_controllore));
-        */
-        //Se VOGLIAMO FARE CHE IL DISPOSITIVO CHIEDE AI SUOI FIGLI SE C'è QUALCUNO CON QUELL'ID ANCHE SE LUI HA GIà QUELL'ID
         rispondi(risposta_controllore, comando);
     }else{
         risposta_controllore.considera = 0;//non considerarmi
@@ -237,7 +210,6 @@ int dev_depth_info(cmd comando, info informazione_dispositivo){
     malloc_array(&array_risposte_figli, N_MAX_DISP);
     int n = broadcast_centralina(dispList, comando, array_risposte_figli);
     
-
     int i;
     for(i=0; i<n; i++){
         if( strcmp ( array_risposte_figli[i].info_disp.tipo , "bulb" )){
@@ -251,24 +223,19 @@ int dev_depth_info(cmd comando, info informazione_dispositivo){
             /////VERIFICO CHE INTERRUTTORE NON SIA A 0, LI METTO A 0 NEL MAIN RICORDA
         }
     }
-
     return 1;
 }
-
-
 
 int dev_delete(cmd comando){
     risp risposta_controllore;
     if(comando.forzato == 1 || comando.id == informazioni.id){//comando --all 
         risposta_controllore.id = informazioni.id;
-       
         risposta_controllore.considera = 1;
         risposta_controllore.eliminato = 1;
         risposta_controllore.pid = informazioni.pid;
         comando.forzato = 1;//indico ai miei figli di eliminarsi
         //set_info 
-        risposta_controllore.info_disp = informazioni;
-        
+        risposta_controllore.info_disp = informazioni;   
         rispondi(risposta_controllore, comando);
     
         exit(0);
@@ -290,7 +257,6 @@ int dev_link(cmd comando){
         info_device_to_add = comando.info_disp;
         risposta_controllore.termina_comunicazione = 0;
         write(fd_write, &risposta_controllore, sizeof(risp));
-
         //La continuazione della risposta si trova nel main
     }else{
         risposta_controllore.considera = 0;
@@ -306,7 +272,6 @@ int dev_manualControl(cmd comando){
     return err;
 }
 
-////////////////////////////////////////////////////////
 int dev_switch(cmd comando){//////DA MODIFICARE
     //puoi richiamare la funzione che c'è sopra bro, guarda, per il resto non dovrebbe variare nulla
     risp risposta_controllore;
@@ -314,23 +279,6 @@ int dev_switch(cmd comando){//////DA MODIFICARE
         comando.forzato = 1;
         risposta_controllore.id = informazioni.id;
         risposta_controllore.considera = 1;
-        /*
-        risposta_controllore.pid = informazioni.pid;
-        risposta_controllore.profondita = comando.profondita+1;
-
-        /////////////////////////////////////////////////////
-        risposta_controllore.info_disp.time = 0;
-        
-        if(strcmp(comando.info_disp.interruttore[0].nome , "accensione")==0){
-            if(strcmp(informazioni.stato,"off")== 0 && strcmp(comando.info_disp.interruttore[0].stato , "on")==0){
-                strcpy(informazioni.stato, "on");  
-            }else if(strcmp(informazioni.stato,"on")== 0 && strcmp(comando.info_disp.interruttore[0].stato , "off")==0){
-                strcpy(informazioni.stato, "off");  
-            }
-            risposta_controllore.considera = 1;
-        }
-        risposta_controllore.info_disp = informazioni;
-        */
         risposta_controllore.info_disp = informazioni;
 
         if(comando.manuale==1){
@@ -389,23 +337,18 @@ int dev_set(cmd comando){
     }
 }
 
-
 int main(int argc, char **args){
     dispList = listInit(getpid());
-
-    //UGUALE A BULB 
 
     fd_read = atoi(args[1]);
     fd_write = atoi(args[2]);
     //MANCA IL SET_INFO, sbaglia l'id
     int err = read(fd_read, &informazioni,sizeof(info));
-    
     informazioni.pid = getpid(); // chiedo il mio pid
     
     informazioni.pid_padre = getppid(); //chiedo il pid di mio padre
     if(err == -1)
         printf("Errore nella lettura delle info date dal padre\n");
-    
 
     if(informazioni.def == 1){
         strcpy(informazioni.stato, "off");
@@ -418,7 +361,6 @@ int main(int argc, char **args){
     signal(SIGCONT, sign_cont_handler_timer);//Segnale per riprendere il controllo 
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1_timer); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
-   //signal(SIGUSR2, sighandle_usr2);
     signal(SIGUSR2, sighandle2);
 
     if(informazioni.def == 1){

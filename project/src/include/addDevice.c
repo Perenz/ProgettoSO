@@ -26,7 +26,6 @@ char *builtin_dev_path[]={
         "./binaries/HUB"
 };
 
-
 int device_number(){
         return sizeof(builtin_device)/sizeof(char*);
 }
@@ -75,21 +74,16 @@ int add_device_generale(char* execPath, NodoPtr list, info info, char* nome){
         if(err == -1) 
             printf("Errore scrittura pipe\n");
 
-
         list = insertLast(list, pid, fd_reader[0],fd_writer[1]);
         //Vado in pausa per permettere al figlio di generarsi
-        pause();
-
-            
+        pause();        
     }
-    
     return 1;
 }
 
 int add_device(char* execPath, NodoPtr magazzino_list, char* nome){
     //add device di default chiamato dalla centralina quando viene aggiunto un dispositivo
     //id_gen+=1;
-    //char info[16];
     info infoD;
     infoD.def = 1; //info default = 1
     infoD.id = id_gen;

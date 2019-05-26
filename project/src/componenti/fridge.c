@@ -13,12 +13,8 @@
 #include "../strutture/listH.h"
 #include "../strutture/comandiH.h"
 
-
 //ho spostato i metodi getLine e splitLine in una nuova libreria 
-//TODO tale verrà linkata nel gestore generale dei processi di interazione
-//void get_info_string(info*);
 int device_handle_command(cmd);
-
 
 int dev_getinfo(cmd);
 int dev_delete(cmd);
@@ -29,13 +25,11 @@ int dev_list(cmd);
 int dev_info(cmd);
 int dev_set(cmd);
 
-
 void set_time();
 
 void sign_cont_handler(int);
 
 #include "../include/funzioniDispositiviInterazione.c"
-
 
 time_t tempoUltimaMisurazione;
 //TODO : potrei usare un unico node
@@ -47,9 +41,6 @@ int sigEntrata=0;
 int fifoCreata=0;
 info informazioni;
 
-
-
-
 char *builtin_command[]={
     "l",//list
     "s",//switch
@@ -57,7 +48,6 @@ char *builtin_command[]={
     "d", //delete
     "m",//Manual
     "p"//set
-
 };
 int (*builtin_func[]) (cmd comando) = { //int man: 0 allora il comando arriva da centralina, 1 il comando arriva da manuale
     &dev_list,
@@ -71,8 +61,6 @@ int dev_numCommands(){
     return (sizeof(builtin_command)/ sizeof(char*));
 }
 int device_handle_command(cmd comando){
-    //da fare come in functionDeclarations in file dispositivi
-    //NON FUNZICA
     int i;
     for(i=0; i<dev_numCommands(); i++){
         char tmp = *builtin_command[i];
@@ -102,8 +90,6 @@ void sighandle_alarm(int sig){
 }
 void sighandle_usr1(int sig){
     sighandle1(sig, fd_read, fd_write);
-
-    //sigEntrata=1;    
 }
 void sighandle_usr2(int sig){
     sigEntrata=2;
@@ -117,7 +103,6 @@ void signint_handler(int sig){
     //Vado in pausa
     //Per il bulb è inutile andare in pause perchè tanto c'è while(1) pause;
 }
-
 
 //COMANDO   l
 /*restituisce in pipe
@@ -133,19 +118,16 @@ int dev_list(cmd comando){
     0 se NON sono il dispositivo in cui ho modificato lo stato
     1 se sono il dispositivo in cui ho modificato lo stato
 */
-//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 int dev_switch(cmd comando){
     risp answer;
     if(comando.id == informazioni.id || comando.forzato == 1){
         if(strcmp(comando.cmdInterruttore.nome , "apertura")==0 || strcmp(comando.cmdInterruttore.nome , "aperturaF")==0){
-            //get_info_string(&(answer.info_disp));
             if(strcmp(informazioni.stato,"chiuso")== 0 && strcmp(comando.cmdInterruttore.stato , "on")==0){
                 strcpy(informazioni.stato, "aperto"); 
                 alarm(informazioni.frigo.delay); 
             }else if(strcmp(informazioni.stato,"aperto")== 0 && strcmp(comando.cmdInterruttore.stato , "off")==0){
                 strcpy(informazioni.stato, "chiuso");  
             }
-            //get_info_string(&(answer.info_disp));
         }else if(strcmp(comando.cmdInterruttore.nome , "termostato")==0){
             informazioni.frigo.temperatura = atoi(comando.cmdInterruttore.stato);
         }
@@ -159,10 +141,8 @@ int dev_switch(cmd comando){
             //Apro Fifo in scrittura
             int fd_manuale = open(fifoManComp, O_WRONLY);
 
-            //////////////////////////////////////////////////////////
             ((strcmp(comando.cmdInterruttore.nome , "apertura")==0) || strcmp(comando.cmdInterruttore.nome , "aperturaF")==0) ? sprintf(msg, "%s", informazioni.stato) : sprintf(msg, "%d", informazioni.frigo.temperatura);//Rispondo solamente con lo status attuale del dispositivo
             int esito=write(fd_manuale, msg, 10);
-            /////////////////////////////////////////////////////////
 
             //Chiudo in scrittura
             close(fd_manuale);
@@ -200,10 +180,8 @@ int dev_set(cmd comando){
             //Apro Fifo in scrittura
             int fd_manuale = open(fifoManComp, O_WRONLY);
 
-            //////////////////////////////////////////////////////////
             sprintf(msg, "%s", comando.cmdInterruttore.stato);//Rispondo solamente con lo status attuale del dispositivo
             int esito=write(fd_manuale, msg, 10);
-            /////////////////////////////////////////////////////////
 
             //Chiudo in scrittura
             close(fd_manuale);
@@ -238,7 +216,6 @@ int dev_delete(cmd comando){
     return err;
 }
 
-
 void set_time(){
     if(strcmp(informazioni.stato,"aperto")== 0){
         time_t tmp;
@@ -257,14 +234,13 @@ int dev_manualControl(cmd comando){
     return err;
 }
 
-
 int main(int argc, char *args[]){
     //leggo args per prendere gli argomenti passati(puntatore al lato di scrittura della pipe)
     fd_read = atoi(args[1]);
     fd_write = atoi(args[2]);  
     int err = read(fd_read, &informazioni,sizeof(info));
     if(err == -1)
-        printf("eerore nella lettura delle info BULB\n");
+        printf("errore nella lettura delle info BULB\n");
     
     time(&tempoUltimaMisurazione);
     if(informazioni.def == 1){
@@ -279,13 +255,11 @@ int main(int argc, char *args[]){
         alarm((informazioni.frigo.delay - ((int)informazioni.time % (int)informazioni.frigo.delay)));
     }
     informazioni.pid = getpid(); // chiedo il mio pid
-    informazioni.pid_padre = getppid(); //chiedo il pid di mio padre
-    
+    informazioni.pid_padre = getppid(); //chiedo il pid di mio padre  
 
-    signal(SIGALRM, sighandle_alarm);
+    signal(SIGALRM, sighandle_alarm);//segnale usato per il delay
     signal(SIGQUIT, signhandle_quit);
     signal(SIGUSR1, sighandle_usr1); //imposto un gestore custom che faccia scrivere sulla pipe i miei dati alla ricezione del segnale utente1
-   //signal(SIGUSR2, sighandle_usr2);
     signal(SIGUSR2, sighandle2); //Alla ricezione di SIGUSR2 leggere il comanda sulla fifo direttamente connessa al manuale
     signal(SIGCONT, sign_cont_handler);//Segnale per riprendere il controllo 
 
@@ -306,7 +280,6 @@ int main(int argc, char *args[]){
     int ris = kill(informazioni.pid_padre, SIGCONT); 
 
     //Child va in pausa
-    
     
     while(1){
         if(sigEntrata==2){
