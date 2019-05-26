@@ -69,22 +69,17 @@ typedef struct{
 
 
 
-//PER ORA IMPLEMENTO SOLO QUESTO, AL POSTO CHE INFO ANDRà MESSO DISPOSITIVO CHE SARà UN'ALTRA STRUCT 
 typedef struct{
-    int considera;
+    int considera;// se = 1 stampo la risposta
     int id;
     int pid;
-    int id_padre;
-    int profondita;
-    int termina_comunicazione;
-    int eliminato;
-    //potrei usare errore e settare gli errori: 
-        //1 per dispostivio interazione in fase di linking
-        //2 aggiunta dispositivo a timer che possiede già un dispositivo
-        //3 override su hub
-    int dispositivo_interazione;
+    int id_padre;//usato per impartire il comando di linking 
+    int profondita;//usato per l'indentazione
+    int termina_comunicazione;//parametro che indica il termine della comunicazione
+    int eliminato;//il dispositivo è stato eliminato se = 1 così che il padre possa rimuoverlo dalla lista dei figli
+    int dispositivo_interazione;//se = 1 segnala che il linking non può essere fatto
     int errore;
-    info info_disp;
+    info info_disp;//informazioni relative al dispositivo che da la risposta
 }risp;
 
 #endif
