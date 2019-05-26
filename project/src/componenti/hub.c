@@ -285,9 +285,6 @@ int dev_switch(cmd comando){//////DA MODIFICARE
         
         risposta_controllore.info_disp = informazioni;
         if(comando.manuale==1){
-            //comando.manuale=0;
-            //rispondi(risposta_controllore, comando);
-
             //Devo rispondere al manuale
             //fd_manuale
             //devo aprire la fifo prima di rispondere
