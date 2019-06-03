@@ -21,10 +21,12 @@ void alloc_array(risp** array_risposte, int n);
 void stampaRisp(risp);
 void printColorato(char* string, char* color);
 
+//Signal handler per centralina
 void sign_cont_handler(int sig){
     return;
 }
 
+//prende la riga di testo inserita dall'utente
 char* getLine(){
     char *cmd=NULL;
     //Dimensione buffer per riallocazione
@@ -70,29 +72,20 @@ char** splitLine(char* line){
 }
 
 int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
-    //Setto il gestore di SIGCONT, l'ho giò settato ma per sicurezza lo risetto
-    signal(SIGCONT, sign_cont_handler);
     int err_signal;//errore kill
-    //Salto il primo nodo della lista dato che appartiene alla centralina
+    //Salto il primo nodo della lista dato che rappresenta la centralina
     NodoPtr nodo = list->next;
-    //TODO restabilire l'array dinamico di risposte
     risp answer_tmp;//Risposta che verrà inserita in un array di risposte
-    //Imposto a zero la terminazione della comunicazione che fa continuare il ciclio di comunicazione con i figli
+    //Imposto a zero la terminazione della comunicazione che fa continuare il ciclo di comunicazione con i figli
     answer_tmp.termina_comunicazione = 0;
-    comando.profondita = 0;
-    //array statico di risposte PROVA
-    int i = 0;//indice array statico delle risposte PROVA
+    //Imposto a 1 la profondità che mi servirà per indentare il codice nella stampa in shell
+    comando.profondita = 1;
+    int i = 0;//indice array statico delle risposte 
 
     //Finchè ho figli prova ad instaurare la comunicazione
     while(nodo != NULL){
-        //Setto la lettura in pipe come non bloccante
-        /*
-        int flags = fcntl(nodo->fd_reader, F_GETFL, 0);
-        fcntl(nodo->fd_reader, F_SETFL, flags | O_NONBLOCK);
-        */
-
         //mando il comando al figlio nodo 
-        comando.id_padre = 2;
+        comando.id_padre = 0;
         write(nodo->fd_writer, &comando, sizeof(comando));
         //Comunico al figlio di gestire il comando appena inviato
         err_signal = kill(nodo->data, SIGUSR1); 
@@ -103,67 +96,58 @@ int broadcast_centralina(NodoPtr list, cmd comando, risp* array_risposte){
         //Finchè il figlio non mi manda un messaggio con terminazione == 1 significa che 
         //ha ancora dei figli e perciò devo rimanere in ascolto e gestire le sue risposte
         while(1){
-            //Leggo la risposta --> viene letta dopo che mi è arrivato un segnale SIGCONT
-            //dato che la read è bloccante
-            //debug printf("\tMi metto in ascolto in centralina\n");
+            //Leggo la risposta --> viene letta dopo che mi è arrivata
+            //dato che la read è bloccante non andrà avanti finchè non arriverà una risposta dal figlio che manderà sempre tale risposta
             read(nodo->fd_reader, &answer_tmp, sizeof(risp));
-            //se è un messaggio di terminazione devo uscire dal ciclo di ascolto e andare 
-            //al nodo successivo
+            //se è un messaggio di terminazione devo uscire dal ciclo di ascolto e vado al figlio successivo
             if(answer_tmp.termina_comunicazione == 1){
-                //debug printf("Il messaggio è di terminazione\n");
-
                 break;
             }else{
-                if(answer_tmp.considera == 1){
-                    array_risposte[i] = answer_tmp;
-                    i++;
-                }
                 //se non è un messaggio di terminazione significa che il figlio ha ancora risp da comunicare
                 //nel caso dei dispositivi di interazione (o controllo senza figli) verrà mandato
-                //1 messaggio contenente le informazioni e un successivo messaggio di terminazione
+                //1 messaggio contenente le informazioni e un successivo messaggio di terminazione subito dopo
 
-                //nel caso di dispositivi di controllo con figli continueranno a mandare messaggi
+                //nel caso di dispositivi di controllo con figli continueranno a mandare messaggi.
                 //il primo messaggio sarà quello relativo al dispositivo di controllo in question
                 //finchè tutti i figli non avranno mandato il messaggio di terminazione
                 //continuerà a mandare risposte, quando tutti avranno mandato il messaggio di terminazione
                 //egli manderà 1 messaggio di terminazione alla centralina (qui)
-
                 //inserisco il messaggio nell'array e incremento l'indice
-                
-                //printf("\t\t\t%s\n", answer_tmp.info);
-
+                if(answer_tmp.considera == 1){
+                    array_risposte[i] = answer_tmp;
+                    i++;
+                }
                 //mando un segnale al figlio per comunicare di continuare la comunicazione dato 
                 //che ho letto la sua risposta
                 err_signal = kill(nodo->data, SIGCONT); 
                 if(err_signal != 0){
                     perror("errore in invio segnale");
                 }
+                //nel caso il comando sia quello di eliminare un dispositivo verrà settato un flag nella risposta in modo da eliminarlo dalla
+                //lista nella centralina
                 if(answer_tmp.eliminato == 1){
                     removeNode(list, answer_tmp.pid);
                 }
                 //andrò in pausa perché all'inizio del while c'è la read bloccante
             }
         }
+        //passo al figlio successivo
         nodo = nodo->next;
     }
-
-    //Rispondo con il numero di dispositivi inseriti, metodo di merda, però utile per verificare se ci sono disp
+    //Rispondo con il numero di dispositivi inseriti e che mi hanno comunicato la loro risposta
     return i;
 }
+
+//funzione utilizzata da hub e timer per inoltrare le risposte date dal loro sott'albero e la propria verso la centralina
 int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_papi, risp risposta_to_padre){
-    //nodo rappresenta il figlio, nell'hub passo il successivo dato che il primo nodo 
-    //è sè stesso
+    //nodo rappresenta il figlio, nell'hub passo il successivo dato che il primo nodo è sè stesso
     NodoPtr nodo = list->next;
-    //risposta che verrà mandata al padre (se ho figli)
+    //risposta che verrà mandata al padre (se ho figli aggiuntivi)
     risp answer;
     int err_signal;//errore kill
     //scrivo al padre la risposta del dispositivo di controllo contenente le sue info
     //il padre potrebbe essere un dispositivo diverso dalla centralina ma comunque sarà in ascolto
-    comando.profondita+=1;
-    risposta_to_padre.profondita = comando.profondita;
-    
-    if(comando.manuale != 1)
-        write(fd_papi, &risposta_to_padre, sizeof(risp));
+    write(fd_papi, &risposta_to_padre, sizeof(risp));
     comando.id_padre = informazioni.id;
     
     //finchè ho figli
@@ -176,18 +160,12 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
         if(err_signal != 0)
             perror("errore in invio segnale");
         while(1){
-            //Leggo la risposta --> viene letta dopo che mi è arrivato un segnale SIGCONT
-            //dato che è bloccante
+            //Leggo la risposta
             read(nodo->fd_reader, &answer, sizeof(risp));
-            //stampaDisp(answer.info_disp);
-                //debug printf("Leggo la risposta in %d, %s\n", id, answer.info);
-            //se è un messaggio di terminazione devo uscire dal ciclo di ascolto e andare 
-            //al nodo successivo
+            //se è un messaggio di terminazione devo uscire dal ciclo di ascolto e andare al nodo successivo 
             if(answer.termina_comunicazione == 1){
                 break;
             }else{
-                
-                //Il delete non funziona se fatto non al primo nodo o con delete --all OIBO
                 //se non è un messaggio di terminazione significa che il figlio ha ancora risp da comunicare
                 //nel caso dei dispositivi di interazione (o controllo senza figli) verrà mandato
                 //1 messaggio contenente le informazioni e un successivo messaggio di terminazione
@@ -197,44 +175,33 @@ int broadcast_controllo(NodoPtr list, cmd comando, info informazioni, int fd_pap
                 //egli manderà 1 messaggio di terminazione al padre
                 //scrivo a mio padre la risposta che ho appena letto
                 if(answer.considera==1 ){
-                    if(comando.manuale != 1)
-                        write(fd_papi, &answer, sizeof(risp));
+                    write(fd_papi, &answer, sizeof(risp));
                 }
                 
                 //mando un segnale al figlio per comunicare di continuare la comunicazione                
                 err_signal = kill(pid_figlio, SIGCONT);
                 if(answer.eliminato == 1){//questo vale quando risalgo, se il dispositivo è da eliminare lo tolgo dalla lista dei processi
-                    //printList(list);
                     removeNode(list, answer.pid);
                     answer.eliminato = 0;//setto a 0 sennò lo toglie anche il padre che non lo ha nella lista 
                 }
                 if(err_signal != 0)
                     perror("errore in invio segnale");
-                //messaggio di terminazione o
-                //ulteriore risposta con terminazione = 0 
-                
+                //messaggio di terminazione o ulteriore risposta con terminazione == 0 
             }
         }
+        //passo al nodo successivo
         nodo = nodo->next;
     }
     //comunico al padre di aver finito di comunicare mettendo il parametro termina_comunicazione = 1
     risposta_to_padre.termina_comunicazione = 1;
-    if(comando.manuale != 1)
-        write(fd_papi, &risposta_to_padre,sizeof(risp));
+    write(fd_papi, &risposta_to_padre,sizeof(risp));
     return 1;
 }
 
-
-
-
-
-
-
-
-
+//funzione utilizzata per stampare le risposte in shell
 void stampaRisp(risp answer){
     if(strcmp(answer.info_disp.tipo, "bulb") == 0){
-        printf("%d Bulb %d %s time: %.2f \n",answer.info_disp.pid,answer.info_disp.id,answer.info_disp.stato,answer.info_disp.time);
+        printf("%d Bulb %d %s time: %.2f \n",answer.info_disp.pid,answer.info_disp.id, answer.info_disp.stato, answer.info_disp.time);
     }else if(strcmp(answer.info_disp.tipo, "fridge") == 0){
         printf("%d Fridge %d %s time: %.2f  delay: %.2f  percentualeRiempimento: %d  temperatura: %d \n",answer.info_disp.pid,answer.info_disp.id,answer.info_disp.stato,answer.info_disp.time,
        answer.info_disp.frigo.delay,answer.info_disp.frigo.percentuale,answer.info_disp.frigo.temperatura);
@@ -242,7 +209,7 @@ void stampaRisp(risp answer){
         printf("%d Window %d %s time: %.2f \n",answer.info_disp.pid,answer.info_disp.id,answer.info_disp.stato,answer.info_disp.time);
     }else if(strcmp(answer.info_disp.tipo, "timer") == 0){
         ////////////////da cambiare
-        printf("%d Timer %d %s time: %.2f \n",answer.info_disp.pid,answer.info_disp.id,answer.info_disp.stato,answer.info_disp.time);//aggiungere override 1 / 0
+        printf("%d Timer %d %s time: %.2f \n",answer.info_disp.pid,answer.info_disp.id,answer.info_disp.stato,answer.info_disp.time);
     }else if(strcmp(answer.info_disp.tipo, "hub") == 0){        
         printf("%d Hub %d ",answer.info_disp.pid,answer.info_disp.id);
 
@@ -254,7 +221,6 @@ void stampaRisp(risp answer){
             if(answer.info_disp.lampadina.override_hub == '1')
                 printColorato("\tOverrode ", "red" );
         }
-
         if(answer.info_disp.finestra.maxTime != -1){
             printColorato("\n\t\tTempo max finestre: ", "cyan" );
             printf("%.2f ",answer.info_disp.finestra.maxTime);
@@ -263,8 +229,6 @@ void stampaRisp(risp answer){
             if(answer.info_disp.finestra.override_hub == '1')
                 printColorato("\tOverrode ", "red" );
         }
-
-
         if(answer.info_disp.frigo.maxTime != -1){
             printColorato("\n\t\tTempo max frigoriferi: ", "green" );
             printf("%.2f ",answer.info_disp.frigo.maxTime);
@@ -273,14 +237,13 @@ void stampaRisp(risp answer){
             if(answer.info_disp.frigo.override_hub == '1')
                 printColorato("\tOverrode ", "red" );
         }
-        
         printf("\n");
-
     }
 }
-void printRisp(risp* array_risposte, int n, int indentazione){
-    //Se indentazione = 1 indento la stampa
 
+//funzione utilizzata per stampare un array di risposte
+void printRisp(risp* array_risposte, int n, int indentazione){
+    //Se indentazione == 1 indento la stampa in base al parametro profondità presente nella struct risposta
     int i = 0;
     for(; i < n; i++){
         if(indentazione == 1){
@@ -292,6 +255,7 @@ void printRisp(risp* array_risposte, int n, int indentazione){
         stampaRisp(array_risposte[i]);
     }
 }
+
 void printColorato(char* string, char* color){
     if(strcmp(color, "red") == 0){
         printf("\033[0;31m");
@@ -306,15 +270,9 @@ void printColorato(char* string, char* color){
     printf("\033[0m");
 }
 
+//alloca un array risp* in n celle
 void malloc_array(risp** array_risposte, int n){
     *array_risposte = malloc(n * sizeof(risp));
     if(array_risposte == NULL)
         perror("Errore allocazione memoria");
 }
-
-void calloc_array(risp** array_risposte, int n){
-    *array_risposte = calloc(0, n * sizeof(risp));
-    if(array_risposte == NULL)
-        perror("Errore allocazione memoria");
-}
-
