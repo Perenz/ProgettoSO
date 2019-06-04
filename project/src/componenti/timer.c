@@ -436,7 +436,7 @@ int dev_set(cmd comando){
         risposta_controllore.considera = 1;
         risposta_controllore.info_disp = informazioni;
 
-        rispondi(risposta_controllore, comando);  
+        //rispondi(risposta_controllore, comando);  
 
         //Devo rispondere al manuale
         //fd_manuale
@@ -453,8 +453,14 @@ int dev_set(cmd comando){
         //Chiudo in scrittura
         close(fd_manuale);
       
+        int n;
+        risp* array_risposte;
+        malloc_array(&array_risposte, N_MAX_DISP);
+        comando.manuale = 0;
+        n = broadcast_centralina(dispList, comando, array_risposte);
         return 1;
     }
+    return 1;
 }
 
 int main(int argc, char **args){
